@@ -1,0 +1,26 @@
+{
+    "pages":[ {
+        "id": "main",
+        "title": "mapManager",
+        "file": "home.md",
+        "icon": "icon icon-home"
+    },
+    {
+        "id":"map",
+        "title": "What is a map ?",
+        "file": "map.md",
+        "icon": "icon icon-map"
+    },
+    {
+        "id":"load",
+        "title": "Load a map",
+        "file": "load.md",
+        "icon": "icon icon-upload"
+    },
+    {
+        "id": "create",
+        "title": "Create a map",
+        "file": "create.md",
+        "icon": "icon icon-feather"
+    }]
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Atlas",
+  "author": "Gherardo Varando <gherardo.varando@gmail.com>",
+  "version": "0.1.0",
+  "description": "An extendible and flexible application for maps analysis and visualization based on electron and nodejs and using leafelt library",
+  "product name": "Atlas",
+  "homepage": "https://github.com/gherardovarando",
+  "bugs": {
+    "email": "gherardo.varando@gmail.com"
+  },
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack:osx": "electron-packager .   --overwrite --version=1.4.5 --platform=darwin --arch=x64 --icon=images/appicons/icon.icns",
+    "pack:win32": "electron-packager . --overwrite --version=1.4.5 --platform=win32 --arch=ia32 --icon=images/appicons/icon.ico",
+    "pack:win64": "electron-packager . --overwrite --version=1.4.5 --platform=win32 --arch=x64  --icon=images/appicons/icon.ico",
+    "pack:linux": "electron-packager . --overwrite --version=1.4.5 --platform=linux --arch=x64  --icon=images/appicons/icon.png",
+    "packall": "npm run pack:osx && npm run pack:win32 && npm run pack:win64 && npm run pack:linux"
+  },
+  "repository": "https://github.com/gherardovarando",
+  "keywords": [
+    "Atlas",
+    "map",
+    "leaflet",
+    "brain",
+    "neuroscience",
+    "spatial data"
+  ],
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "electron": "^1.4.10"
+  },
+  "dependencies": {
+    "async": "^2.1.2",
+    "babyparse": "^0.4.6",
+    "electron-json-storage": "^2.1.0",
+    "image-size": "^0.5.0",
+    "json2csv": "^3.7.2",
+    "leaflet": "1.0.2",
+    "leaflet-draw": "^0.4.1",
+    "leaflet-easybutton": "*",
+    "leaflet-geometryutil": "^0.8.0",
+    "leaflet-snap": "0.0.4",
+    "leaflet.markercluster": "^1.0.0",
+    "marked": "^0.3.6",
+    "tiff-to-png": "^1.0.5"
+  }
+}

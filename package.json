@@ -1,0 +1,26 @@
+{
+  "devDependencies": {
+    "electron-builder": "^5.12.1",
+    "electron-prebuilt": "~1.4.5"
+  },
+  "scripts": {
+    "postinstall": "install-app-deps",
+    "start": "electron ./app --enable-logging",
+    "dev": "NODE_ENV='development' npm run start",
+    "dist": "build  -lw --x64 --ia32"
+  },
+  "build": {
+    "appId": "maps.gherardovarando",
+    "extraResources": ["ImageJ"] ,
+    "mac": {
+      "category": "your.app.category.type"
+    },
+    "squirrelWindows": {
+      "iconUrl": "http://vps136.cesvima.upm.es:3001/images/icon.ico",
+      "msi": true
+    },
+    "win":{
+      "iconUrl": "http://vps136.cesvima.upm.es:3001/images/icon.ico"
+    }
+  }
+}

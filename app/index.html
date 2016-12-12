@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+
+    <title>Atlas v0.1.0</title>
+    <script src="jscolor.js"></script>
+
+    <script>
+        if (typeof module === 'object') {
+            window.module = module;
+            module = undefined;
+        }
+    </script>
+
+
+
+
+    <!-- font awesome icons-->
+    <link type="text/css" rel="stylesheet" href="style/font-awesome-4.5.0/css/font-awesome.min.css">
+
+
+    <link rel="stylesheet" href="style/photon.min.css">
+
+
+    <link type="text/css" rel="stylesheet" href="style/gui.css">
+
+    <!-- Leaflet -->
+    <link type="text/css" rel="stylesheet" href="style/leaflet.css">
+
+    <!-- Leaflet.Draw  (is min) -->
+    <link type="text/css" rel="stylesheet" href="style/leaflet.draw.css">
+
+    <!-- marker cluster -->
+    <link type="text/css" rel="stylesheet" href="style/MarkerCluster.Default.css">
+
+
+    <script>
+        if (window.module) module = window.module;
+    </script>
+
+
+</head>
+
+<body>
+
+    <div class="window">
+        <header class="toolbar toolbar-header" style="-webkit-app-region: drag" id="header">
+            <div class="toolbar-actions">
+
+
+            </div>
+        </header>
+
+        <div class="window-content">
+
+
+                <div class="pane-group main" id="main">
+
+                </div>
+
+
+
+        </div>
+        <footer class="toolbar toolbar-footer" id="footer">
+
+        </footer>
+
+</body>
+
+
+<script>
+    const Gui= require(`./src/node_modules/Gui`);
+    let gui = new Gui();
+    gui.extensionsManager.loadExtension('./../extensions/helpPage/helpPage');
+    gui.extensionsManager.loadExtension('./../extensions/mapPage/mapPage');
+    //gui.loadAllExtensions();
+    gui.extensionsManager.extensions.helpPage.activate();
+    gui.extensionsManager.extensions.mapPage.activate();
+
+
+
+
+
+</script>
+
+
+</html>

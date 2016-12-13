@@ -118,7 +118,7 @@ class helpPage extends GuiExtension {
     }
 
     getPagesDir() {
-        return `${__dirname}/_help/Atlas.wiki/`;
+        return `${__dirname}/_help/`;
     }
 
 

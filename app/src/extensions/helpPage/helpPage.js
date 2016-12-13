@@ -87,7 +87,7 @@ class helpPage extends GuiExtension {
 
 
 
-        this.pages = Util.readJSONsync(`${this.getPagesDir()}pages.json`, (err) => {
+        this.pages = Util.readJSONsync(`${__dirname}/_help/pages.json`, (err) => {
             console.log(err);
         }).pages;
         this.pagesId = this.pages.map((pag) => {
@@ -118,7 +118,7 @@ class helpPage extends GuiExtension {
     }
 
     getPagesDir() {
-        return `${__dirname}/_help/`;
+        return `${__dirname}/_help/Atlas.wiki/`;
     }
 
 

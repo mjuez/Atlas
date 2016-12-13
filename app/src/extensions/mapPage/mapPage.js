@@ -20,6 +20,7 @@
 
 "use strict";
 
+const Workspace = require('Workspace');
 const Sidebar = require('Sidebar');
 const GuiExtension = require('GuiExtension');
 const ListGroup = require('ListGroup');
@@ -39,7 +40,7 @@ const {
 } = require('child_process');
 const fs = require('fs');
 const mapManager = require('./_modules/MapManager.js');
-const MapConfigurationParse = require('./_modules/MapConfigurationParser.js');
+const MapImport = require('./_modules/MapImport.js');
 const leaflet = require('leaflet');
 const {
     ipcRenderer
@@ -169,15 +170,19 @@ class mapPage extends GuiExtension {
             this.gui.workspace.addSpace(this, this.maps, false); //without overwriting
 
             //saving to workspace and retriving loaded worspace
-            if (this.gui.workspace) {
+            if (this.gui.workspace instanceof Workspace) {
                 this.gui.workspace.addSpace(this, this.maps);
                 this.gui.workspace.on('load', () => {
+                    this.gui.notify('loading maps from workspace...');
                     this.cleanMaps();
                     let maps = this.gui.workspace.spaces.mapPage || {};
-                    Object.keys(maps).map((id) => {
-                        this.addNewMap(MapConfigurationParse.buildConfiguration(maps[id]));
+                    let tot = Object.keys(maps).length;
+                    Object.keys(maps).map((id,i) => {
+                        this.gui.footer.progressBar.setBar(100*(i+1)/tot);
+                        this.addNewMap(MapImport.buildConfiguration(maps[id]));
                     });
                     this.gui.workspace.addSpace(this, this.maps, true); //overwriting
+                    this.gui.notify(`${tot} maps from workspace loaded`);
                 });
             }
 
@@ -186,7 +191,7 @@ class mapPage extends GuiExtension {
                 this.cleanMaps();
                 let maps = this.gui.workspace.spaces.mapPage;
                 Object.keys(maps).map((id) => {
-                    this.addNewMap(MapConfigurationParse.buildConfiguration(maps[id]));
+                    this.addNewMap(MapImport.buildConfiguration(maps[id]));
                 });
                 this.gui.workspace.addSpace(this, this.maps, true); //overwriting
             }
@@ -200,9 +205,9 @@ class mapPage extends GuiExtension {
         let region = new Menu();
         let layer = new Menu();
         layer.append(new MenuItem({
-            label: 'Add layer',
+            label: 'Add layer from file',
             click: () => {
-                this.addLayer();
+                this.openLayerFile();
             }
         }));
         region.append(new MenuItem({
@@ -258,7 +263,7 @@ class mapPage extends GuiExtension {
             label: 'Load map',
             type: 'normal',
             click: () => {
-                MapConfigurationParse.loadMapfromFile((configuration) => {
+                MapImport.loadMapfromFile((configuration) => {
                     this.showConfiguration(configuration, true);
                 });
             }
@@ -734,6 +739,7 @@ class mapPage extends GuiExtension {
     updateMap(configuration) {
         if (typeof configuration.id === 'undefined') return;
         try {
+            configuration = MapImport.buildConfiguration(configuration);
             // this.initSidebarLayer(configuration);
             this.initRegionActions(configuration);
             this.mapManager.setConfiguration(configuration);
@@ -853,11 +859,12 @@ class mapPage extends GuiExtension {
 
 
     createMap() {
-        let configuration = MapConfigurationParse.buildConfiguration(MapConfigurationParse.baseConfiguration());
+        let configuration = MapImport.buildConfiguration(MapImport.baseConfiguration());
         this.showConfiguration(configuration, true);
     }
 
-    addLayer() {
+    openLayerFile() {
+      if (Object.keys(this.maps).length <= 0) return;
         dialog.showOpenDialog({
             title: 'Add a new layer',
             filters: [{
@@ -874,7 +881,6 @@ class mapPage extends GuiExtension {
         }, (filenames) => {
             if (filenames.length === 0) return;
             fs.stat(filenames[0], (err, stats) => {
-
                 if (err) return;
                 if (stats.isFile()) {
                     dialog.showMessageBox({
@@ -895,12 +901,13 @@ class mapPage extends GuiExtension {
         });
     }
 
-    addLayerFile(path) {
+    addLayerFile(path, options) {
+        options = options || {};
         if (path.endsWith('.json') || path.endsWith('.mapconfig')) {
             let conf = Util.readJSONsync(path);
             let key = conf.name || conf.alias || path;
             this.mapManager._configuration.layers[key] = conf;
-            conf.basePath = MapConfigurationParse.basePath(conf, path);
+            conf.basePath = MapImport.basePath(conf, path);
             this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
         } else if (path.endsWith('.jpg') || path.endsWith('.JPG') || path.endsWith('.png') || path.endsWith('.gif')) {
             const sizeOf = require('image-size');
@@ -921,9 +928,8 @@ class mapPage extends GuiExtension {
                     [0, Math.floor(dim.width * 256 / siz)]
                 ],
                 size: 256
-
             }
-            conf = MapConfigurationParse.parseLayerConfig(conf);
+            conf = MapImport.parseLayerConfig(conf);
             let key = path;
             this.mapManager._configuration.layers[key] = conf;
             this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
@@ -942,7 +948,7 @@ class mapPage extends GuiExtension {
                 maxZoom: 8
 
             }
-            conf = MapConfigurationParse.parseLayerConfig(conf);
+            conf = MapImport.parseLayerConfig(conf);
             let key = path;
             this.mapManager._configuration.layers[key] = conf;
             this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
@@ -971,7 +977,7 @@ class mapPage extends GuiExtension {
                     maxZoom: 8
                 }
                 let key = path;
-                conf = MapConfigurationParse.parseLayerConfig(conf);
+                conf = MapImport.parseLayerConfig(conf);
                 this.mapManager._configuration.layers[key] = conf;
                 this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
                 this.showConfiguration(this.mapManager._configuration, true);
@@ -979,10 +985,10 @@ class mapPage extends GuiExtension {
                 Util.notifyOS(`"${conf.name} added"`);
             }
             this.gui.notify(`${path} started conversion`);
-            fs.watch(MapConfigurationParse.basePath(null, path), (eventType, filename) => {
+            fs.watch(MapImport.basePath(null, path), (eventType, filename) => {
 
             });
-            converter.convertArray([path], MapConfigurationParse.basePath(null, path));
+            converter.convertArray([path], MapImport.basePath(null, path));
         }
         this.showConfiguration(this.mapManager._configuration, true);
     }

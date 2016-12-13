@@ -521,14 +521,6 @@ if (L != undefined) {
         },
 
         addGuideLayer: function(layerConfig) {
-            // if (this._guideLayer) {
-            //     this._guideLayer.eachLayer((layer) => {
-            //         this._guideLayer.removeLayer(layer);
-            //     });
-            //     this._map.removeLayer(this._guideLayer);
-            //     delete this._guideLayer;
-            // }
-
             layerConfig.name = layerConfig.name || layerConfig.alias || layerConfig.Name || 'Guide';
             let guideLayer = L.featureGroup();
             this._guideLayers.push(guideLayer);
@@ -569,21 +561,19 @@ if (L != undefined) {
 
             } else {
                 let scale = 1;
-                if (layerConfig.size && this._tilesLayers[0].options) {
-                    scale = layerConfig.size / this._tilesLayers[0].options.tileSize;
-                    let tileSize = layerConfig.size;
-                    if (layerConfig.tileSize) {
-                        tileSize = layerConfig.tileSize;
-                    }
-                    for (let i = 0; i <= layerConfig.size; i = i + layerConfig.tileSize) {
-                        for (let j = 0; j <= layerConfig.size; j = j + layerConfig.tileSize) {
-                            guideLayer.addLayer(L.circleMarker([-i / scale, j / scale], {
-                                radius: 4
-                            }));
+                let baselayer = this._activeBaseLayer || this._tilesLayers[0];
+                if (layerConfig.size && (baselayer.options || baselayer._configuration)) {
+                    scale = layerConfig.size / (baselayer._configuration.size || baselayer.options.tileSize);
+                    let tileSize = layerConfig.tileSize || layerConfig.size;
+                    if (tileSize > 0) {
+                        for (let i = 0; i <= layerConfig.size; i = i + layerConfig.tileSize) {
+                            for (let j = 0; j <= layerConfig.size; j = j + layerConfig.tileSize) {
+                                guideLayer.addLayer(L.circleMarker([-i / scale, j / scale], {
+                                    radius: 4
+                                }));
+                            }
                         }
                     }
-
-
                 }
             }
 
@@ -660,6 +650,7 @@ if (L != undefined) {
                 this._imageLayers.push(layer);
                 if (options.baseLayer) {
                     this._configuration.size = this._configuration.size || options.size;
+                    this._activeBaseLayer = this._activeBaseLayer || layer;
                 }
                 this._configuration.layers[key] = options; //save the new options
 

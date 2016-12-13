@@ -1,7 +1,7 @@
 {
   "name": "Atlas",
   "author": "Gherardo Varando <gherardo.varando@gmail.com>",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An extendible and flexible application for maps analysis and visualization based on electron and nodejs and using leafelt library",
   "product name": "Atlas",
   "homepage": "https://github.com/gherardovarando",
@@ -34,6 +34,7 @@
     "async": "^2.1.2",
     "babyparse": "^0.4.6",
     "electron-json-storage": "^2.1.0",
+    "github": "^7.0.1",
     "image-size": "^0.5.0",
     "json2csv": "^3.7.2",
     "leaflet": "1.0.2",

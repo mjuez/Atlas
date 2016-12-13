@@ -1,6 +1,6 @@
 {
     "pages":[ {
-        "id": "main",
+        "id": "home",
         "title": "mapManager",
         "file": "home.md",
         "icon": "icon icon-home"

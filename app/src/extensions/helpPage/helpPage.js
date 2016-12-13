@@ -27,16 +27,18 @@ const fs = require('fs');
 const marked = require('marked');
 const renderer = new marked.Renderer();
 const ToggleElement = require('ToggleElement');
+const GitHubApi = require("github");
 
 
 renderer.link = function(href, title, text) {
+    console.log(href);
 
     if (!text) text = href;
     if (href.includes("@")) {
         return (`<a href="mailto:${href}" title="${title}" target="_top"> ${text} </a>`);
     }
     if (href.includes('http') | href.includes('www')) {
-        return (`<a href="#" title="${title}" onclick="gui.extensionsManager.extensions.helpPage.loadurl(${href});"> ${text} </a>`);
+        return (`<a href="#" title="${title}" onclick="gui.extensionsManager.extensions.helpPage.loadurl('${href}');"> ${text} </a>`);
     }
     return (`<a href="#" role="button" title="${title}" onclick="gui.extensionsManager.extensions.helpPage.displayPage('${href}');"> ${text} </a>`);
 
@@ -75,8 +77,8 @@ class helpPage extends GuiExtension {
 
         //add the webview
         let webview = document.createElement('WEBVIEW');
-        webview.autosize = 'off';
-        webview.style.width = '80%';
+        webview.autosize = 'on';
+        webview.style.width = '100%';
         webview.className = 'padded';
         this.webview = new ToggleElement(webview);
         this.webview.hide();
@@ -102,6 +104,26 @@ class helpPage extends GuiExtension {
             buttonsContainer: this.gui.header.actionsContainer,
             icon: "fa fa-question",
             groupId: "basetools"
+        });
+
+
+        this.sidebar.nav.addTitle('Github');
+
+        this.sidebar.addItem({
+            title: 'Source code',
+            icon: 'icon icon-github-circled',
+            onclick: () => {
+                this.loadurl('https://github.com/gherardovarando/prova/');
+            }
+        });
+
+
+        this.sidebar.addItem({
+            title: 'Submit issue',
+            icon: 'icon icon-github',
+            onclick: () => {
+                this.loadurl('https://github.com/gherardovarando/prova/issues/new');
+            }
         });
 
         //display the first page

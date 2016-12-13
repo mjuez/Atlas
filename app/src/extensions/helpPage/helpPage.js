@@ -43,7 +43,7 @@ renderer.link = function(href, title, text) {
 }
 
 renderer.image = function(href, title, text) {
-    return (`<img src="${gui.extensionsManager.extensions.helpPage.getPagesDir()}/images/${href}" alt="${text}" title="${title}"></img>`)
+    return (`<img src="${gui.extensionsManager.extensions.helpPage.getPagesDir()}/${href}" alt="${text}" title="${title}"></img>`)
 }
 
 marked.setOptions({
@@ -52,10 +52,10 @@ marked.setOptions({
 
 class helpPage extends GuiExtension {
 
-     constructor(gui){
-      super(gui);
-      this.icon = 'fa fa-question fa-3x';
-     }
+    constructor(gui) {
+        super(gui);
+        this.icon = 'fa fa-question fa-3x';
+    }
 
 
     activate() {
@@ -109,29 +109,34 @@ class helpPage extends GuiExtension {
         super.activate();
     }
 
-    deactivate(){ /// the extension has to take care of removing all the buttons and element appended
-      this.sidebar.remove();
-      this.element.removeChild(this.page.element);
-      this.element.removeChild(this.webview.element);
-      this.removeToggleButton();//this is compulsory to leave the interface clean
-      super.deactivate();
+    deactivate() { /// the extension has to take care of removing all the buttons and element appended
+        this.sidebar.remove();
+        this.element.removeChild(this.page.element);
+        this.element.removeChild(this.webview.element);
+        this.removeToggleButton(); //this is compulsory to leave the interface clean
+        super.deactivate();
     }
 
     getPagesDir() {
-        return `${__dirname}/_help/`;
+        return `${__dirname}/_help/Atlas.wiki/`;
     }
 
 
-    readMarkdown(filename, callback, errorCl) {
+    readMarkdown(filename, callback, errorCl, callfirst) {
         fs.readFile(filename, 'utf-8', function(err, data) {
             if (err) {
-                if (errorCl) {
+                if (typeof errorCl === 'function') {
                     errorCl(err);
                 }
                 return;
             }
+            if (typeof callfirst === 'function') {
+                data = callfirst(data);
+            }
             var obj = marked(data);
-            callback(obj);
+            if (typeof callback === 'function') {
+                callback(obj);
+            }
         });
     }
 
@@ -142,7 +147,9 @@ class helpPage extends GuiExtension {
         options.title = page.title;
         options.onclick = () => {
             this.displayPage(page);
-            this.sidebar.nav.applyAll((it)=>{ it.className = 'nav-group-item'; });
+            this.sidebar.nav.applyAll((it) => {
+                it.className = 'nav-group-item';
+            });
             this.sidebar.nav.items[page.id].className = 'nav-group-item active';
         };
         this.sidebar.nav.addItem(options);
@@ -157,9 +164,10 @@ class helpPage extends GuiExtension {
         }
 
         this.webview.hide();
-
         this.readMarkdown(`${this.getPagesDir()}${pg.file}`, (md) => {
             this.page.element.innerHTML = md;
+        }, null, (data) => {
+            return (data.replace(/\[\[/g, '![](').replace(/\]\]/g, ')')); // here we translate from github markdown expression for image [[ ]] to the usual md image syntax !()[ ]
         });
 
 

@@ -304,16 +304,15 @@ class MapImport {
             config.noWrap = config.noWrap || true;
             config.zoomOffset = Number(config.zoomOffset || 0);
             config.zoomReverse = config.zoomReverse || false;
-            config.opacity = Number(config.opacity || 1);
-            config.tileSize = config.tileSize || 256;
-            config.size = config.size ||  Math.max(config.tileSize) || 256;
+            config.opacity = Math.min(1,Math.max(0,Number(config.opacity || 1)));
+            config.tileSize = Math.max(1,config.tileSize || 256);
+            config.size = Math.max(1,Number(config.size ||  config.tileSize || 256));
             config.size_cal = config.size_cal || config.size || 256;
-
 
             if (Array.isArray(config.tileSize)) {
                 config.bounds = config.bounds || [
-                    [-Number(config.tileSize[1]), 0],
-                    [0, Number(config.tileSize[0])]
+                    [-Math.floor(Number(config.tileSize[1])), 0],
+                    [0, Math.floor(Number(config.tileSize[0]))]
                 ];
             } else if (typeof config.tileSize === 'number' || typeof config.tileSize === 'string') {
                 config.bounds = config.bounds || [
@@ -321,14 +320,11 @@ class MapImport {
                     [0, Math.floor(config.tileSize) || 256]
                 ];
             } else { // it is an object
-
                 config.bounds = config.bounds || [
                     [-Math.floor(config.tileSize.x) || -256, 0],
                     [0, Math.floor(config.tileSize.y) || 256]
                 ]
-
             }
-
         }
         if (config.type.includes('pointsLayer')) {
 
@@ -346,7 +342,6 @@ class MapImport {
 
         }
         return config;
-
     }
 
 

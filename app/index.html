@@ -54,9 +54,18 @@
         <div class="window-content">
 
 
-                <div class="pane-group main" id="main">
+            <div class="pane-group main" id="main">
+                <div class='pane padded'>
+                    <h1> Atlas v0.1.1 <img src='images/icon.png' height="30" width="30"></img></h1>
+
+                    <p> <img src='images/cig.png'></img>
+                        <img src='images/cbbp.png'></img>
+                        <img src='images/hbp.png'></img>
+                        <img src='images/upm.png'></img>
+                    </p>
 
                 </div>
+            </div>
 
 
 
@@ -69,18 +78,13 @@
 
 
 <script>
-    const Gui= require(`./src/node_modules/Gui`);
+    const Gui = require(`./src/node_modules/Gui`);
     let gui = new Gui();
     gui.extensionsManager.loadExtension('./../extensions/helpPage/helpPage');
     gui.extensionsManager.loadExtension('./../extensions/mapPage/mapPage');
     //gui.loadAllExtensions();
     gui.extensionsManager.extensions.helpPage.activate();
     gui.extensionsManager.extensions.mapPage.activate();
-
-
-
-
-
 </script>
 
 

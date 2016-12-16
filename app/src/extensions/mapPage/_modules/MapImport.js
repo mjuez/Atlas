@@ -18,6 +18,13 @@
 
 'use strict';
 
+const MapEdit = require('./MapEdit');
+const {
+    app
+} = require('electron').remote;
+const path = require('path');
+const ButtonsContainer = require('ButtonsContainer');
+const Modal = require('Modal');
 const os = require('os');
 const fs = require('fs');
 const {
@@ -65,10 +72,9 @@ class MapImport {
                 if (id >= 1) {
                     configuration.basePath = MapImport.basePath(configuration, filename[0]);
                     configuration = MapImport.buildConfiguration(configuration);
+                    configuration.new = true;
                     Util.merge(configuration, MapImport.baseConfiguration());
-                    if (typeof cl === 'function') {
-                        cl(configuration);
-                    }
+                    MapEdit.previewModal(configuration, cl);
                 }
             });
         });
@@ -106,7 +112,6 @@ class MapImport {
                     if (ch === 1) {
                         return configuration.basePath;
                     } else {
-                        const path = require("path");
                         return filename.substr(0, filename.lastIndexOf(path.sep) + 1);
                     }
                 }
@@ -116,7 +121,6 @@ class MapImport {
                     configuration.source === "server") {
                     return "";
                 } else if (filename) {
-                    const path = require("path");
                     return filename.substr(0, filename.lastIndexOf(path.sep) + 1);
                 } else {
                     return "";
@@ -124,7 +128,6 @@ class MapImport {
             }
         } else {
             if (filename) {
-                const path = require("path");
                 return filename.substr(0, filename.lastIndexOf(path.sep) + 1);
             } else {
                 return "";
@@ -178,6 +181,7 @@ class MapImport {
         if (configuration.source === 'server' || configuration.source === 'online') {
             configuration.source = 'remote';
         }
+        configuration.source = configuration.source || 'local';
 
         if (!configuration.name) {
             if (configuration.Name) {
@@ -230,7 +234,6 @@ class MapImport {
 
         configuration.layers = {};
         let id = 0;
-        const path = require("path");
 
         for (var a in alls) {
             for (var lay in alls[a]) {
@@ -238,26 +241,20 @@ class MapImport {
                     // if lay is just a string we look at the corresponding folder to find the config file
                     try {
                         let c = MapImport.findConfigurationSync(configuration.basePath + alls[a][lay] + path.sep, alls[a][lay]);
-                        c.basePath = c.basePath  || (configuration.basePath + alls[a][lay] + path.sep);
-                        configuration.layers[alls[a][lay]] = MapImport.parseLayerConfig(c);
-                        configuration.layers[alls[a][lay]].id = id;
-                        id = id + 1;
+                        c.id = id;
+                        id++;
+                        c.basePath = c.basePath || (configuration.basePath + alls[a][lay] + path.sep);
+                        configuration.layers[id] = MapImport.parseLayerConfig(c);
                     } catch (e) {
                         throw e;
                     }
                 } else {
                     // otherwise we assume lay is a configuration object
-                    if (alls[a][lay].name) {
-                        //if there is a name use it
-                        configuration.layers[alls[a][lay].name] = MapImport.parseLayerConfig(alls[a][lay]);
-                        configuration.layers[alls[a][lay].name].id = id;
-                        id = id + 1;
-                    } else {
-                        //otherwise use the properties
-                        configuration.layers[lay] = MapImport.parseLayerConfig(alls[a][lay]);
-                        configuration.layers[lay].id = id;
-                        id = id + 1;
-                    }
+                    let c = alls[a][lay];
+                    c.id = id;
+                    id++;
+                    c.basePath = c.basePath || (configuration.basePath + alls[a][lay] + path.sep);
+                    configuration.layers[id] = MapImport.parseLayerConfig(c);
                 }
             }
         }
@@ -281,7 +278,7 @@ class MapImport {
         Util.setOne(config, 'name', ['NAME', 'title', 'TITLE', '_name']);
         Util.setOne(config, 'type', ['TYPE', 'layerType', 'layertype', '_type']);
         Util.setOne(config, 'source', ['SOURCE', 'Source']);
-        Util.setOne(config, 'size', ['SIZE','Size', 'dim' ,'DIM','Dim']);
+        Util.setOne(config, 'size', ['SIZE', 'Size', 'dim', 'DIM', 'Dim']);
         config.alias = config.alias || config.name;
         config.attribution = config.attribution || '@gherardo.varando';
 
@@ -293,20 +290,20 @@ class MapImport {
                 config.tilesUrlTemplate.startsWith("https://")) {
                 config.basePath = '';
             }
-            if (config.tilesUrlTemplate.includes(config.basePath)){
-              config.basePath = '';
+            if (config.tilesUrlTemplate.includes(config.basePath)) {
+                config.basePath = '';
             }
-            config.maxZoom = Number(config.maxZoom || 0);
-            config.minZoom = Number(config.minZoom || 0);
-            config.maxNativeZoom = Number(config.maxNativeZoom || 0);
-            config.minNativeZoom = Number(config.minNativeZoom || 0);
+            config.maxZoom = Number(config.maxZoom) || 0;
+            config.minZoom = Number(config.minZoom) || 0;
+            config.maxNativeZoom = Number(config.maxNativeZoom) || 0;
+            config.minNativeZoom = Number(config.minNativeZoom) || 0;
             config.errorTileUrl = config.errorTileUrl || '';
             config.noWrap = config.noWrap || true;
-            config.zoomOffset = Number(config.zoomOffset || 0);
+            config.zoomOffset = Number(config.zoomOffset) || 0;
             config.zoomReverse = config.zoomReverse || false;
-            config.opacity = Math.min(1,Math.max(0,Number(config.opacity || 1)));
-            config.tileSize = Math.max(1,config.tileSize || 256);
-            config.size = Math.max(1,Number(config.size ||  config.tileSize || 256));
+            config.opacity = Math.min(1, Math.max(0, Number(config.opacity || 1)));
+            config.tileSize = Math.max(1, config.tileSize || 256);
+            config.size = Math.max(1, Number(config.size || config.tileSize || 256));
             config.size_cal = config.size_cal || config.size || 256;
 
             if (Array.isArray(config.tileSize)) {
@@ -325,24 +322,53 @@ class MapImport {
                     [0, Math.floor(config.tileSize.y) || 256]
                 ]
             }
+
+            config.previewImageUrl = (config.basePath + config.tilesUrlTemplate).replace('{x}', '0').replace('{y}', '0').replace('{z}', '0');
+
+            if (config.customKeys) {
+                for (let k in config.customKeys) {
+                    config.previewImageUrl = config.previewImageUrl.replace(`{${k}}`, `${config.customKeys[k][0]}`);
+                    config[k] = `${config.customKeys[k][0]}`;
+                }
+            }
+
         }
         if (config.type.includes('pointsLayer')) {
+            config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}points.png`;
+            config.__color = 'red';
+            Util.setOne(config, 'color', ['COLOR', 'Color', '__color']);
 
         }
         if (config.type.includes('guideLayer')) {
-
+            config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}grid.png`;
+            config.__color = 'blue';
+            Util.setOne(config, 'color', ['COLOR', 'Color', '__color']);
         }
         if (config.type.includes('gridLayer')) {
+            config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}grid.png`;
+            config.__color = 'blue';
+            Util.setOne(config, 'color', ['COLOR', 'Color', '__color']);
 
         }
         if (config.type.includes('imageLayer')) {
+            config.previewImageUrl = config.basePath + config.imageUrl;
 
         }
         if (config.type.includes('drawnPolygons')) {
-
+            config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}regions.png`;
         }
         return config;
     }
+
+
+
+
+    static createMap() {
+        MapEdit.previewModal(MapImport.baseConfiguration());
+    }
+
+
+
 
 
 }

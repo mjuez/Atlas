@@ -31,8 +31,6 @@ const GitHubApi = require("github");
 
 
 renderer.link = function(href, title, text) {
-    console.log(href);
-
     if (!text) text = href;
     if (href.includes("@")) {
         return (`<a href="mailto:${href}" title="${title}" target="_top"> ${text} </a>`);

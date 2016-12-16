@@ -1,5 +1,0 @@
-<div class=​"toolbar-actions">​…​</div>​
-Error: ENOENT: no such file or directory, scandir '/home/gherardo/mapsManager/node_modules/electron/dist/resources/GuiExtensions/'(…)
-gui.extensions.helpPage.activate();
-/home/gherardo/mapsManager/js/GuiExtensions/helpPage/.help/pages.json
-Uncaught TypeError: Cannot read property 'pages' of null(…)

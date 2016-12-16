@@ -20,6 +20,7 @@
 
 "use strict";
 
+const Modal = require('Modal');
 const Workspace = require('Workspace');
 const Sidebar = require('Sidebar');
 const GuiExtension = require('GuiExtension');
@@ -41,6 +42,7 @@ const {
 const fs = require('fs');
 const mapManager = require('./_modules/MapManager.js');
 const MapImport = require('./_modules/MapImport.js');
+const MapEdit = require('./_modules/MapEdit.js');
 const leaflet = require('leaflet');
 const {
     ipcRenderer
@@ -104,7 +106,7 @@ class mapPage extends GuiExtension {
                 groupId: "mapPage",
                 action: () => {
                     this.mapPane.show();
-                    this.previewPane.hide();
+                    this.devPane.hide();
                 }
             });
             //add the sidebars
@@ -143,10 +145,10 @@ class mapPage extends GuiExtension {
                 this.mapManager.tDOWN();
             });
 
-            this.previewPane = new ToggleElement(document.createElement('DIV'));
-            this.previewPane.element.className = 'pane padded';
-            this.previewPane.hide();
-            this.element.appendChild(this.previewPane.element);
+            this.devPane = new ToggleElement(document.createElement('DIV'));
+            this.devPane.element.className = 'pane padded';
+            this.devPane.hide();
+            this.element.appendChild(this.devPane.element);
 
             this.sidebarRegions = new Sidebar(this.element);
             this.sidebarRegions.addList();
@@ -263,8 +265,8 @@ class mapPage extends GuiExtension {
             label: 'Load map',
             type: 'normal',
             click: () => {
-                MapImport.loadMapfromFile((configuration) => {
-                    this.showConfiguration(configuration, true);
+                MapImport.loadMapfromFile((conf)=>{
+                  this.addNewMap(conf);
                 });
             }
         }));
@@ -304,7 +306,7 @@ class mapPage extends GuiExtension {
             click: () => {
                 this.show();
                 this.mapPane.show();
-                this.previewPane.hide();
+                this.devPane.hide();
             }
         }));
         this.menu = new MenuItem({
@@ -319,7 +321,7 @@ class mapPage extends GuiExtension {
         this.sidebar.remove();
         this.sidebarRegions.remove();
         this.element.removeChild(this.mapPane.element);
-        this.element.removeChild(this.previewPane.element);
+        this.element.removeChild(this.devPane.element);
         this.gui.removeSubmenu(this.menu);
         this.removeToggleButton('mapPageToggleButton'); //this is compulsory to leave the interface clean
         super.deactivate(); //we will also call the super class deactivate method
@@ -346,7 +348,7 @@ class mapPage extends GuiExtension {
 
 
     showConfiguration(configuration, show) {
-        let pane = this.previewPane.element;
+        let pane = this.devPane.element;
         Util.empty(pane, pane.firstChild);
         let tree = new TreeListInput(pane, configuration);
         let raw = document.createElement('TEXTAREA');
@@ -392,7 +394,7 @@ class mapPage extends GuiExtension {
             text: 'Cancel',
             className: 'btn btn-form btn-default',
             action: () => {
-                this.previewPane.hide();
+                this.devPane.hide();
                 this.mapPane.show();
                 Util.empty(pane, pane.firstChild);
             }
@@ -403,7 +405,7 @@ class mapPage extends GuiExtension {
         pane.appendChild(sub.element);
         if (show) {
             this.mapPane.hide();
-            this.previewPane.show();
+            this.devPane.show();
             this.show();
         }
     }
@@ -417,18 +419,18 @@ class mapPage extends GuiExtension {
         }
     }
 
-    initRegionActions(configuration) {
-        if (configuration === this.mapManager._configuration) return;
+    initRegionActions(configuration,force) {
+        if (configuration === this.mapManager._configuration && !force) return;
         this.sidebarRegions.list.clean();
     }
 
-    switchMap(configuration) {
+    switchMap(configuration,force) {
         if (configuration) {
             this.sidebar.list.deactiveAll();
             this.sidebar.list.applyAll((item) => {
                 item.body.hide();
             });
-            if (configuration != this.mapManager._configuration) {
+            if ((configuration != this.mapManager._configuration) || force) {
                 this.sidebar.layerList.clean();
             }
 
@@ -441,10 +443,10 @@ class mapPage extends GuiExtension {
                 });
             });
             this.selectedRegions = [];
-            this.initRegionActions(configuration);
+            this.initRegionActions(configuration,force);
             this.showConfiguration(configuration);
-            this.mapManager.setConfiguration(configuration);
-            this.sidebar.list.items[`${configuration.id}`].element.getElementsByTagName('STRONG')[0].innerHTML = configuration.name;
+            this.mapManager.setConfiguration(configuration,force);
+            this.sidebar.list.items[`${configuration.id}`].element.getElementsByTagName('STRONG')[0].innerHTML = configuration.name; //set the correct name
             this.sidebar.list.activeOne(`${configuration.id}`);
             this.sidebarRegions.show();
             this.sidebar.layerList.hide();
@@ -492,11 +494,41 @@ class mapPage extends GuiExtension {
             }
         }));
         ctn.append(new MenuItem({
-            label: 'Configuration',
+            label: 'Edit map',
             type: 'normal',
             click: () => {
-                this.mapPane.hide();
-                this.previewPane.show();
+                MapEdit.previewModal(this.mapManager._configuration,(c)=>{
+                this.updateMap(c);
+                });
+            }
+        }));
+        ctn.append(new MenuItem({
+            label: 'Edit layers',
+            type: 'normal',
+            click: () => {
+                MapEdit.editLayersModal(this.mapManager._configuration,(c)=>{
+                this.updateMap(c);
+                });
+            }
+        }));
+        ctn.append(new MenuItem({
+            label: 'Dev',
+            type: 'normal',
+            click: () => {
+              dialog.showMessageBox({
+                  title: 'show map configuration?',
+                  type: 'warning',
+                  buttons: ['No', "Yes"],
+                  message: `The map configuration object should be modified only if you know what you are doing`,
+                  detail: 'tips: you can go back to map view with CmdOrCtrl + M',
+                  noLink: true
+              }, (id) => {
+                  if (id > 0) {
+                    this.mapPane.hide();
+                    this.devPane.show();
+                  }
+              });
+
             }
         }));
         ctn.append(new MenuItem({
@@ -549,7 +581,7 @@ class mapPage extends GuiExtension {
         configuration.new = false;
         this.switchMap(configuration);
         this.mapPane.show();
-        this.previewPane.hide();
+        this.devPane.hide();
     }
 
 
@@ -740,18 +772,16 @@ class mapPage extends GuiExtension {
         if (typeof configuration.id === 'undefined') return;
         try {
             configuration = MapImport.buildConfiguration(configuration);
-            // this.initSidebarLayer(configuration);
             this.initRegionActions(configuration);
-            this.mapManager.setConfiguration(configuration);
         } catch (e) {
             // otherwise means that the mapManager is unable to load the map
             console.log(e);
             return;
         }
         this.maps[configuration.id] = configuration;
-        this.switchMap(configuration);
+        this.switchMap(configuration,true);
         this.mapPane.show();
-        this.previewPane.hide();
+        this.devPane.hide();
     }
 
 
@@ -906,8 +936,8 @@ class mapPage extends GuiExtension {
         if (path.endsWith('.json') || path.endsWith('.mapconfig')) {
             let conf = Util.readJSONsync(path);
             let key = conf.name || conf.alias || path;
-            this.mapManager._configuration.layers[key] = conf;
             conf.basePath = MapImport.basePath(conf, path);
+            this.mapManager._configuration.layers[key] = MapImport.parseLayerConfig(conf);
             this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
         } else if (path.endsWith('.jpg') || path.endsWith('.JPG') || path.endsWith('.png') || path.endsWith('.gif')) {
             const sizeOf = require('image-size');
@@ -990,7 +1020,8 @@ class mapPage extends GuiExtension {
             });
             converter.convertArray([path], MapImport.basePath(null, path));
         }
-        this.showConfiguration(this.mapManager._configuration, true);
+        this.showConfiguration(this.mapManager._configuration);
+        this.switchMap(this.mapManager._configuration);
     }
 
 

@@ -182,7 +182,7 @@ if (L != undefined) {
             if (typeof color === 'string') this._configuration.drawingColor = color;
         },
 
-        setMapOptions() {
+        setMapOptions: function() {
             if (this._configuration) {
                 this._configuration.minZoom = this._configuration.minZoom || 0;
                 this._map.setMinZoom(this._configuration.minZoom);
@@ -192,27 +192,35 @@ if (L != undefined) {
             }
         },
 
-        getSize() {
-            let size = 256;
-            if (this._activeBaseLayer) {
-                size = this._activeBaseLayer._configuration.size || this._activeBaseLayer._configuration.tileSize || 256;
-            } else {
-                let temp = this.getLayers('tilesLayer')[0];
-                if (!temp) {
-                    temp = this.getLayers('imageLayer')[0];
-                }
-                if (temp) {
-                    size = temp._configuration.size || temp._configuration.tileSize || 256;
-                }
-            }
-            if (size.x && size.y) {
-                return Math.max(size.x, size.y);
-            }
-            if (Array.isArray(size)) {
-                return (Math.max(size));
-            }
-            return size;
+        getSize: function() { //this is the maximum of the 2 dimension
+          let temp=this.getSizes();
+          return Math.max(temp[0],temp[1]);
         },
+
+        getSizes: function(){
+          let size = [256,256];
+          if (this._activeBaseLayer) {
+              size = this._activeBaseLayer._configuration.size || this._activeBaseLayer._configuration.tileSize || 256;
+          } else {
+              let temp = this.getLayers('tilesLayer')[0];
+              if (!temp) {
+                  temp = this.getLayers('imageLayer')[0];
+              }
+              if (temp) {
+                  size = temp._configuration.size || temp._configuration.tileSize || [256,256];
+              }
+          }
+          if (typeof size === 'number'){
+            return [size,size];
+          }
+          if (size.x && size.y) {
+              return [size.x, size.y];
+          }
+          if (Array.isArray(size)) {
+              return (size);
+          }
+        },
+
 
         getLayers: function(types) {
             if (Array.isArray(types)) {
@@ -473,27 +481,11 @@ if (L != undefined) {
         addPointsLayer: function(layer) {
             if (layer.pointsUrlTemplate) {
                 this._pointsLayers.push(layer);
-                let basePath = this._configuration.basePath;
-                layer.color = layer.color || this.getDrawingColor();
-                if (layer.source === "remote") {
-                    if (layer.basePath.startsWith('http://')) {
-                        basePath = layer.basePath;
-                    } else {
-                        basePath = "";
-                    }
-                }
-                if (layer.basePath) {
-                    basePath = layer.basePath;
-                }
-                if (layer.pointsUrlTemplate.startsWith("http://") |
-                    layer.pointsUrlTemplate.startsWith("file://") |
-                    layer.pointsUrlTemplate.startsWith("ftp://")) {
-                    basePath = "";
-                }
-                if (layer.pointsUrlTemplate.includes(basePath)) basePath = '';
-                layer.pointsUrlTemplate = `${basePath}${layer.pointsUrlTemplate}`;
-                layer.easyToDraw = layer.easyToDraw || false;
 
+                layer.color = layer.color || this.getDrawingColor();
+
+
+                layer.easyToDraw = layer.easyToDraw || false;
                 if (!layer.easyToDraw) {
                     return;
                 }
@@ -504,6 +496,7 @@ if (L != undefined) {
                 }
                 let points = new pointsLayer(layer);
                 let scale = points.configuration.size / this.getSize();
+                console.log(scale);
 
                 points.countPoints({
                     maxTiles: 10,
@@ -700,6 +693,7 @@ if (L != undefined) {
                 if (options.tileSize.x && options.tileSize.y) {
                     options.tileSize = L.point(options.tileSize.x, options.tileSize.y);
                 }
+
 
                 let layer = L.tileLayer(layerConfig.basePath + options.tilesUrlTemplate, options);
                 layer._configuration = layerConfig;

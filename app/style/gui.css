@@ -244,6 +244,7 @@ div.input-label {
 .simple {
   background-color: inherit;
   width: auto;
+  max-width:200pt;
   box-shadow: none;
   border-color: inherit;
   border-width: 0px;
@@ -303,4 +304,10 @@ inpu.overlay {
 div.flex-container{
     display: -webkit-flex;
     display: flex;
+}
+
+
+img.imageicon {
+width: 10px;
+height: 10px;
 }

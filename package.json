@@ -10,8 +10,14 @@
     "dist": "build  -lw --x64 --ia32"
   },
   "build": {
-    "appId": "maps.gherardovarando",
-    "extraResources": ["ImageJ"] ,
+    "appId": "atlas.gherardovarando",
+    "extraResources": [
+      {
+          "from": "app/src/extensions/imagejPage/_resources/ImageJ",
+          "to": "ImageJ",
+          "filter": ["**/*"]
+        }
+    ],
     "mac": {
       "category": "your.app.category.type"
     },

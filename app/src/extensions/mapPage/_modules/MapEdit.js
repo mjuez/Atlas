@@ -211,7 +211,7 @@ class MapEdit {
     static previewModal(conf, cl) {
         let newconf = Util.clone(conf);
         let modal = new Modal({
-            title: `Add ${conf.name} map?`,
+            title: `${conf.name}`,
             width: '400px',
             height: 'auto'
         });
@@ -438,7 +438,8 @@ class MapEdit {
                     parent: parent,
                     type: 'checkbox',
                     checked: layer.easyToDraw,
-                    oninput: (inp) => {
+                    onchange: (inp) => {
+                        console.log(inp.checked);
                         layer.easyToDraw = Boolean(inp.checked);
                     }
                 });

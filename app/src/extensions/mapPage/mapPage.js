@@ -60,11 +60,6 @@ const {
     app
 } = require('electron').remote;
 
-// x = [lat,lng]
-// output = [-lng,lat]
-function leaflet2standard(x) {
-    return ([-x[1], x[0]]);
-}
 
 
 function extractPolygonArray(polygon, scale) {
@@ -212,6 +207,14 @@ class mapPage extends GuiExtension {
                 this.openLayerFile();
             }
         }));
+        layer.append(new MenuItem({
+            label: 'Edit layers',
+            click: () => {
+              MapEdit.editLayersModal(this.mapManager._configuration,(c)=>{
+              this.updateMap(c);
+              });
+            }
+        }));
         region.append(new MenuItem({
             label: 'Delete selected',
             accelerator: 'CmdOrCtrl + D',
@@ -278,8 +281,12 @@ class mapPage extends GuiExtension {
             }
         }));
         mapMenu.append(new MenuItem({
-            label: '',
-            type: 'separator'
+            label: 'Edit map',
+            click: () => {
+              MapEdit.previewModal(this.mapManager._configuration,(c)=>{
+              this.updateMap(c);
+              });
+            }
         }));
         mapMenu.append(new MenuItem({
             label: '',
@@ -889,8 +896,9 @@ class mapPage extends GuiExtension {
 
 
     createMap() {
-        let configuration = MapImport.buildConfiguration(MapImport.baseConfiguration());
-        this.showConfiguration(configuration, true);
+       MapImport.createMap((c)=>{
+        this.addNewMap(c);
+       });
     }
 
     openLayerFile() {

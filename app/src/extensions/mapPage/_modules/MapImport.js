@@ -80,7 +80,8 @@ class MapImport {
         });
     }
 
-    static baseConfiguration() {
+    static baseConfiguration(options) {
+      options = options || {};
         return {
             type: 'map',
             name: 'new map',
@@ -89,7 +90,8 @@ class MapImport {
             layers: [],
             new: true,
             basePath: '',
-            minZoom: 0
+            minZoom: 0,
+            new: options.new
         };
     }
 
@@ -253,7 +255,7 @@ class MapImport {
                     let c = alls[a][lay];
                     c.id = id;
                     id++;
-                    c.basePath = c.basePath || (configuration.basePath + alls[a][lay] + path.sep);
+                    c.basePath = c.basePath || configuration.basePath;
                     configuration.layers[id] = MapImport.parseLayerConfig(c);
                 }
             }
@@ -302,7 +304,7 @@ class MapImport {
             config.zoomOffset = Number(config.zoomOffset) || 0;
             config.zoomReverse = config.zoomReverse || false;
             config.opacity = Math.min(1, Math.max(0, Number(config.opacity || 1)));
-            config.tileSize = Math.max(1, config.tileSize || 256);
+            config.tileSize = config.tileSize || 256;
             config.size = Math.max(1, Number(config.size || config.tileSize || 256));
             config.size_cal = config.size_cal || config.size || 256;
 
@@ -363,8 +365,8 @@ class MapImport {
 
 
 
-    static createMap() {
-        MapEdit.previewModal(MapImport.baseConfiguration());
+    static createMap(cl) {
+        MapEdit.previewModal(MapImport.baseConfiguration({new:true}),cl);
     }
 
 

@@ -81,7 +81,11 @@ function pointsLayer(configuration) {
                 y0 = 0;
             }
             var temp = [];
-            var xstart = Math.floor(bounds.west / tileSize);
+            let siz = self.configuration.size;
+            Object.keys(bounds).map((k)=>{
+                bounds[k]= Math.max(Math.min(bounds[k],siz),0)
+            });
+            var xstart = Math.floor( bounds.west / tileSize);
             var xstop = Math.floor(bounds.east / tileSize);
             var ystart = Math.floor(bounds.north / tileSize);
             var ystop = Math.floor(bounds.south / tileSize);

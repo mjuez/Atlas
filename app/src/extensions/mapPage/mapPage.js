@@ -41,7 +41,7 @@ const {
 } = require('child_process');
 const fs = require('fs');
 const mapManager = require('./_modules/MapManager.js');
-const MapImport = require('./_modules/MapImport.js');
+const MapIO = require('./_modules/MapIO.js');
 const MapEdit = require('./_modules/MapEdit.js');
 const leaflet = require('leaflet');
 const {
@@ -174,9 +174,9 @@ class mapPage extends GuiExtension {
                     this.cleanMaps();
                     let maps = this.gui.workspace.spaces.mapPage || {};
                     let tot = Object.keys(maps).length;
-                    Object.keys(maps).map((id,i) => {
-                        this.gui.footer.progressBar.setBar(100*(i+1)/tot);
-                        this.addNewMap(MapImport.buildConfiguration(maps[id]));
+                    Object.keys(maps).map((id, i) => {
+                        this.gui.footer.progressBar.setBar(100 * (i + 1) / tot);
+                        this.addNewMap(MapIO.buildConfiguration(maps[id]));
                     });
                     this.gui.workspace.addSpace(this, this.maps, true); //overwriting
                     this.gui.notify(`${tot} maps from workspace loaded`);
@@ -188,7 +188,7 @@ class mapPage extends GuiExtension {
                 this.cleanMaps();
                 let maps = this.gui.workspace.spaces.mapPage;
                 Object.keys(maps).map((id) => {
-                    this.addNewMap(MapImport.buildConfiguration(maps[id]));
+                    this.addNewMap(MapIO.buildConfiguration(maps[id]));
                 });
                 this.gui.workspace.addSpace(this, this.maps, true); //overwriting
             }
@@ -210,9 +210,9 @@ class mapPage extends GuiExtension {
         layer.append(new MenuItem({
             label: 'Edit layers',
             click: () => {
-              MapEdit.editLayersModal(this.mapManager._configuration,(c)=>{
-              this.updateMap(c);
-              });
+                MapEdit.editLayersModal(this.mapManager._configuration, (c) => {
+                    this.updateMap(c);
+                });
             }
         }));
         region.append(new MenuItem({
@@ -268,8 +268,8 @@ class mapPage extends GuiExtension {
             label: 'Load map',
             type: 'normal',
             click: () => {
-                MapImport.loadMapfromFile((conf)=>{
-                  this.addNewMap(conf);
+                MapIO.loadMapfromFile((conf) => {
+                    this.addNewMap(conf);
                 });
             }
         }));
@@ -283,9 +283,23 @@ class mapPage extends GuiExtension {
         mapMenu.append(new MenuItem({
             label: 'Edit map',
             click: () => {
-              MapEdit.previewModal(this.mapManager._configuration,(c)=>{
-              this.updateMap(c);
-              });
+                MapEdit.previewModal(this.mapManager._configuration, (c) => {
+                    this.updateMap(c);
+                });
+            }
+        }));
+        mapMenu.append(new MenuItem({
+            label: '',
+            type: 'separator'
+        }));
+        mapMenu.append(new MenuItem({
+            label: 'Export current map',
+            click: () => {
+                MapIO.saveAs(this.mapManager._configuration, (c, p, e) => {
+                    this.gui.notify(`${c.name} map saved in ${p}`);
+                }, (err) => {
+                    this.gui.notify(err);
+                });
             }
         }));
         mapMenu.append(new MenuItem({
@@ -426,12 +440,12 @@ class mapPage extends GuiExtension {
         }
     }
 
-    initRegionActions(configuration,force) {
+    initRegionActions(configuration, force) {
         if (configuration === this.mapManager._configuration && !force) return;
         this.sidebarRegions.list.clean();
     }
 
-    switchMap(configuration,force) {
+    switchMap(configuration, force) {
         if (configuration) {
             this.sidebar.list.deactiveAll();
             this.sidebar.list.applyAll((item) => {
@@ -450,9 +464,9 @@ class mapPage extends GuiExtension {
                 });
             });
             this.selectedRegions = [];
-            this.initRegionActions(configuration,force);
+            this.initRegionActions(configuration, force);
             this.showConfiguration(configuration);
-            this.mapManager.setConfiguration(configuration,force);
+            this.mapManager.setConfiguration(configuration, force);
             this.sidebar.list.items[`${configuration.id}`].element.getElementsByTagName('STRONG')[0].innerHTML = configuration.name; //set the correct name
             this.sidebar.list.activeOne(`${configuration.id}`);
             this.sidebarRegions.show();
@@ -493,6 +507,7 @@ class mapPage extends GuiExtension {
 
 
         let ctn = new Menu();
+        let edit = new Menu();
         ctn.append(new MenuItem({
             label: 'Toggle Layers View',
             type: 'normal',
@@ -501,44 +516,40 @@ class mapPage extends GuiExtension {
             }
         }));
         ctn.append(new MenuItem({
+          type:'separator'
+        }));
+        ctn.append(new MenuItem({
+            label: 'Export map',
+            type: 'normal',
+            click: () => {
+              MapIO.saveAs(this.maps[configuration.id], (c, p, e) => {
+                  this.gui.notify(`${c.name} map saved in ${p}`);
+              }, (err) => {
+                  this.gui.notify(err);
+              });
+            }
+        }));
+        edit.append(new MenuItem({
             label: 'Edit map',
             type: 'normal',
             click: () => {
-                MapEdit.previewModal(this.mapManager._configuration,(c)=>{
-                this.updateMap(c);
+                MapEdit.previewModal(this.maps[configuration.id], (c) => {
+                    this.updateMap(c);
                 });
             }
         }));
-        ctn.append(new MenuItem({
+
+
+        edit.append(new MenuItem({
             label: 'Edit layers',
             type: 'normal',
             click: () => {
-                MapEdit.editLayersModal(this.mapManager._configuration,(c)=>{
-                this.updateMap(c);
+                MapEdit.editLayersModal(this.maps[configuration.id], (c) => {
+                    this.updateMap(c);
                 });
             }
         }));
-        ctn.append(new MenuItem({
-            label: 'Dev',
-            type: 'normal',
-            click: () => {
-              dialog.showMessageBox({
-                  title: 'show map configuration?',
-                  type: 'warning',
-                  buttons: ['No', "Yes"],
-                  message: `The map configuration object should be modified only if you know what you are doing`,
-                  detail: 'tips: you can go back to map view with CmdOrCtrl + M',
-                  noLink: true
-              }, (id) => {
-                  if (id > 0) {
-                    this.mapPane.hide();
-                    this.devPane.show();
-                  }
-              });
-
-            }
-        }));
-        ctn.append(new MenuItem({
+        edit.append(new MenuItem({
             label: 'Delete',
             type: 'normal',
             click: () => {
@@ -546,7 +557,7 @@ class mapPage extends GuiExtension {
                     title: 'Delete Map?',
                     type: 'warning',
                     buttons: ['No', "Yes"],
-                    message: `Delete map ${configuration.name}? (no undo available)`,
+                    message: `Delete map ${this.maps[configuration.id].name}? (no undo available)`,
                     noLink: true
                 }, (id) => {
                     if (id > 0) {
@@ -557,6 +568,32 @@ class mapPage extends GuiExtension {
 
             }
         }));
+        ctn.append(new MenuItem({
+          label: 'Edit',
+          type: 'submenu',
+          submenu: edit
+        }));
+        ctn.append(new MenuItem({
+            label: 'Dev view',
+            type: 'normal',
+            click: () => {
+                dialog.showMessageBox({
+                    title: 'show map configuration?',
+                    type: 'warning',
+                    buttons: ['No', "Yes"],
+                    message: `The map configuration object should be modified only if you know what you are doing`,
+                    detail: 'tips: you can go back to map view with CmdOrCtrl + M',
+                    noLink: true
+                }, (id) => {
+                    if (id > 0) {
+                        this.mapPane.hide();
+                        this.devPane.show();
+                    }
+                });
+
+            }
+        }));
+
         let title = document.createElement('STRONG');
         title.innerHTML = configuration.name;
         title.oncontextmenu = () => {
@@ -726,7 +763,7 @@ class mapPage extends GuiExtension {
         });
 
         this.mapManager.on('add:marker', (e) => {
-           //add logic for markers
+            //add logic for markers
 
         });
 
@@ -778,7 +815,7 @@ class mapPage extends GuiExtension {
     updateMap(configuration) {
         if (typeof configuration.id === 'undefined') return;
         try {
-            configuration = MapImport.buildConfiguration(configuration);
+            configuration = MapIO.buildConfiguration(configuration);
             this.initRegionActions(configuration);
         } catch (e) {
             // otherwise means that the mapManager is unable to load the map
@@ -786,7 +823,7 @@ class mapPage extends GuiExtension {
             return;
         }
         this.maps[configuration.id] = configuration;
-        this.switchMap(configuration,true);
+        this.switchMap(configuration, true);
         this.mapPane.show();
         this.devPane.hide();
     }
@@ -816,7 +853,7 @@ class mapPage extends GuiExtension {
         let scale = points.size / this.mapManager.getSize();
         let pol = extractPolygonArray(polygon.getLatLngs(), scale);
         let ch = fork(`${__dirname}/_modules/childCount.js`);
-        ch.on("message", (m) => {
+        ch.on('message', (m) => {
             switch (m.x) {
                 case 'complete':
                     if (typeof callback === 'function') callback(m);
@@ -830,7 +867,7 @@ class mapPage extends GuiExtension {
                     this.gui.notify(`${(m.prog / m.tot)*100}%`);
                     break;
                 case 'error':
-                    console.log(m.error + "error");
+                    this.gui.notify(m.error + "error");
                     ch.kill();
                     break;
                 default:
@@ -838,7 +875,7 @@ class mapPage extends GuiExtension {
             }
         });
         ch.send({
-            x: 'count',
+            job: 'points',
             polygon: pol,
             points: points
         });
@@ -896,13 +933,13 @@ class mapPage extends GuiExtension {
 
 
     createMap() {
-       MapImport.createMap((c)=>{
-        this.addNewMap(c);
-       });
+        MapIO.createMap((c) => {
+            this.addNewMap(c);
+        });
     }
 
     openLayerFile() {
-      if (Object.keys(this.maps).length <= 0) return;
+        if (Object.keys(this.maps).length <= 0) return;
         dialog.showOpenDialog({
             title: 'Add a new layer',
             filters: [{
@@ -944,8 +981,8 @@ class mapPage extends GuiExtension {
         if (path.endsWith('.json') || path.endsWith('.mapconfig')) {
             let conf = Util.readJSONsync(path);
             let key = conf.name || conf.alias || path;
-            conf.basePath = MapImport.basePath(conf, path);
-            this.mapManager._configuration.layers[key] = MapImport.parseLayerConfig(conf);
+            conf.basePath = MapIO.basePath(conf, path);
+            this.mapManager._configuration.layers[key] = MapIO.parseLayerConfig(conf);
             this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
         } else if (path.endsWith('.jpg') || path.endsWith('.JPG') || path.endsWith('.png') || path.endsWith('.gif')) {
             const sizeOf = require('image-size');
@@ -967,7 +1004,7 @@ class mapPage extends GuiExtension {
                 ],
                 size: 256
             }
-            conf = MapImport.parseLayerConfig(conf);
+            conf = MapIO.parseLayerConfig(conf);
             let key = path;
             this.mapManager._configuration.layers[key] = conf;
             this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
@@ -986,7 +1023,7 @@ class mapPage extends GuiExtension {
                 maxZoom: 8
 
             }
-            conf = MapImport.parseLayerConfig(conf);
+            conf = MapIO.parseLayerConfig(conf);
             let key = path;
             this.mapManager._configuration.layers[key] = conf;
             this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
@@ -1015,7 +1052,7 @@ class mapPage extends GuiExtension {
                     maxZoom: 8
                 }
                 let key = path;
-                conf = MapImport.parseLayerConfig(conf);
+                conf = MapIO.parseLayerConfig(conf);
                 this.mapManager._configuration.layers[key] = conf;
                 this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
                 this.showConfiguration(this.mapManager._configuration, true);
@@ -1023,10 +1060,10 @@ class mapPage extends GuiExtension {
                 Util.notifyOS(`"${conf.name} added"`);
             }
             this.gui.notify(`${path} started conversion`);
-            fs.watch(MapImport.basePath(null, path), (eventType, filename) => {
+            fs.watch(MapIO.basePath(null, path), (eventType, filename) => {
 
             });
-            converter.convertArray([path], MapImport.basePath(null, path));
+            converter.convertArray([path], MapIO.basePath(null, path));
         }
         this.showConfiguration(this.mapManager._configuration);
         this.switchMap(this.mapManager._configuration);

@@ -72,13 +72,11 @@ class MapEdit {
 
     static getLayersName(conf) {
         return Object.keys(conf.layers).map((k) => {
-            console.log(k);
             return conf.layers[k].name || k;
         });
     }
 
     static editLayersModal(conf, cl) {
-
         let newlayers = Util.clone(conf.layers);
         let modal = new Modal({
             title: `Edit ${conf.name} layers`,
@@ -439,7 +437,6 @@ class MapEdit {
                     type: 'checkbox',
                     checked: layer.easyToDraw,
                     onchange: (inp) => {
-                        console.log(inp.checked);
                         layer.easyToDraw = Boolean(inp.checked);
                     }
                 });

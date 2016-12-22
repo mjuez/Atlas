@@ -33,9 +33,9 @@ const {
 const Util = require('Util');
 
 
-class MapImport {
+class MapIO {
     constructor() {
-        console.log('MapImport is just a container of static methods');
+        console.log('MapIO is just a container of static methods');
     }
 
     static loadMapfromFile(cl) {
@@ -70,10 +70,10 @@ class MapImport {
                     configuration.type = 'map';
                 }
                 if (id >= 1) {
-                    configuration.basePath = MapImport.basePath(configuration, filename[0]);
-                    configuration = MapImport.buildConfiguration(configuration);
+                    configuration.basePath = MapIO.basePath(configuration, filename[0]);
+                    configuration = MapIO.buildConfiguration(configuration);
                     configuration.new = true;
-                    Util.merge(configuration, MapImport.baseConfiguration());
+                    Util.merge(configuration, MapIO.baseConfiguration());
                     MapEdit.previewModal(configuration, cl);
                 }
             });
@@ -81,7 +81,7 @@ class MapImport {
     }
 
     static baseConfiguration(options) {
-      options = options || {};
+        options = options || {};
         return {
             type: 'map',
             name: 'new map',
@@ -242,11 +242,11 @@ class MapImport {
                 if (typeof alls[a][lay] === 'string' || alls[a][lay] instanceof String) {
                     // if lay is just a string we look at the corresponding folder to find the config file
                     try {
-                        let c = MapImport.findConfigurationSync(configuration.basePath + alls[a][lay] + path.sep, alls[a][lay]);
+                        let c = MapIO.findConfigurationSync(configuration.basePath + alls[a][lay] + path.sep, alls[a][lay]);
                         c.id = id;
                         id++;
                         c.basePath = c.basePath || (configuration.basePath + alls[a][lay] + path.sep);
-                        configuration.layers[id] = MapImport.parseLayerConfig(c);
+                        configuration.layers[c.name || id] = MapIO.parseLayerConfig(c);
                     } catch (e) {
                         throw e;
                     }
@@ -256,7 +256,7 @@ class MapImport {
                     c.id = id;
                     id++;
                     c.basePath = c.basePath || configuration.basePath;
-                    configuration.layers[id] = MapImport.parseLayerConfig(c);
+                    configuration.layers[c.name || id] = MapIO.parseLayerConfig(c);
                 }
             }
         }
@@ -283,6 +283,7 @@ class MapImport {
         Util.setOne(config, 'size', ['SIZE', 'Size', 'dim', 'DIM', 'Dim']);
         config.alias = config.alias || config.name;
         config.attribution = config.attribution || '@gherardo.varando';
+        config.basePath = config.basePath || '';
 
 
         if (config.type.includes('tilesLayer')) {
@@ -295,6 +296,8 @@ class MapImport {
             if (config.tilesUrlTemplate.includes(config.basePath)) {
                 config.basePath = '';
             }
+            config.tilesUrlTemplate = config.basePath + config.tilesUrlTemplate; //join basepath and tilesUrltemplate
+
             config.maxZoom = Number(config.maxZoom) || 0;
             config.minZoom = Number(config.minZoom) || 0;
             config.maxNativeZoom = Number(config.maxNativeZoom) || 0;
@@ -325,7 +328,7 @@ class MapImport {
                 ]
             }
 
-            config.previewImageUrl = (config.basePath + config.tilesUrlTemplate).replace('{x}', '0').replace('{y}', '0').replace('{z}', '0');
+            config.previewImageUrl = (config.tilesUrlTemplate).replace('{x}', '0').replace('{y}', '0').replace('{z}', '0');
 
             if (config.customKeys) {
                 for (let k in config.customKeys) {
@@ -337,6 +340,16 @@ class MapImport {
         }
         if (config.type.includes('pointsLayer')) {
             config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}points.png`;
+            config.pointsUrlTemplate = config.pointsUrlTemplate || '';
+            if (config.pointsUrlTemplate.startsWith("http://") |
+                config.pointsUrlTemplate.startsWith("file://") |
+                config.pointsUrlTemplate.startsWith("https://")) {
+                config.basePath = '';
+            }
+            if (config.pointsUrlTemplate.startsWith(config.basePath)) {
+                config.basePath = '';
+            }
+            config.pointsUrlTemplate = config.basePath + config.pointsUrlTemplate;
             config.__color = 'red';
             Util.setOne(config, 'color', ['COLOR', 'Color', '__color']);
 
@@ -353,7 +366,17 @@ class MapImport {
 
         }
         if (config.type.includes('imageLayer')) {
-            config.previewImageUrl = config.basePath + config.imageUrl;
+            config.imageUrl = config.imageUrl || '';
+            if (config.imageUrl.startsWith("http://") |
+                config.imageUrl.startsWith("file://") |
+                config.imageUrl.startsWith("https://")) {
+                config.basePath = '';
+            }
+            if (config.imageUrl.includes(config.basePath)) {
+                config.basePath = '';
+            }
+            config.imageUrl = config.basePath + config.imageUrl;
+            config.previewImageUrl = config.imageUrl;
 
         }
         if (config.type.includes('drawnPolygons')) {
@@ -366,7 +389,54 @@ class MapImport {
 
 
     static createMap(cl) {
-        MapEdit.previewModal(MapImport.baseConfiguration({new:true}),cl);
+        MapEdit.previewModal(MapIO.baseConfiguration({
+            new: true
+        }), cl);
+    }
+
+
+    static saveAs(configuration, cl, errcl) {
+        dialog.showSaveDialog({
+            title: `Save ${configuration.name} map`,
+            filters: [{
+                name: 'JSON',
+                extensions: ['json']
+            }, {
+                name: 'mapconfig',
+                extensions: ['mapconfig']
+            }]
+        }, (fileName) => {
+            if (fileName === undefined) {
+                if (typeof 'errcl' === 'function') {
+                    errcl(configuration);
+                }
+                return;
+            }
+            MapIO.exportConfiguration(configuration, fileName, cl);
+        });
+    }
+
+
+
+
+    static exportConfiguration(configuration, path, cl) {
+        try {
+            if (typeof path === 'string') {
+                let content = JSON.stringify(configuration);
+                fs.writeFile(path, content, (error) => {
+                    if (error) {
+                        Util.notifyOS(error);
+                    } else {
+                        Util.notifyOS(`Map ${configuration.map} saved in ${path}`);
+                    }
+                    if (typeof cl === 'function') {
+                        cl(configuration, path, error);
+                    }
+                });
+            }
+        } catch (e) {
+            Util.notifyOS(e);
+        }
     }
 
 
@@ -376,4 +446,4 @@ class MapImport {
 }
 
 
-module.exports = MapImport;
+module.exports = MapIO;

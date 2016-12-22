@@ -19,6 +19,7 @@
  */
 
 "use strict";
+const isDev = require('electron-is-dev');
 const os = require('os');
 const Util = require('Util');
 const {
@@ -47,8 +48,11 @@ class imagej extends GuiExtension {
         if (platform == 'darwin'){
             this.imagejcmnd = `./Contents/MacOS/ImageJ-macosx`;
         }
+        if (isDev){
         this.imagejpath = `${__dirname}${path.sep}_resources${path.sep}ImageJ${path.sep}`;
-        //this.imagejpath = `${process.resourcesPath}${path.sep}ImageJ${path.sep}`;
+      }else{
+        this.imagejpath = `${process.resourcesPath}${path.sep}ImageJ${path.sep}`;
+      }
     }
 
     activate() {
@@ -100,7 +104,7 @@ class imagej extends GuiExtension {
     }
 
     launchImageJ() {
-        exec(`${this.imagejcmnd} --ij2`, {
+        exec(`java -jar ij.jar`, {
             cwd: this.imagejpath
         }, (error, stdout, stderr) => {
             if (error) {
@@ -114,7 +118,7 @@ class imagej extends GuiExtension {
 
 
     run(cmnd, arg, cl) {
-        exec(`${this.imagejcmnd} --ij2 -run "obj detection folder" `, {
+        exec(`java -jar ij.jar -run "obj detection folder" `, {
             cwd: this.imagejpath
         }, (error, stdout, stderr) => {
           console.log(stderr);

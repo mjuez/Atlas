@@ -38,6 +38,7 @@ if (L != undefined) {
         _configuration: {},
         _tilesLayers: [],
         _pointsLayers: [],
+        _pixelsLayers: [],
         _gridLayers: [],
         _guideLayers: [],
         _imageLayers: [],
@@ -81,7 +82,7 @@ if (L != undefined) {
 
         },
 
-        setConfiguration: function(configuration,force) {
+        setConfiguration: function(configuration, force) {
             if (configuration === this._configuration && !force) return;
             try {
                 this._configuration = this.parse(configuration);
@@ -138,6 +139,7 @@ if (L != undefined) {
             this._tilesLayers = [];
             this._imageLayers = [];
             this._pointsLayers = [];
+            this._pixelslayers = [];
             this._gridLayers = [];
             this._guideLayers = [];
             this._polygons = [];
@@ -161,11 +163,11 @@ if (L != undefined) {
                 if (this._configuration.layers) {
                     if (this._configuration.layers instanceof Array) {
                         this._configuration.layers.map((layer, index) => {
-                            this.addLayer(layer, index);
+                            this.addLayer(layer);
                         });
                     } else { //we assume is an object
                         for (let a in this._configuration.layers) {
-                            this.addLayer(this._configuration.layers[a], a);
+                            this.addLayer(this._configuration.layers[a]);
                         }
                     }
                 }
@@ -193,32 +195,32 @@ if (L != undefined) {
         },
 
         getSize: function() { //this is the maximum of the 2 dimension
-          let temp=this.getSizes();
-          return Math.max(temp[0],temp[1]);
+            let temp = this.getSizes();
+            return Math.max(temp[0], temp[1]);
         },
 
-        getSizes: function(){
-          let size = [256,256];
-          if (this._activeBaseLayer) {
-              size = this._activeBaseLayer._configuration.size || this._activeBaseLayer._configuration.tileSize || 256;
-          } else {
-              let temp = this.getLayers('tilesLayer')[0];
-              if (!temp) {
-                  temp = this.getLayers('imageLayer')[0];
-              }
-              if (temp) {
-                  size = temp._configuration.size || temp._configuration.tileSize || [256,256];
-              }
-          }
-          if (typeof size === 'number'){
-            return [size,size];
-          }
-          if (size.x && size.y) {
-              return [size.x, size.y];
-          }
-          if (Array.isArray(size)) {
-              return (size);
-          }
+        getSizes: function() {
+            let size = [256, 256];
+            if (this._activeBaseLayer) {
+                size = this._activeBaseLayer._configuration.size || this._activeBaseLayer._configuration.tileSize || 256;
+            } else {
+                let temp = this.getLayers('tilesLayer')[0];
+                if (!temp) {
+                    temp = this.getLayers('imageLayer')[0];
+                }
+                if (temp) {
+                    size = temp._configuration.size || temp._configuration.tileSize || [256, 256];
+                }
+            }
+            if (typeof size === 'number') {
+                return [size, size];
+            }
+            if (size.x && size.y) {
+                return [size.x, size.y];
+            }
+            if (Array.isArray(size)) {
+                return (size);
+            }
         },
 
 
@@ -238,6 +240,9 @@ if (L != undefined) {
                     case "pointsLayer":
                         return this._pointsLayers;
                         break;
+                    case "pixelsLayer":
+                        return this._pixelsLayers;
+                        break;
                     case "guideLayer":
                         return this._guideLayers;
                         break;
@@ -252,7 +257,7 @@ if (L != undefined) {
 
                 }
             } else if (types === undefined || types === null || !types) {
-                return this.getLayers(['tilesLayer', 'pointsLayer', 'guideLayer', 'drawnPolygons']);
+                return this.getLayers(['tilesLayer', 'pointsLayer', 'pixelsLayer', 'guideLayer', 'drawnPolygons']);
             }
 
         },
@@ -283,34 +288,34 @@ if (L != undefined) {
             return Math.abs(area / 2);
         },
 
-        addLayer: function(layer, key) {
+        addLayer: function(layer) {
             switch (layer.type) {
                 case 'tilesLayer':
-                    this.addTilesLayer(layer, key);
+                    this.addTilesLayer(layer);
                     break;
                 case 'pointsLayer':
-                    this.addPointsLayer(layer, key);
+                    this.addPointsLayer(layer);
+                    break;
+                case 'pixelsLayer':
+                    this.addPixelsLayer(layer);
                     break;
                 case 'polygon':
-                    this.addPolygon(layer, key);
+                    this.addPolygon(layer);
                     break;
                 case 'marker':
-                    this.addMarker(layer, key);
+                    this.addMarker(layer);
                     break;
                 case 'circleMarker':
-                    this.addCircleMarker(layer, key);
-                    break;
-                case 'gridPoints':
-                    this.addGridPoints(layer, key);
+                    this.addCircleMarker(layer);
                     break;
                 case 'guideLayer':
-                    this.addGuideLayer(layer, key);
+                    this.addGuideLayer(layer);
                     break;
                 case 'drawnPolygons':
-                    this.addDrawnPolygons(layer, key);
+                    this.addDrawnPolygons(layer);
                     break;
                 case 'imageLayer':
-                    this.addImageLayer(layer, key);
+                    this.addImageLayer(layer);
                     break;
                 default:
                     return;
@@ -439,6 +444,7 @@ if (L != undefined) {
             }
             if (addToConfiguration) {
                 this._configuration.layers.drawnPolygons = this._configuration.layers.drawnPolygons || {
+                    name: 'drawnPolygons',
                     type: 'drawnPolygons',
                     polygons: {}
                 };
@@ -474,8 +480,28 @@ if (L != undefined) {
                 layer: polygon
                     //layerConfig: this._configuration.layers.drawnPolygons.polygons[`${polygon._id}`]
             });
-            delete this._configuration.layers.drawnPolygons.polygons[`${polygon._id}`];
             this._polygons.splice(this._polygons.indexOf(polygon), 1);
+            delete this._configuration.layers.drawnPolygons.polygons[polygon._id];
+        },
+
+
+        addDrawnPolygons: function(layerConfig) {
+            if (Array.isArray(layerConfig.polygons)) {
+                layerConfig.polygons.map((pol) => {
+                    this.addPolygon(pol);
+                });
+            } else { //assume is an object
+                Object.keys(layerConfig.polygons).map((key) => {
+                    this.addPolygon(layerConfig.polygons[key]);
+                });
+            }
+
+            this.fire('add:drawnpolygons', {
+                layer: null,
+                layerConfig: layerConfig,
+                manager: this
+            });
+
         },
 
         addPointsLayer: function(layer) {
@@ -496,14 +522,14 @@ if (L != undefined) {
                 }
                 let points = new pointsLayer(layer);
                 let scale = points.configuration.size / this.getSize();
-                console.log(scale);
-
                 points.countPoints({
                     maxTiles: 10,
-                    cl: function(point) {
+                    cl: (point) => {
+
                         point = [-point[1] / scale, point[0] / scale];
                         let mk = L.circleMarker(point, {
-                            color: layer.color || this.getDrawingColor
+                            color: layer.color || this.getDrawingColor(),
+                            radious: layer.radious || 3
                         });
                         markers.addLayer(mk);
                     },
@@ -515,8 +541,21 @@ if (L != undefined) {
 
         },
 
-        getBaseLayer: function(){
-          return this._activeBaseLayer || this._tilesLayers[0];
+        addPixelsLayer: function(layer) {
+            if (layer.pointsUrlTemplate) {
+                this._pixelsLayers.push(layer);
+                if (!layer.easyToDraw) {
+                    return;
+                }
+                // drawing part
+
+            }
+
+        },
+
+
+        getBaseLayer: function() {
+            return this._activeBaseLayer || this._tilesLayers[0];
 
         },
 
@@ -592,27 +631,9 @@ if (L != undefined) {
 
         },
 
-        addDrawnPolygons: function(layerConfig) {
-            if (Array.isArray(layerConfig.polygons)) {
-                layerConfig.polygons.map((pol) => {
-                    this.addPolygon(pol);
-                });
-            } else {
-                Object.keys(layerConfig.polygons).map((key) => {
-                    this.addPolygon(layerConfig.polygons[key]);
-                });
-            }
-
-            this.fire('add:drawnpolygons', {
-                layer: null,
-                layerConfig: layerConfig,
-                manager: this
-            });
-
-        },
 
 
-        addImageLayer: function(layerConfig, key) {
+        addImageLayer: function(layerConfig) {
             if (layerConfig.imageUrl) {
                 let basePath = this._configuration.basePath;
                 if (layerConfig.basePath) {
@@ -630,12 +651,6 @@ if (L != undefined) {
                     opacity: layerConfig.opacity || 1,
                 };
 
-
-
-
-
-
-
                 Object.keys(layerConfig).map((key) => { //copy all the attributes of layerConfig
                     options[key] = options[key] || layerConfig[key];
                 });
@@ -651,7 +666,7 @@ if (L != undefined) {
                     this._configuration.size = this._configuration.size || options.size;
                     this._activeBaseLayer = this._activeBaseLayer || layer;
                 }
-                this._configuration.layers[key] = options; //save the new options
+                //this._configuration.layers[key] = options; //save the new options
 
                 if (this._layerControl) {
                     if (options.baseLayer) {
@@ -682,7 +697,7 @@ if (L != undefined) {
         },
 
 
-        addTilesLayer: function(layerConfig, key) {
+        addTilesLayer: function(layerConfig) {
             //create layer
             if (layerConfig.tilesUrlTemplate) {
                 let options = {};
@@ -695,7 +710,7 @@ if (L != undefined) {
                 }
 
 
-                let layer = L.tileLayer(layerConfig.basePath + options.tilesUrlTemplate, options);
+                let layer = L.tileLayer(options.tilesUrlTemplate, options);
                 layer._configuration = layerConfig;
                 this._tilesLayers.push(layer);
 

@@ -27,8 +27,6 @@ const fs = require('fs');
 const marked = require('marked');
 const renderer = new marked.Renderer();
 const ToggleElement = require('ToggleElement');
-const GitHubApi = require("github");
-
 
 renderer.link = function(href, title, text) {
     if (!text) text = href;

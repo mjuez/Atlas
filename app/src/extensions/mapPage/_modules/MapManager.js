@@ -139,12 +139,11 @@ if (L != undefined) {
             this._tilesLayers = [];
             this._imageLayers = [];
             this._pointsLayers = [];
-            this._pixelslayers = [];
+            this._pixelsLayers = [];
             this._gridLayers = [];
             this._guideLayers = [];
             this._polygons = [];
             this._activeBaseLayer = null;
-
         },
 
         reload: function() {
@@ -522,7 +521,7 @@ if (L != undefined) {
                 }
                 let points = new pointsLayer(layer);
                 let scale = points.configuration.size / this.getSize();
-                points.countPoints({
+                points.count({
                     maxTiles: 10,
                     cl: (point) => {
 
@@ -542,7 +541,7 @@ if (L != undefined) {
         },
 
         addPixelsLayer: function(layer) {
-            if (layer.pointsUrlTemplate) {
+            if (layer.pixelsUrlTemplate) {
                 this._pixelsLayers.push(layer);
                 if (!layer.easyToDraw) {
                     return;

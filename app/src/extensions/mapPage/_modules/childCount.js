@@ -3,7 +3,7 @@ process.on('message', (m) => {
         case 'points':
             const pointsLayer = require(`./pointsLayer.js`);
             let points = new pointsLayer(m.points);
-            points.countPoints({
+            points.count({
                 polygon: m.polygon,
                 complete: (r) => {
                     r.x = 'complete';
@@ -25,8 +25,8 @@ process.on('message', (m) => {
             break;
         case 'pixels':
             const pixelsLayer = require(`./pixelsLayer.js`);
-            let pixels = new pixelsLayer(m.points);
-            points.countPoints({
+            let pixels = new pixelsLayer(m.pixels);
+            pixels.sum({
                 polygon: m.polygon,
                 complete: (r) => {
                     r.x = 'complete';

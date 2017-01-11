@@ -44,7 +44,7 @@ class pointsLayer {
             if (intersect) inside = !inside;
         }
         return inside;
-    };
+    }
 
     isRemote() {
         if (typeof this.configuration.source === 'string') {
@@ -133,7 +133,7 @@ class pointsLayer {
     }
 
 
-    countPoints(options) {
+    count(options) {
         let t0 = process.hrtime();
 
         let polygon = options.polygon;
@@ -206,11 +206,11 @@ class pointsLayer {
 
         for (var tt = 0; tt < maxTiles; tt++) {
 
-            this.readPoints(polygon, references[tt], step, err, end);
+            this.read(polygon, references[tt], step, err, end);
         }
     }
 
-    readPoints(polygon, reference, step, error, end) {
+    read(polygon, reference, step, error, end) {
         let num = 0;
         let url = this.configuration.pointsUrlTemplate;
         url = url.replace("{x}", reference.col);

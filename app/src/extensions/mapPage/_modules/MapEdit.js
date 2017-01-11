@@ -372,6 +372,17 @@ class MapEdit {
                     }
                 });
                 Util.input({
+                    label: 'Original Size',
+                    className: 'simple form-control',
+                    parent: parent,
+                    type: 'numeric',
+                    value: layer.original_size || 256,
+                    placeholder: 'original size',
+                    oninput: (inp) => {
+                        inp.value = layer.original_size;
+                    }
+                });
+                Util.input({
                     label: 'Opacity',
                     className: 'simple form-control',
                     parent: parent,
@@ -497,6 +508,17 @@ class MapEdit {
                     placeholder: 'image url',
                     oninput: (inp) => {
                         layer.imageUrl = inp.value;
+                    }
+                });
+                Util.input({
+                    label: 'Original Size',
+                    className: 'simple form-control',
+                    parent: parent,
+                    type: 'numeric',
+                    value: layer.original_size || 256,
+                    placeholder: 'original size',
+                    oninput: (inp) => {
+                        inp.value = layer.original_size;
                     }
                 });
                 Util.input({

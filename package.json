@@ -7,7 +7,7 @@
     "postinstall": "install-app-deps",
     "start": "electron ./app --enable-logging",
     "dev": "NODE_ENV='development' npm run start",
-    "dist": "build  -lw --x64 --ia32"
+    "dist": "build  -lw --x64 "
   },
   "build": {
     "appId": "atlas.gherardovarando",

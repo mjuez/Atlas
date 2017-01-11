@@ -208,6 +208,12 @@ class mapPage extends GuiExtension {
             }
         }));
         layer.append(new MenuItem({
+            label: 'Add tilesLayer',
+            click: () => {
+
+            }
+        }));
+        layer.append(new MenuItem({
             label: 'Edit layers',
             click: () => {
                 MapEdit.editLayersModal(this.mapManager._configuration, (c) => {
@@ -516,17 +522,17 @@ class mapPage extends GuiExtension {
             }
         }));
         ctn.append(new MenuItem({
-          type:'separator'
+            type: 'separator'
         }));
         ctn.append(new MenuItem({
             label: 'Export map',
             type: 'normal',
             click: () => {
-              MapIO.saveAs(this.maps[configuration.id], (c, p, e) => {
-                  this.gui.notify(`${c.name} map saved in ${p}`);
-              }, (err) => {
-                  this.gui.notify(err);
-              });
+                MapIO.saveAs(this.maps[configuration.id], (c, p, e) => {
+                    this.gui.notify(`${c.name} map saved in ${p}`);
+                }, (err) => {
+                    this.gui.notify(err);
+                });
             }
         }));
         edit.append(new MenuItem({
@@ -569,9 +575,9 @@ class mapPage extends GuiExtension {
             }
         }));
         ctn.append(new MenuItem({
-          label: 'Edit',
-          type: 'submenu',
-          submenu: edit
+            label: 'Edit',
+            type: 'submenu',
+            submenu: edit
         }));
         ctn.append(new MenuItem({
             label: 'Dev view',
@@ -843,6 +849,15 @@ class mapPage extends GuiExtension {
                 this.gui.notify(`${polygon._configuration.name} computed with ${point.name}, ${m.N} internal points counted in ${m.time[0]}.${m.time[1].toString()} seconds`);
                 Util.notifyOS(`${polygon._configuration.name}: ${m.N} internal points from  ${point.name}`);
             });
+        });
+
+        this.mapManager.getLayers('pixelsLayer').map((pixel) => {
+            this.computePolygonPixels(polygon, pixel, (m) => {
+                polygon._configuration.stats[`${pixel.name}_raw_sum`] = m.sum;
+                this.gui.notify(`${polygon._configuration.name} computed with ${pixel.name}, ${m.sum} total summed in ${m.time[0]}.${m.time[1].toString()} seconds`);
+                Util.notifyOS(`${polygon._configuration.name}: ${m.sum} internal pixels from  ${pixel.name}`);
+            });
+
 
         });
 
@@ -879,8 +894,39 @@ class mapPage extends GuiExtension {
             polygon: pol,
             points: points
         });
+    }
 
 
+    computePolygonPixels(polygon, pixels, callback) {
+        let scale = pixels.size / this.mapManager.getSize();
+        let pol = extractPolygonArray(polygon.getLatLngs(), scale);
+        let ch = fork(`${__dirname}/_modules/childCount.js`);
+        ch.on('message', (m) => {
+            switch (m.x) {
+                case 'complete':
+                    if (typeof callback === 'function') callback(m);
+                    ch.kill();
+                    break;
+                case 'step':
+                    this.gui.header.progressBar.setBar((m.prog / m.tot) * 100);
+                    ipcRenderer.send('setProgress', {
+                        value: (m.prog / m.tot)
+                    });
+                    this.gui.notify(`${(m.prog / m.tot)*100}%`);
+                    break;
+                case 'error':
+                    this.gui.notify(m.error + "error");
+                    ch.kill();
+                    break;
+                default:
+                    null
+            }
+        });
+        ch.send({
+            job: 'pixels',
+            polygon: pol,
+            pixels: pixels
+        });
     }
 
 
@@ -918,12 +964,14 @@ class mapPage extends GuiExtension {
             let fields = ['name'];
             let cont = json2csv({
                 data: regions.map((reg) => {
+                    reg._configuration.stats.name = reg._configuration.name;
                     Object.keys(reg._configuration.stats).map((key) => {
-                        if (fields.indexOf(`stats.${key}`) < 0) {
-                            fields.push(`stats.${key}`);
+                        console.log(key);
+                        if (fields.indexOf(`${key}`) < 0) {
+                            fields.push(`${key}`);
                         }
                     });
-                    return (reg._configuration);
+                    return (reg._configuration.stats);
                 }),
                 fields: fields
             });
@@ -969,8 +1017,6 @@ class mapPage extends GuiExtension {
                             this.addLayerFile(filenames[0]);
                         }
                     });
-                } else if (stats.isDirectory()) {
-                    this.addLayerDirectory(filenames[0]);
                 }
             });
         });
@@ -988,11 +1034,12 @@ class mapPage extends GuiExtension {
             const sizeOf = require('image-size');
             var dim = sizeOf(path);
             let siz = Math.max(dim.height, dim.width);
-            let conf = {
+            this.addLayer({
                 name: `tilesLayer from ${path}`,
                 tilesUrlTemplate: `file://${path}`,
                 basePath: '',
                 source: 'local',
+                original_size: siz,
                 baseLayer: !this.mapManager._state.baseLayerOn,
                 author: 'unknown',
                 type: 'tilesLayer',
@@ -1003,14 +1050,11 @@ class mapPage extends GuiExtension {
                     [0, Math.floor(dim.width * 256 / siz)]
                 ],
                 size: 256
-            }
-            conf = MapIO.parseLayerConfig(conf);
-            let key = path;
-            this.mapManager._configuration.layers[key] = conf;
-            this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
+            });
+
 
         } else if (path.endsWith('.csv')) {
-            let conf = {
+            this.addLayer({
                 name: path,
                 alias: `pointsLayer from ${path}`,
                 author: 'unknow',
@@ -1021,12 +1065,8 @@ class mapPage extends GuiExtension {
                 size: this.mapManager._configuration.size || 256,
                 maxNativeZoom: 0,
                 maxZoom: 8
+            });
 
-            }
-            conf = MapIO.parseLayerConfig(conf);
-            let key = path;
-            this.mapManager._configuration.layers[key] = conf;
-            this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
 
         } else if (path.endsWith('.tiff') || path.endsWith('.tif')) { //convert it to png and use it
             var converter = new ConvertTiff({
@@ -1037,7 +1077,7 @@ class mapPage extends GuiExtension {
                 const sizeOf = require('image-size');
                 var dim = sizeOf(`${converted[0].target}\/slice1.png`);
                 let siz = Math.max(dim.height, dim.width);
-                let conf = {
+                this.addLayer({
                     type: `tilesLayer`,
                     tilesUrlTemplate: `${converted[0].target}\/slice{t}.png`,
                     customKeys: {
@@ -1050,35 +1090,27 @@ class mapPage extends GuiExtension {
                     tileSize: [dim.width / siz * 256, dim.height / siz * 256],
                     maxNativeZoom: 0,
                     maxZoom: 8
-                }
-                let key = path;
-                conf = MapIO.parseLayerConfig(conf);
-                this.mapManager._configuration.layers[key] = conf;
-                this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
-                this.showConfiguration(this.mapManager._configuration, true);
+                });
                 this.gui.notify(`"${conf.name} added`);
                 Util.notifyOS(`"${conf.name} added"`);
             }
             this.gui.notify(`${path} started conversion`);
-            fs.watch(MapIO.basePath(null, path), (eventType, filename) => {
-
-            });
             converter.convertArray([path], MapIO.basePath(null, path));
         }
         this.showConfiguration(this.mapManager._configuration);
         this.switchMap(this.mapManager._configuration);
     }
 
-
-    exportMap(configuration) {
-        if (!configuration) configuration = this.mapManager._configuration;
-
+    addLayer(conf){
+      conf = MapIO.parseLayerConfig(conf);
+      let key = conf.name || conf.alias || conf.id || conf.type;
+      console.log(key);
+      this.mapManager._configuration.layers[key] = conf;
+      this.mapManager.addLayer(conf);
     }
 
 
-    addLayerDirectory(path) {
 
-    }
 
 
 

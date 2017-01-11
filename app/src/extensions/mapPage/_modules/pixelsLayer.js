@@ -30,6 +30,7 @@ class pixelsLayer {
         var x = point[0],
             y = point[1]; // extract x and y form point
 
+
         //convert latlngs to a vector of coordinates
         var vs = polygon;
 
@@ -46,7 +47,7 @@ class pixelsLayer {
             if (intersect) inside = !inside;
         }
         return inside;
-    };
+    }
 
     getBounds(polygon) {
         if (polygon) {
@@ -120,7 +121,7 @@ class pixelsLayer {
         }
     }
 
-    sumPixels(options) {
+    sum(options) {
         let t0 = process.hrtime();
         let polygon = options.polygon;
         let complete = options.complete;
@@ -131,14 +132,16 @@ class pixelsLayer {
         var references = this.getReferences(this.getBounds(polygon));
         var l = references.length;
         const tot = l;
-        var pointsUrlTemplate = this.configuration.pixelsUrlTemplate;
+        var pixelsUrlTemplate = this.configuration.pixelsUrlTemplate;
         let res = 0;
+        let N=0;
 
-        var step = function(v, x, y) {
-            if (this.pointinpolygon([x, y], polygon)) {
-                N = N + 1;
+        var step = (v, x, y)=> {
+            if (this.pointinpolygon([x, y], polygon) ) {
+                res = res + v;
+                N++;
                 if (typeof cl === 'function') {
-                    cl(v,x,y);
+                    cl(v, x, y);
                 }
             }
         };
@@ -152,7 +155,9 @@ class pixelsLayer {
                 let t1 = process.hrtime(t0);
                 if (typeof complete === 'function') {
                     complete({
-                        result: res,
+                        sum: res,
+                        mean: res/N,
+                        N:N,
                         tot: tot,
                         time: t1
                     });
@@ -173,7 +178,7 @@ class pixelsLayer {
                 let t1 = process.hrtime(t0);
                 if (typeof complete === 'function') {
                     complete({
-                        N: N,
+                        sum: res,
                         tot: tot,
                         time: t1
                     });
@@ -188,96 +193,25 @@ class pixelsLayer {
         }
 
         for (var tt = 0; tt < maxTiles; tt++) {
-            this.readPoints(polygon, references[tt], step, err, end);
-        }
-    }
-
-
-    meanPixels(options) {
-        let t0 = process.hrtime();
-        let polygon = options.polygon;
-        let complete = options.complete;
-        let error = options.errorcl;
-        let cl = options.cl;
-        let bunch = options.bunch;
-        let maxTiles = options.maxTiles;
-
-
-        var references = this.getReferences(this.getBounds(polygon));
-        var l = references.length;
-        const tot = l;
-        var pointsUrlTemplate = this.configuration.pixelsUrlTemplate;
-        let res = 0;
-
-        var step = function(v, x, y) {
-            if (this.pointinpolygon([x, y], polygon)) {
-                N = N + 1;
-                if (typeof cl === 'function') {
-                    cl(point);
-                }
-            }
-        };
-
-        var end = () => {
-            l = l - 1;
-            if (bunch) {
-                bunch(tot - l, tot);
-            }
-            if (l <= 0) {
-                let t1 = process.hrtime(t0);
-                if (typeof complete === 'function') {
-                    complete({
-                        result: res,
-                        tot: tot,
-                        time: t1
-                    });
-                }
-            }
-        };
-
-
-        var err = (e) => {
-            if (typeof error === 'function') {
-                error(e);
-            }
-            l = l - 1;
-            if (typeof bunch === 'function') {
-                bunch(tot - l, tot);
-            }
-            if (l <= 0) {
-                let t1 = process.hrtime(t0);
-                if (typeof complete === 'function') {
-                    complete({
-                        N: N,
-                        tot: tot,
-                        time: t1
-                    });
-                }
-            }
-        };
-
-        if (maxTiles) {
-            maxTiles = Math.min(maxTiles, references.length);
-        } else {
-            maxTiles = references.length;
-        }
-
-        for (var tt = 0; tt < maxTiles; tt++) {
-            this.readPoints(polygon, references[tt], step, err, end);
+            this.read(polygon, references[tt], step, err, end);
         }
     }
 
     isRemote() {
-        if (this.configuration.source === 'remote') return true;
-        if (this.configuration.source === 'local') return false;
-        if (this.configuration.pixelsUrlTemplate.startsWith('http')) return true;
-        if (this.configuration.pixelsUrlTemplate.startsWith('file')) return false;
-        if (this.configuration.pixelsUrlTemplate.startsWith('/')) return true;
-        return (Boolean(this.configuration.remote));
+        if (typeof this.configuration.source === 'string') {
+            if (this.configuration.source === 'remote') return true;
+            if (this.configuration.source === 'local') return false;
+        }
+        if (typeof this.configuration.pixelsUrlTemplate === 'string') {
+            if (this.configuration.pixelsUrlTemplate.startsWith('http')) return true;
+            if (this.configuration.pixelsUrlTemplate.startsWith('file')) return false;
+            if (this.configuration.pixelsUrlTemplate.startsWith('/')) return false;
+        }
+        return false;
     }
 
-    readPixels(polygon, reference, step, error, end) {
-        let url = this.configuration.pointsUrlTemplate;
+    read(polygon, reference, step, error, end) {
+        let url = this.configuration.pixelsUrlTemplate;
         url = url.replace("{x}", reference.col);
         url = url.replace("{y}", reference.row);
         let j = 0;
@@ -285,6 +219,7 @@ class pixelsLayer {
             let contents = '';
             if (this.isRemote()) {
                 contents = url;
+
             } else {
                 contents = fss.readFileSync(url).toString();
             }
@@ -293,10 +228,9 @@ class pixelsLayer {
                 fastMode: true,
                 step: (results, parser) => { //read line by line
                     let y = j + reference.row * this.configuration.tileSize;
-                    for (let i = 0; i < this.configuration.tileSize; i++) {
+                    for (let i = 0; i < results.data[0].length; i++) {
                         let x = i + reference.col * this.configuration.tileSize;
-
-                        step([results.data[0][i]], x, y); //read one cell of the csv
+                        step(results.data[0][i], x, y); //read one cell of the csv
                     }
                     j++; //increment lines count
                 },
@@ -306,7 +240,7 @@ class pixelsLayer {
                     }
                 },
                 error: (e, file) => {
-                    if (error) {
+                    if (typeof error === 'function') {
                         error(e);
                     }
                 }

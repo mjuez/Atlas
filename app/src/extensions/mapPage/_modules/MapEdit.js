@@ -461,6 +461,16 @@ class MapEdit {
                         layer.color = inp.value;
                     }
                 });
+                Util.input({
+                    label: 'Radius',
+                    className: 'simple form-control',
+                    parent: parent,
+                    type: 'number',
+                    value: layer.radius || 4,
+                    oninput: (inp) => {
+                        layer.radius = inp.value;
+                    }
+                });
 
                 break;
             case 'pixelsLayer':

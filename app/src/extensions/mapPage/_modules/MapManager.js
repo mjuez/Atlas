@@ -528,7 +528,7 @@ if (L != undefined) {
                         point = [-point[1] / scale, point[0] / scale];
                         let mk = L.circleMarker(point, {
                             color: layer.color || this.getDrawingColor(),
-                            radious: layer.radious || 3
+                            radius: layer.radius || 3
                         });
                         markers.addLayer(mk);
                     },

@@ -7,11 +7,17 @@
     "postinstall": "install-app-deps",
     "start": "electron ./app --enable-logging",
     "dev": "NODE_ENV='development' npm run start",
-    "dist": "build  -lw --x64 --ia32"
+    "dist": "build  -lw --x64 "
   },
   "build": {
-    "appId": "maps.gherardovarando",
-    "extraResources": ["ImageJ"] ,
+    "appId": "atlas.gherardovarando",
+    "extraResources": [
+      {
+          "from": "app/src/extensions/imagejPage/_resources/ImageJ",
+          "to": "ImageJ",
+          "filter": ["**/*"]
+        }
+    ],
     "mac": {
       "category": "your.app.category.type"
     },

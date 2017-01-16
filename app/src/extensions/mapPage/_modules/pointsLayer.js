@@ -4,13 +4,12 @@
 const Baby = require("babyparse");
 const fss = require("fs");
 
-function pointsLayer(configuration) {
-    this.configuration = configuration;
-    if (!this.configuration.basePath) {
-        this.configuration.basePath = "";
+class pointsLayer {
+
+    constructor(configuration) {
+        this.configuration = configuration;
+        this.options = {};
     }
-    this.options = {};
-    let self = this;
 
 
     /**
@@ -19,7 +18,7 @@ function pointsLayer(configuration) {
      * @param  {polygon} polygon vector of 2dim vectors components,
      * @return {logical}
      */
-    this.pointinpolygon = function(point, polygon) {
+    pointinpolygon(point, polygon) {
         if (!polygon) {
             return true;
         }
@@ -45,9 +44,23 @@ function pointsLayer(configuration) {
             if (intersect) inside = !inside;
         }
         return inside;
-    };
+    }
 
-    this.getBounds = function(polygon) {
+    isRemote() {
+        if (typeof this.configuration.source === 'string') {
+            if (this.configuration.source === 'remote') return true;
+            if (this.configuration.source === 'local') return false;
+        }
+        if (typeof this.configuration.pointsUrlTemplate === 'string') {
+            if (this.configuration.pointsUrlTemplate.startsWith('http')) return true;
+            if (this.configuration.pointsUrlTemplate.startsWith('file')) return false;
+            if (this.configuration.pointsUrlTemplate.startsWith('/')) return false;
+        }
+        return false;
+    }
+
+
+    getBounds(polygon) {
         if (polygon) {
             let b = {
                 west: polygon[0][0],
@@ -68,10 +81,10 @@ function pointsLayer(configuration) {
     }
 
     // bounds is an object with .west .east .north and .south
-    this.getReferences = function(bounds) {
-        let tileSize = self.configuration.tileSize;
-        let x0 = self.configuration.tilex0;
-        let y0 = self.configuration.tiley0;
+    getReferences(bounds) {
+        let tileSize = this.configuration.tileSize;
+        let x0 = this.configuration.tilex0;
+        let y0 = this.configuration.tiley0;
         if (bounds) {
             if (!x0) {
                 x0 = 0;
@@ -81,12 +94,16 @@ function pointsLayer(configuration) {
                 y0 = 0;
             }
             var temp = [];
+            let siz = this.configuration.size;
+            Object.keys(bounds).map((k) => {
+                bounds[k] = Math.max(Math.min(bounds[k], siz), 0)
+            });
             var xstart = Math.floor(bounds.west / tileSize);
             var xstop = Math.floor(bounds.east / tileSize);
             var ystart = Math.floor(bounds.north / tileSize);
             var ystop = Math.floor(bounds.south / tileSize);
-            if (xstop===(bounds.east / tileSize) ) xstop--;
-            if (ystop===(bounds.south / tileSize) ) ystop--;
+            if (xstop === (bounds.east / tileSize)) xstop--;
+            if (ystop === (bounds.south / tileSize)) ystop--;
             for (var i = xstart; i <= xstop; i++) {
                 for (var j = ystart; j <= ystop; j++) {
                     //if (i>=0 && j>=0){
@@ -106,17 +123,17 @@ function pointsLayer(configuration) {
 
             return (res);
         } else {
-            return self.getReferences({
+            return this.getReferences({
                 west: 0,
-                east: self.configuration.size,
+                east: this.configuration.size,
                 north: 0,
-                south: self.configuration.size
+                south: this.configuration.size
             });
         }
     }
 
 
-    this.countPoints = function(options) {
+    count(options) {
         let t0 = process.hrtime();
 
         let polygon = options.polygon;
@@ -127,23 +144,23 @@ function pointsLayer(configuration) {
         let maxTiles = options.maxTiles;
 
 
-        var references = self.getReferences(self.getBounds(polygon));
+        var references = this.getReferences(this.getBounds(polygon));
         var l = references.length;
         const tot = l;
-        var pointsUrlTemplate = self.configuration.pointsUrlTemplate;
+        var pointsUrlTemplate = this.configuration.pointsUrlTemplate;
         let points = [];
         let N = 0;
 
-        var step = function(point) {
-            if (self.pointinpolygon([point[0], point[1]], polygon)) {
+        var step = (point) => {
+            if (this.pointinpolygon([point[0], point[1]], polygon)) {
                 N = N + 1;
-                if (typeof cl === 'function' ) {
+                if (typeof cl === 'function') {
                     cl(point);
                 }
             }
         };
 
-        var end = function(num) {
+        var end = (num) => {
             l = l - 1;
             if (bunch) {
                 bunch(tot - l, tot);
@@ -161,7 +178,7 @@ function pointsLayer(configuration) {
         };
 
 
-        var err = function(e) {
+        var err = (e) => {
             if (error) {
                 error(e);
             }
@@ -189,20 +206,22 @@ function pointsLayer(configuration) {
 
         for (var tt = 0; tt < maxTiles; tt++) {
 
-            self.readPoints(polygon, references[tt], step, err, end);
+            this.read(polygon, references[tt], step, err, end);
         }
     }
 
-    this.readPoints = function(polygon, reference, step, error, end) {
+    read(polygon, reference, step, error, end) {
         let num = 0;
-        let url = self.configuration.pointsUrlTemplate;
+        let url = this.configuration.pointsUrlTemplate;
         url = url.replace("{x}", reference.col);
         url = url.replace("{y}", reference.row);
         try {
-            // if (this.isRemote()) {
-            //     let contents = url;
-            // } else {
-            let contents = fss.readFileSync(url).toString();
+            let contents = '';
+            if (this.isRemote()) {
+                contents = url;
+            } else {
+                 contents = fss.readFileSync(url).toString();
+            }
             Baby.parse(contents, {
                 dynamicTyping: true,
                 fastMode: true,
@@ -222,7 +241,9 @@ function pointsLayer(configuration) {
             });
         } catch (e) {
             if (error) {
-                error(e);
+                if (typeof error === 'function') {
+                    error(e);
+                }
             }
         }
     }

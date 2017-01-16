@@ -19,10 +19,6 @@ let win
 
 
 
-
-
-
-
 function createWindow() {
 
      let frame=true;

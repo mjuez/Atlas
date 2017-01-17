@@ -386,7 +386,7 @@ class MapIO {
     }
 
 
-    
+
 
 
 
@@ -425,7 +425,29 @@ class MapIO {
     static exportConfiguration(configuration, path, cl) {
         try {
             if (typeof path === 'string') {
-                let content = JSON.stringify(configuration);
+                let conf = JSON.parse(JSON.stringify(configuration)); //clone configuration object
+                Object.keys(conf.layers).map((key) => {
+                    let l = conf.layers[key];
+                    switch (l.type) { //remove the base path from the url of the layers
+                        case "tilesLayer":
+                            l.tilesUrlTemplate = l.tilesUrlTemplate.replace(conf.basePath, "");
+                            break;
+                        case "pointsLayer":
+                            l.pointsUrlTemplate = l.pointsUrlTemplate.replace(conf.basePath, "");
+                            break;
+                        case "pixelsLayer":
+                            l.pixelsUrlTemplate = l.pixelsUrlTemplate.replace(conf.basePath, "");
+                            break;
+                        case "imageLayer":
+                           l.imageUrl = l.imageUrl.replace(conf.basePath,"");
+                          break;
+                        default:
+                    }
+                    delete l.previewImageUrl //delete the previewImageUrl it will be created again from the tiles url
+                    return l;
+                });
+                delete conf.basePath;
+                let content = JSON.stringify(conf);
                 fs.writeFile(path, content, (error) => {
                     if (error) {
                         Util.notifyOS(error);

@@ -4,6 +4,7 @@
 
 Dialog.create("Title")
 Dialog.addNumber("Radius of median filter",10);
+Dialog.show();
 radius = Dialog.getNumber()
 
 setBatchMode(true);

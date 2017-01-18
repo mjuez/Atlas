@@ -88,9 +88,7 @@ class MapIO {
             authors: os.userInfo().username,
             date: (new Date()).toDateString(),
             layers: [],
-            new: true,
             basePath: '',
-            minZoom: 0,
             new: options.new
         };
     }
@@ -176,6 +174,9 @@ class MapIO {
                     configuration.source = 'local';
                 }
                 if (configuration.basePath.startsWith('file')) {
+                    configuration.source = 'local';
+                }
+                if (configuration.basePath.startsWith('C:')) {
                     configuration.source = 'local';
                 }
             }
@@ -443,6 +444,7 @@ class MapIO {
                           break;
                         default:
                     }
+                    delete l.basePath;
                     delete l.previewImageUrl //delete the previewImageUrl it will be created again from the tiles url
                     return l;
                 });

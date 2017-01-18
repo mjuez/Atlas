@@ -182,8 +182,6 @@ input.list-input[readOnly] {
     position: relative;
     background-color: #F6F6F5;
     margin: 15% auto;
-    top: 100px;
-    left:100px;
     /* 15% from the top and centered */
     border: 1px solid #888;
     width: 100%;

@@ -26,6 +26,32 @@ File.makeDirectory(outFolderP);
 outFolderO = imagesDir + "/objects";
 File.makeDirectory(outFolderO);
 
+Dialog.create("obj detection image");
+Dialog.addNumber("rmin",1);
+Dialog.addNumber("rmax",5);
+Dialog.addNumber("by",1);
+Dialog.addString("thrMethod","Moments");
+Dialog.addNumber("min",0);
+Dialog.addNumber("max",-1);
+Dialog.addNumber("fraction",0.5);
+Dialog.addNumber("toll",0);
+Dialog.addMessage("Next you will be asked with the directory where the images to process are");
+Dialog.show();
+rmin = Dialog.getNumber();
+rmax = Dialog.getNumber();
+by = Dialog.getNumber();
+thrMethod = Dialog.getString();
+min = Dialog.getNumber();
+max = Dialog.getNumber();
+fraction = Dialog.getNumber();
+toll = Dialog.getNumber();
+
+imagesDir = getDirectory("Choose a Directory");
+outFolderP = imagesDir + "/points";
+File.makeDirectory(outFolderP);
+outFolderO = imagesDir + "/objects";
+File.makeDirectory(outFolderO);
+
 setBatchMode(true);
 run("Input/Output...", "file=.csv");
 list = getFileList(imagesDir);

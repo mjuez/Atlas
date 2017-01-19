@@ -1,6 +1,4 @@
 
-
-
 Dialog.create("obj detection image");
 Dialog.addNumber("rmin_",1);
 Dialog.addNumber("rmax_",5);

@@ -1,14 +1,30 @@
-// @Integer rmin
-// @Integer rmax
-// @Integer by
-// @String thrMethod
-// @Integer min
-// @Integer max
-// @BigDecimal(stepSize=0.0001) fraction
-// @Integer toll
-// @File(label="Select the input directory", style="directory") imagesDir
-// @File(label="Select an output directory for the points", style="directory") outFolderP
-// @File(label="Select an output directory for the objects", style="directory") outFolderO
+
+
+Dialog.create("obj detection image");
+Dialog.addNumber("rmin_",1);
+Dialog.addNumber("rmax_",5);
+Dialog.addNumber("by",1);
+Dialog.addString("thrMethod","Moments");
+Dialog.addNumber("min_",0);
+Dialog.addNumber("max_",-1);
+Dialog.addNumber("fraction",0.5);
+Dialog.addNumber("toll",0);
+Dialog.addMessage("Next you will be asked with the directory where the images to process are");
+Dialog.show();
+rmin = Dialog.getNumber();
+rmax = Dialog.getNumber();
+by = Dialog.getNumber();
+thrMethod = Dialog.getString();
+min = Dialog.getNumber();
+max = Dialog.getNumber();
+fraction = Dialog.getNumber();
+toll = Dialog.getNumber();
+
+imagesDir = getDirectory("Choose a Directory");
+outFolderP = imagesDir + "/points";
+File.makeDirectory(outFolderP);
+outFolderO = imagesDir + "/objects";
+File.makeDirectory(outFolderO);
 
 Dialog.create("obj detection image");
 Dialog.addNumber("rmin",1);

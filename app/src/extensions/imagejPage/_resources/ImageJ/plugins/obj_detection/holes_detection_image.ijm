@@ -1,6 +1,3 @@
-// @Integer(value=255) thrHoles
-// @Integer(label="Radius of median filter") radius
-// @ImagePlus img
 
 Dialog.create("Title")
 Dialog.addNumber("Radius of median filter",10);

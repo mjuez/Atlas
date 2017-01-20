@@ -991,11 +991,11 @@ class mapPage extends GuiExtension {
         dialog.showOpenDialog({
             title: 'Add a new layer',
             filters: [{
-                name: 'Images',
-                extensions: ['jpg', 'png', 'gif', 'tiff', 'tif']
-            }, {
                 name: 'Configuration',
                 extensions: ['json', 'mapconfig']
+            }, {
+                name: 'Images',
+                extensions: ['jpg', 'png', 'gif', 'tiff', 'tif']
             }, {
                 name: 'CSV',
                 extensions: ['csv']
@@ -1101,11 +1101,11 @@ class mapPage extends GuiExtension {
         this.switchMap(this.mapManager._configuration);
     }
 
-    addLayer(conf){
-      conf = MapIO.parseLayerConfig(conf);
-      let key = conf.name || conf.alias || conf.id || conf.type;
-      this.mapManager._configuration.layers[key] = conf;
-      this.mapManager.addLayer(conf);
+    addLayer(conf) {
+        conf = MapIO.parseLayerConfig(conf);
+        let key = conf.name || conf.alias || conf.id || conf.type;
+        this.mapManager._configuration.layers[key] = conf;
+        this.mapManager.addLayer(conf);
     }
 
 

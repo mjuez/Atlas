@@ -42,17 +42,17 @@ class imagej extends GuiExtension {
     constructor(gui) {
         super(gui);
         this.image = `${__dirname}${path.sep}_images${path.sep}imagej-logo.gif`;
-        let platform = os.platform().replace('32','');
-        let arch = os.arch().replace('x','');
+        let platform = os.platform().replace('32', '');
+        let arch = os.arch().replace('x', '');
         this.imagejcmnd = `./ImageJ-${platform}${arch}`;
-        if (platform == 'darwin'){
+        if (platform == 'darwin') {
             this.imagejcmnd = `./Contents/MacOS/ImageJ-macosx`;
         }
-        if (isDev){
-        this.imagejpath = `${__dirname}${path.sep}_resources${path.sep}ImageJ${path.sep}`;
-      }else{
-        this.imagejpath = `${process.resourcesPath}${path.sep}ImageJ${path.sep}`;
-      }
+        if (isDev) {
+            this.imagejpath = `${__dirname}${path.sep}_resources${path.sep}ImageJ${path.sep}`;
+        } else {
+            this.imagejpath = `${process.resourcesPath}${path.sep}ImageJ${path.sep}`;
+        }
     }
 
     activate() {
@@ -76,9 +76,9 @@ class imagej extends GuiExtension {
     }
 
     deactivate() {
-      //  this.removeToggleButton('imageJToggleButton');
-        this.element.removeChild(this.pane.element);
+        //  this.removeToggleButton('imageJToggleButton');
         this.gui.removeSubmenu(this.menu);
+        this.element.removeChild(this.pane.element);
     }
 
 
@@ -121,7 +121,7 @@ class imagej extends GuiExtension {
         exec(`java -jar ij.jar -run "obj detection folder" `, {
             cwd: this.imagejpath
         }, (error, stdout, stderr) => {
-          console.log(stderr);
+            console.log(stderr);
             if (error) {
                 Util.notifyOS(`imageJ exec error: ${error}`);
                 console.log(error);

@@ -342,6 +342,7 @@ class MapIO {
         if (config.type.includes('pointsLayer')) {
             config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}points.png`;
             config.pointsUrlTemplate = config.pointsUrlTemplate || '';
+            config.excludeCF = config.excludeCF || false;
             if (config.pointsUrlTemplate.startsWith("http://") |
                 config.pointsUrlTemplate.startsWith("file://") |
                 config.pointsUrlTemplate.startsWith("https://")) {

@@ -80,7 +80,7 @@ function extractPolygonArray(polygon, scale) {
 class mapPage extends GuiExtension {
 
     constructor(gui) {
-        super(gui);
+        super(gui); //always
         this.icon = 'fa fa-map fa-2x';
         this.selectedRegions = [];
         this.maps = {};
@@ -769,7 +769,9 @@ class mapPage extends GuiExtension {
         });
 
         this.mapManager.on('add:marker', (e) => {
-            //add logic for markers
+            let mark = e.layer;
+            mark.on('click',(e)=>{
+            });
 
         });
 

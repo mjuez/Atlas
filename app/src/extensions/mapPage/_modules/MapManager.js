@@ -57,6 +57,7 @@ if (L != undefined) {
         _drawnPolygon: [],
         _drawnMarker: [],
         _polygons: [],
+        _markers: [],
 
 
         setMap: function(map) {
@@ -143,6 +144,7 @@ if (L != undefined) {
             this._gridLayers = [];
             this._guideLayers = [];
             this._polygons = [];
+            this._markers = [];
             this._activeBaseLayer = null;
         },
 
@@ -250,6 +252,9 @@ if (L != undefined) {
                         break;
                     case 'polygon':
                         return this._polygons;
+                        break;
+                    case 'markers':
+                        return this._markers;
                         break;
                     default:
                         return null;
@@ -364,7 +369,7 @@ if (L != undefined) {
                     layer = e.layer;
 
                 if (type === 'marker') {
-                    this.addMarker(layer);
+                    this.addMarker(layer, true);
                 } else {
                     layer.setStyle({
                         color: this.getDrawingColor(),
@@ -385,6 +390,13 @@ if (L != undefined) {
                     }
 
                 });
+            });
+
+            this._map.on('draw:edited', (e)=>{
+              let layers = e.layers;
+              layers.eachLayer((layer)=>{
+               this.editDrawnLayer(layer);
+              });
             });
 
             this._map.on('draw:drawstart', () => {
@@ -458,14 +470,55 @@ if (L != undefined) {
             });
         },
 
-        addMarker: function(layer) {
-            if (this._drawnItems) {} else {}
-            this.fire('add:marker', {
-                layer: layer,
-                manager: this
-            });
+        editDrawnLayer: function(layer) {
+            if (layer.getLatLngs) {
+                layer._configuration.latlngs = layer.getLatLngs();
+            }
+            if (layer.getLatLng) {
+                layer._configuration.latlng = layer.getLatLng();
+            }
         },
 
+
+        addMarker: function(layer, addToConfiguration) {
+            let lyjson = {};
+            this._indx++;
+            if (!layer.getLatLng) {
+                lyjson = layer; //we assume layer is written in json format with at least a latlngs field
+                lyjson.options = lyjson.options || {};
+                lyjson.name = lyjson.name || `Marker ${this._indx}`;
+                layer = L.marker(lyjson.latlng ||
+                    lyjson.latLng ||
+                    lyjson.point ||
+                    lyjson.coordinate ||
+                    lyjson.coord || [lyjson.lat || lyjson.y, lyjson.lang || lyjson.x], lyjson.options || lyjson);
+            } else { //assume the layer is already a L.marker
+                lyjson = layer.configuration || {
+                    latlng: layer.getLatLng(),
+                    name: `Marker ${this._indx}`,
+                    options: layer.options,
+                };
+            }
+            layer.bindTooltip(lyjson.name);
+            if (this._drawnItems) {
+                this._drawnItems.addLayer(layer);
+            } else {
+                this._map.addLayer(layer);
+            }
+            if (addToConfiguration) {
+                this._configuration.layers.drawnMarkers = this._configuration.layers.drawnMarkers || {
+                    name: 'drawnMarkers',
+                    type: 'drawnMarkers',
+                    markers: {}
+                };
+                this._configuration.layers.drawnMarkers.markers[`${this._indx}`] = lyjson;
+            }
+            layer._configuration = lyjson;
+            this._markers.push(layer);
+            this.fire('add:marker', {
+                layer: layer
+            });
+        },
 
         removePolygon: function(polygon, removeLayer) {
             if (removeLayer) {
@@ -497,9 +550,8 @@ if (L != undefined) {
 
             this.fire('add:drawnpolygons', {
                 layer: null,
-                layerConfig: layerConfig,
-                manager: this
-            });
+                layerConfig: layerConfig
+              });
 
         },
 
@@ -516,6 +568,7 @@ if (L != undefined) {
                 }
                 // drawing part
                 let markers = L.markerClusterGroup();
+                markers.bindTooltip(layer.name);
                 if (this._layerControl) {
                     this._layerControl.addOverlay(markers, layer.name);
                 }

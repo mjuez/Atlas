@@ -452,6 +452,16 @@ class MapEdit {
                     }
                 });
                 Util.input({
+                    label: 'Exclude points touching CF',
+                    className: 'simple form-control',
+                    parent: parent,
+                    type: 'checkbox',
+                    checked: layer.excludeCF,
+                    onchange: (inp) => {
+                        layer.excludeCF = Boolean(inp.checked);
+                    }
+                });
+                Util.input({
                     label: 'Color',
                     className: 'simple form-control',
                     parent: parent,

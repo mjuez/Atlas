@@ -172,8 +172,21 @@ if (L != undefined) {
                         }
                     }
                 }
+                this.setIndex();
                 this._map.fitWorld();
             }
+        },
+
+
+        setIndex: function() {
+            this._indx = 0;
+            if (this._configuration.layers.drawnPolygons) {
+                this._indx = Math.max(this._indx, Math.max(...Object.keys(this._configuration.layers.drawnPolygons.polygons)) || 0);
+            }
+            if (this._configuration.layers.drawnMarkers) {
+                this._indx = Math.max(this._indx, Math.max(...Object.keys(this._configuration.layers.drawnMarkers.markers)) || 0);
+            }
+
         },
 
         getDrawingColor: function() {
@@ -318,6 +331,9 @@ if (L != undefined) {
                 case 'drawnPolygons':
                     this.addDrawnPolygons(layer);
                     break;
+                case 'drawnMarkers':
+                    this.addDrawnMarkers(layer);
+                    break;
                 case 'imageLayer':
                     this.addImageLayer(layer);
                     break;
@@ -386,17 +402,18 @@ if (L != undefined) {
                     if (layer.getLatLngs) {
                         this.removePolygon(layer, false);
                     } else {
+                        this.removeMarker(layer, false);
 
                     }
 
                 });
             });
 
-            this._map.on('draw:edited', (e)=>{
-              let layers = e.layers;
-              layers.eachLayer((layer)=>{
-               this.editDrawnLayer(layer);
-              });
+            this._map.on('draw:edited', (e) => {
+                let layers = e.layers;
+                layers.eachLayer((layer) => {
+                    this.editDrawnLayer(layer);
+                });
             });
 
             this._map.on('draw:drawstart', () => {
@@ -420,7 +437,7 @@ if (L != undefined) {
             if (!layer.getLatLngs) {
                 lyjson = layer; //we assume layer is written in json format with at least a latlngs field
                 lyjson.options = lyjson.options || {};
-                lyjson.name = lyjson.name || `Region ${this._indx}`;
+                lyjson.name = lyjson.name || `Region ${this._indxP}`;
                 layer = L.polygon(lyjson.latlngs ||
                     lyjson.latLngs ||
                     lyjson.path ||
@@ -491,7 +508,7 @@ if (L != undefined) {
                     lyjson.latLng ||
                     lyjson.point ||
                     lyjson.coordinate ||
-                    lyjson.coord || [lyjson.lat || lyjson.y, lyjson.lang || lyjson.x], lyjson.options || lyjson);
+                    lyjson.coord || [lyjson.lat || lyjson.y, lyjson.lang || lyjson.x]);
             } else { //assume the layer is already a L.marker
                 lyjson = layer.configuration || {
                     latlng: layer.getLatLng(),
@@ -513,12 +530,32 @@ if (L != undefined) {
                 };
                 this._configuration.layers.drawnMarkers.markers[`${this._indx}`] = lyjson;
             }
+            lyjson.id = lyjson.id || this._indx;
+            layer._id = lyjson.id;
             layer._configuration = lyjson;
             this._markers.push(layer);
             this.fire('add:marker', {
                 layer: layer
             });
         },
+
+        removeMarker: function(marker, removeLayer) {
+            if (removeLayer) {
+                if (this._drawnItems) {
+                    this._drawnItems.removeLayer(marker);
+                } else {
+                    this._map.removeLayer(marker);
+                }
+            }
+
+            this._markers.splice(this._markers.indexOf(marker), 1);
+
+            delete this._configuration.layers.drawnMarkers.markers[`${marker._id}`];
+            this.fire('remove:marker', {
+                layer: marker
+            });
+        },
+
 
         removePolygon: function(polygon, removeLayer) {
             if (removeLayer) {
@@ -536,6 +573,25 @@ if (L != undefined) {
             delete this._configuration.layers.drawnPolygons.polygons[polygon._id];
         },
 
+        addDrawnMarkers: function(layerConfig) {
+            if (Array.isArray(layerConfig.markers)) {
+                layerConfig.markers.map((pol) => {
+                    this.addMarker(pol);
+                });
+            } else { //assume is an object
+                Object.keys(layerConfig.markers).map((key) => {
+                    this.addMarker(layerConfig.markers[key]);
+                });
+            }
+
+            this.fire('add:drawnmarkers', {
+                layer: null,
+                layerConfig: layerConfig
+            });
+
+        },
+
+
 
         addDrawnPolygons: function(layerConfig) {
             if (Array.isArray(layerConfig.polygons)) {
@@ -551,7 +607,7 @@ if (L != undefined) {
             this.fire('add:drawnpolygons', {
                 layer: null,
                 layerConfig: layerConfig
-              });
+            });
 
         },
 

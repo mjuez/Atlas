@@ -180,11 +180,15 @@ if (L != undefined) {
 
         setIndex: function() {
             this._indx = 0;
-            if (this._configuration.layers.drawnPolygons) {
-                this._indx = Math.max(this._indx, Math.max(...Object.keys(this._configuration.layers.drawnPolygons.polygons)) || 0);
-            }
-            if (this._configuration.layers.drawnMarkers) {
-                this._indx = Math.max(this._indx, Math.max(...Object.keys(this._configuration.layers.drawnMarkers.markers)) || 0);
+            if (this._configuration) {
+                if (this._configuration.layers) {
+                    if (this._configuration.layers.drawnPolygons) {
+                        this._indx = Math.max(this._indx, Math.max(...Object.keys(this._configuration.layers.drawnPolygons.polygons)) || 0);
+                    }
+                    if (this._configuration.layers.drawnMarkers) {
+                        this._indx = Math.max(this._indx, Math.max(...Object.keys(this._configuration.layers.drawnMarkers.markers)) || 0);
+                    }
+                }
             }
 
         },

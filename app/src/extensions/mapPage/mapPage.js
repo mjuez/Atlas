@@ -80,7 +80,7 @@ function extractPolygonArray(polygon, scale) {
 class mapPage extends GuiExtension {
 
     constructor(gui) {
-        super(gui);
+        super(gui); //always
         this.icon = 'fa fa-map fa-2x';
         this.selectedRegions = [];
         this.maps = {};
@@ -769,7 +769,10 @@ class mapPage extends GuiExtension {
         });
 
         this.mapManager.on('add:marker', (e) => {
-            //add logic for markers
+            let mark = e.layer;
+            mark.on('contextmenu',(e)=>{
+
+            });
 
         });
 
@@ -991,11 +994,11 @@ class mapPage extends GuiExtension {
         dialog.showOpenDialog({
             title: 'Add a new layer',
             filters: [{
-                name: 'Images',
-                extensions: ['jpg', 'png', 'gif', 'tiff', 'tif']
-            }, {
                 name: 'Configuration',
                 extensions: ['json', 'mapconfig']
+            }, {
+                name: 'Images',
+                extensions: ['jpg', 'png', 'gif', 'tiff', 'tif']
             }, {
                 name: 'CSV',
                 extensions: ['csv']
@@ -1101,11 +1104,11 @@ class mapPage extends GuiExtension {
         this.switchMap(this.mapManager._configuration);
     }
 
-    addLayer(conf){
-      conf = MapIO.parseLayerConfig(conf);
-      let key = conf.name || conf.alias || conf.id || conf.type;
-      this.mapManager._configuration.layers[key] = conf;
-      this.mapManager.addLayer(conf);
+    addLayer(conf) {
+        conf = MapIO.parseLayerConfig(conf);
+        let key = conf.name || conf.alias || conf.id || conf.type;
+        this.mapManager._configuration.layers[key] = conf;
+        this.mapManager.addLayer(conf);
     }
 
 

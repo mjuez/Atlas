@@ -220,13 +220,15 @@ class pointsLayer {
             if (this.isRemote()) {
                 contents = url;
             } else {
-                 contents = fss.readFileSync(url).toString();
+                contents = fss.readFileSync(url).toString();
             }
             Baby.parse(contents, {
                 dynamicTyping: true,
                 fastMode: true,
                 step: (results, parser) => {
-                    step([results.data[0][0] + reference.x, results.data[0][1] + reference.y]);
+                    if (!this.configuration.excludeCF || results.data[0][3] == 0) {
+                        step([results.data[0][0] + reference.x, results.data[0][1] + reference.y]);
+                    }
                 },
                 complete: (results, file) => {
                     if (end) {

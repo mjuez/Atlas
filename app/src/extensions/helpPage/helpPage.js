@@ -109,7 +109,7 @@ class helpPage extends GuiExtension {
             title: 'Source code',
             icon: 'icon icon-github-circled',
             onclick: () => {
-                this.loadurl('https://github.com/gherardovarando/Atlas/');
+                this.loadurl('https://github.com/ComputationalIntelligenceGroup/Atlas');
             }
         });
 
@@ -118,7 +118,7 @@ class helpPage extends GuiExtension {
             title: 'Submit issue',
             icon: 'icon icon-github',
             onclick: () => {
-                this.loadurl('https://github.com/gherardovarando/Atlas/issues/new');
+                this.loadurl('https://github.com/ComputationalIntelligenceGroup/Atlas/issues/new');
             }
         });
 

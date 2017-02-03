@@ -88,7 +88,7 @@ class imagej extends GuiExtension {
             label: 'Launch ImageJ',
             type: 'normal',
             click: () => {
-                this.launchImageJ();
+                this.run();
             }
         }));
         this.menu = new MenuItem({
@@ -118,7 +118,7 @@ class imagej extends GuiExtension {
 
 
     run(cmnd, arg, cl) {
-        exec(`java -jar ij.jar -run "obj detection folder" `, {
+        exec(`java -jar ij.jar -batchpath /home/gherardo/Desktop/Macro.ijm `, {
             cwd: this.imagejpath
         }, (error, stdout, stderr) => {
             console.log(stderr);

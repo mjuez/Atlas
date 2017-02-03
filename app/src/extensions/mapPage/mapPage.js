@@ -739,7 +739,7 @@ class mapPage extends GuiExtension {
             inp.placeholder = 'Region name';
             inp.value = layerConfig.name;
             inp.size = layerConfig.name.length + 1;
-            let c = document.createElement('DIV');
+            let c = document.createElement('STRONG');
             c.appendChild(inp);
             c.appendChild(inpC);
             c.oncontextmenu = (event) => {

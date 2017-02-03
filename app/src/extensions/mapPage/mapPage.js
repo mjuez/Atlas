@@ -453,17 +453,9 @@ class mapPage extends GuiExtension {
 
     switchMap(configuration, force) {
         if (configuration) {
-            this.sidebar.list.deactiveAll();
-            this.sidebar.list.applyAll((item) => {
-                item.body.hide();
-            });
             if ((configuration != this.mapManager._configuration) || force) {
                 this.sidebar.layerList.clean();
             }
-
-            this.sidebarRegions.list.applyAll((item) => {
-                item.element.className = 'list-group-item';
-            });
             this.selectedRegions.map((pol) => {
                 pol.setStyle({
                     fillOpacity: 0.3
@@ -474,7 +466,6 @@ class mapPage extends GuiExtension {
             this.showConfiguration(configuration);
             this.mapManager.setConfiguration(configuration, force);
             this.sidebar.list.items[`${configuration.id}`].element.getElementsByTagName('STRONG')[0].innerHTML = configuration.name; //set the correct name
-            this.sidebar.list.activeOne(`${configuration.id}`);
             this.sidebarRegions.show();
             this.sidebar.layerList.hide();
         } else {
@@ -611,7 +602,7 @@ class mapPage extends GuiExtension {
             title: title,
             body: body,
             icon: ic,
-            toggle: true,
+            toggle: {justOne:true},
             onclick: {
                 active: () => {
                     this.switchMap(this.maps[configuration.id]);
@@ -756,7 +747,8 @@ class mapPage extends GuiExtension {
                         layer.setStyle({
                             fillOpacity: 0.8
                         });
-                        this.gui.notify(`${layerConfig.name} => ${Util.stringify(layerConfig.stats) || ' '} _`);
+                        this.gui.notify(`${layerConfig.name} selected`);
+                        //this.gui.notify(`${layerConfig.name} => ${Util.stringify(layerConfig.stats) || ' '} _`); //region stats in footbar
                     },
                     deactive: () => {
                         this.selectedRegions.splice(this.selectedRegions.indexOf(layer), 1);

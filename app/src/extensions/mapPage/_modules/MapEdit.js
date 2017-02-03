@@ -26,7 +26,7 @@ const Modal = require('Modal');
 const ButtonsContainer = require('ButtonsContainer');
 
 const Util = require('Util');
-
+const Input = require('Input');
 
 class MapEdit {
     constructor() {
@@ -91,7 +91,7 @@ class MapEdit {
         right.width = '60%';
         body.appendChild(left);
         body.appendChild(right);
-        Util.selectInput({
+        Input.selectInput({
             label: 'Layers',
             parent: left,
             choices: MapEdit.getLayersName(conf),
@@ -145,7 +145,7 @@ class MapEdit {
             right.width = '60%';
             ed.appendChild(right); //left and right are inverted :-)
             ed.appendChild(left);
-            Util.input({
+            Input.input({
                 parent: right,
                 className: 'simple form-control',
                 type: 'text',
@@ -156,7 +156,7 @@ class MapEdit {
                     layer.name = inp.value;
                 }
             });
-            Util.input({
+            Input.input({
                 parent: right,
                 className: 'simple form-control',
                 type: 'text',
@@ -167,7 +167,7 @@ class MapEdit {
                     layer.authors = inp.value;
                 }
             });
-            Util.selectInput({
+            Input.selectInput({
                 parent: right,
                 label: 'Type',
                 className: 'simple form-control',
@@ -221,7 +221,7 @@ class MapEdit {
         right.width = '60%';
         body.appendChild(left);
         body.appendChild(right);
-        Util.input({
+        Input.input({
             parent: left,
             label: 'Name',
             className: 'simple form-control',
@@ -231,7 +231,7 @@ class MapEdit {
                 newconf.name = inp.value;
             }
         });
-        Util.input({
+        Input.input({
             parent: left,
             className: 'simple form-control',
             label: 'Authors',
@@ -241,7 +241,7 @@ class MapEdit {
                 newconf.authors = inp.value;
             }
         });
-        Util.input({
+        Input.input({
             parent: left,
             className: 'simple form-control',
             type: 'date',
@@ -252,7 +252,7 @@ class MapEdit {
                 newconf.date = inp.value;
             }
         });
-        Util.selectInput({
+        Input.selectInput({
             parent: left,
             className: 'simple form-control',
             choices: ['remote', 'local'],
@@ -262,7 +262,7 @@ class MapEdit {
                 newconf.source = inp.value;
             }
         });
-        Util.selectInput({
+        Input.selectInput({
             label: 'Layers',
             parent: left,
             choices: MapEdit.getLayersName(conf),
@@ -316,7 +316,7 @@ class MapEdit {
     static layerSpecificEditors(layer, parent) {
         switch (layer.type) {
             case 'tilesLayer':
-                Util.input({
+                Input.input({
                     label: 'Tiles url template',
                     className: 'simple form-control',
                     parent: parent,
@@ -327,7 +327,7 @@ class MapEdit {
                         layer.tilesUrlTemplate = inp.value;
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'MaxZoom',
                     className: 'simple form-control',
                     parent: parent,
@@ -338,7 +338,7 @@ class MapEdit {
                         layer.maxZoom = Number(inp.value);
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'MinZoom',
                     className: 'simple form-control',
                     parent: parent,
@@ -349,7 +349,7 @@ class MapEdit {
                         layer.minZoom = Number(inp.value);
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'MaxNativeZoom',
                     className: 'simple form-control',
                     parent: parent,
@@ -360,7 +360,7 @@ class MapEdit {
                         layer.maxNativeZoom = Number(inp.value);
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'MinNativeZoom',
                     className: 'simple form-control',
                     parent: parent,
@@ -371,7 +371,7 @@ class MapEdit {
                         layer.minNativeZoom = Number(inp.value);
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Original Size',
                     className: 'simple form-control',
                     parent: parent,
@@ -382,7 +382,7 @@ class MapEdit {
                         inp.value = layer.original_size;
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Opacity',
                     className: 'simple form-control',
                     parent: parent,
@@ -396,7 +396,7 @@ class MapEdit {
                         layer.opacity = Number(inp.value);
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Base layer',
                     className: 'simple form-control',
                     parent: parent,
@@ -408,7 +408,7 @@ class MapEdit {
                 });
                 break;
             case 'pointsLayer':
-                Util.input({
+                Input.input({
                     label: 'Points url template',
                     className: 'simple form-control',
                     parent: parent,
@@ -419,7 +419,7 @@ class MapEdit {
                         layer.pointsUrlTemplate = inp.value;
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Size',
                     className: 'simple form-control',
                     parent: parent,
@@ -430,7 +430,7 @@ class MapEdit {
                         layer.size = Number(inp.value);
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Tile size',
                     className: 'simple form-control',
                     parent: parent,
@@ -441,7 +441,7 @@ class MapEdit {
                         layer.tileSize = Number(inp.value);
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Easy to draw',
                     className: 'simple form-control',
                     parent: parent,
@@ -451,7 +451,7 @@ class MapEdit {
                         layer.easyToDraw = Boolean(inp.checked);
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Exclude points touching CF',
                     className: 'simple form-control',
                     parent: parent,
@@ -461,7 +461,7 @@ class MapEdit {
                         layer.excludeCF = Boolean(inp.checked);
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Color',
                     className: 'simple form-control',
                     parent: parent,
@@ -471,7 +471,7 @@ class MapEdit {
                         layer.color = inp.value;
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Radius',
                     className: 'simple form-control',
                     parent: parent,
@@ -484,7 +484,7 @@ class MapEdit {
 
                 break;
             case 'pixelsLayer':
-                Util.input({
+                Input.input({
                     label: 'Pixels url template',
                     className: 'simple form-control',
                     parent: parent,
@@ -495,7 +495,7 @@ class MapEdit {
                         layer.pixelsUrlTemplate = inp.value;
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Size',
                     className: 'simple form-control',
                     parent: parent,
@@ -506,7 +506,7 @@ class MapEdit {
                         layer.size = Number(inp.value);
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Tile size',
                     className: 'simple form-control',
                     parent: parent,
@@ -519,7 +519,7 @@ class MapEdit {
                 });
                 break;
             case 'imageLayer':
-                Util.input({
+                Input.input({
                     label: 'Image url',
                     className: 'simple form-control',
                     parent: parent,
@@ -530,7 +530,7 @@ class MapEdit {
                         layer.imageUrl = inp.value;
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Original Size',
                     className: 'simple form-control',
                     parent: parent,
@@ -541,7 +541,7 @@ class MapEdit {
                         inp.value = layer.original_size;
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Opacity',
                     className: 'simple form-control',
                     parent: parent,
@@ -558,7 +558,7 @@ class MapEdit {
 
                 break;
             case 'guideLayer':
-                Util.input({
+                Input.input({
                     label: 'Size',
                     className: 'simple form-control',
                     parent: parent,
@@ -569,7 +569,7 @@ class MapEdit {
                         layer.size = Number(inp.value);
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Tile size',
                     className: 'simple form-control',
                     parent: parent,
@@ -580,7 +580,7 @@ class MapEdit {
                         layer.tileSize = Number(inp.value);
                     }
                 });
-                Util.input({
+                Input.input({
                     label: 'Color',
                     className: 'simple form-control',
                     parent: parent,

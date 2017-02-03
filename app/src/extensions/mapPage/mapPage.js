@@ -771,7 +771,7 @@ class mapPage extends GuiExtension {
         this.mapManager.on('add:marker', (e) => {
             let mark = e.layer;
             mark.on('contextmenu',(e)=>{
-              
+
             });
 
         });

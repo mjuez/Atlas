@@ -306,3 +306,27 @@ img.imageicon {
     width: 10px;
     height: 10px;
 }
+
+.grid {
+    width: auto;
+    margin: 10px 0;
+}
+
+.grid td {
+    padding: 2px 10px 2px 0;
+}
+
+.grid td label {
+    font-weight: bold;
+    vertical-align: middle;
+    margin:0;
+}
+
+.grid tr:active {
+    background: transparent;
+    color: #333;
+}
+
+.folderselector {
+    display: none;
+}

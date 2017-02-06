@@ -35,7 +35,13 @@ const ToggleElement = require('ToggleElement');
 const {
     app
 } = require('electron').remote;
+const MapIO = require('../mapPage/_modules/MapIO.js');
 const path = require('path');
+const Modal = require('Modal');
+const Grid = require('Grid');
+const FolderSelector = require('FolderSelector');
+const Input = require('Input');
+const ButtonsContainer = require('ButtonsContainer');
 
 class imagej extends GuiExtension {
 
@@ -88,9 +94,18 @@ class imagej extends GuiExtension {
             label: 'Launch ImageJ',
             type: 'normal',
             click: () => {
-                this.run();
+                this.launchImageJ();
             }
         }));
+
+        menu.append(new MenuItem({
+            label: "Create map",
+            type: "normal",
+            click: () => {
+                this.createMap(true);
+            }
+        }))
+
         this.menu = new MenuItem({
             label: "Imagej",
             type: "submenu",
@@ -117,8 +132,8 @@ class imagej extends GuiExtension {
     }
 
 
-    run(cmnd, arg, cl) {
-        exec(`java -jar ij.jar -batchpath /home/gherardo/Desktop/Macro.ijm `, {
+    run(macro, args, next) {
+        exec(`java -jar ij.jar -batchpath ${macro}.ijm ${args}`, {
             cwd: this.imagejpath
         }, (error, stdout, stderr) => {
             console.log(stderr);
@@ -127,12 +142,12 @@ class imagej extends GuiExtension {
                 console.log(error);
                 return;
             }
-            if (typeof cl === 'function') {
-                cl(stdout);
+            if (typeof next === 'function') {
+                next(stdout);
             }
             this.gui.notify(`ImageJ macro finish and closed`);
         });
-        this.gui.notify(`ImageJ macro from ${cmnd} launched`);
+        this.gui.notify(`ImageJ macro from ${macro} launched`);
     }
 
     runHeadless(cmnd, arg, cl) {
@@ -153,7 +168,172 @@ class imagej extends GuiExtension {
         this.gui.notify(`ImageJ macro from ${cmnd} launched`);
     }
 
+    createMap(isMap) {
+        dialog.showOpenDialog({
+            title: 'Create map from image',
+            type: 'normal'
+        }, (filepaths) => {
+            if (filepaths) {
+                this.showParametersModal((modal, params) => {
+                    let use = "";
+                    if (params.use) {
+                        use = "use ";
+                    }
+                    let create = "";
+                    if (isMap) {
+                        create = "create ";
+                    }
+                    let macro = "mapcreator";
+                    if (params.merge) {
+                        macro += "withmerge";
+                    }
 
+                    let args = `"${filepaths[0]}#map=${params.map} pixel=${params.pixel} maximum=${params.maximum} slice=${params.slice} ${use}${create}choose=${params.path}"`;
+                    this.run(macro, args, (stdout) => {
+                        modal.destroy();
+                        MapIO.loadMap([`${params.path}${path.sep}${params.map}${path.sep}${params.map}.json`], (conf) => {
+                            this.gui.extensionsManager.extensions.mapPage.addNewMap(conf);
+                        });
+                    });
+                });
+            }
+        });
+    }
+
+    showParametersModal(next) {
+        var modal = new Modal({
+            title: "Map creator options",
+            width: "500px",
+            height: "auto"
+        });
+
+        let body = document.createElement("DIV");
+        body.className = "padded";
+        let grid = new Grid(7, 2);
+
+        let txtMapName = Input.input({
+            type: "text",
+            id: "txtmapname",
+            value: "map"
+        });
+        let lblMapName = document.createElement("LABEL");
+        lblMapName.htmlFor = "txtmapname";
+        lblMapName.innerHTML = "Map name: ";
+        grid.addElement(lblMapName, 0, 0);
+        grid.addElement(txtMapName, 0, 1);
+
+        let txtPixelTiles = Input.input({
+            type: "text",
+            id: "txtpixeltiles",
+            value: "256"
+        });
+        let lblPixelTiles = document.createElement("LABEL");
+        lblPixelTiles.htmlFor = "txtpixeltiles";
+        lblPixelTiles.innerHTML = "Pixel tiles dimension: ";
+        grid.addElement(lblPixelTiles, 1, 0);
+        grid.addElement(txtPixelTiles, 1, 1);
+
+        let numMaximumZoom = Input.input({
+            type: "number",
+            id: "nummaximumzoom",
+            value: "5",
+            min: "0",
+            max: "8"
+        });
+        let lblMaximumZoom = document.createElement("LABEL");
+        lblMaximumZoom.htmlFor = "nummaximumzoom";
+        lblMaximumZoom.innerHTML = "Maximum zoom: ";
+        grid.addElement(lblMaximumZoom, 2, 0);
+        grid.addElement(numMaximumZoom, 2, 1);
+
+        let checkUseAllSlice = Input.input({
+            type: "checkbox",
+            id: "useallslice",
+            onchange: (e) => {
+                checkMergeAllSlices.disabled = checkUseAllSlice.checked;
+                numUsedSlice.disabled = checkUseAllSlice.checked;
+            }
+        });
+        let lblUseAllSlice = document.createElement("LABEL");
+        lblUseAllSlice.htmlFor = "useallslice";
+        lblUseAllSlice.innerHTML = "Use all slice: ";
+        grid.addElement(lblUseAllSlice, 3, 0);
+        grid.addElement(checkUseAllSlice, 3, 1);
+
+        let checkMergeAllSlices = Input.input({
+            type: "checkbox",
+            id: "mergeallslices",
+            onchange: (e) => {
+                checkUseAllSlice.disabled = checkMergeAllSlices.checked;
+                numUsedSlice.disabled = checkMergeAllSlices.checked;
+            }
+        });
+        let lblMergeAllSlices = document.createElement("LABEL");
+        lblMergeAllSlices.htmlFor = "mergeallslices";
+        lblMergeAllSlices.innerHTML = "Merge all slices: ";
+        grid.addElement(lblMergeAllSlices, 4, 0);
+        grid.addElement(checkMergeAllSlices, 4, 1);
+
+        let numUsedSlice = Input.input({
+            type: "number",
+            id: "numusedslice",
+            value: "1",
+            min: "1"
+        });
+        let lblUsedSlice = document.createElement("LABEL");
+        lblUsedSlice.htmlFor = "numusedslice";
+        lblUsedSlice.innerHTML = "Slice to be used: ";
+        grid.addElement(lblUsedSlice, 5, 0);
+        grid.addElement(numUsedSlice, 5, 1);
+
+        let fldOutputFolder = new FolderSelector("fileoutputfolder");
+        let lblOutputFolder = document.createElement("LABEL");
+        lblOutputFolder.htmlFor = "fileoutputfolder";
+        lblOutputFolder.innerHTML = "Output folder: ";
+        grid.addElement(lblOutputFolder, 6, 0);
+        grid.addElement(fldOutputFolder.element, 6, 1);
+
+        body.appendChild(grid.element);
+
+        let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
+        buttonsContainer.addButton({
+            id: "CreateMap00",
+            text: "Create",
+            action: () => {
+                if (typeof next === 'function') {
+                    if (fldOutputFolder.getFolderRoute()) {
+                        let params = {
+                            map: txtMapName.value || "[]",
+                            pixel: txtPixelTiles.value || "[]",
+                            maximum: numMaximumZoom.value || "[]",
+                            slice: numUsedSlice.value || "[]",
+                            use: checkUseAllSlice.checked,
+                            merge: checkMergeAllSlices.checked,
+                            path: fldOutputFolder.getFolderRoute()
+                        }
+                        next(modal, params);
+                    } else {
+                        dialog.showErrorBox("Can't create map", "You must choose an output folder.");
+                    }
+                }
+            },
+            className: "btn-default"
+        });
+        buttonsContainer.addButton({
+            id: "CancelMap00",
+            text: "Cancel",
+            action: () => {
+                modal.destroy();
+            },
+            className: "btn-default"
+        });
+        let footer = document.createElement('DIV');
+        footer.appendChild(buttonsContainer.element);
+
+        modal.addBody(body);
+        modal.addFooter(footer);
+        modal.show();
+    }
 }
 
 

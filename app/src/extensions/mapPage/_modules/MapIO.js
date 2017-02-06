@@ -38,6 +38,39 @@ class MapIO {
         console.log('MapIO is just a container of static methods');
     }
 
+    static loadMap(filename, next) {
+        if (filename === undefined) return;
+        fs.readFile(filename[0], 'utf-8', (err, data) => {
+            if (err) {
+                dialog.showErrorBox("Error", err.message);
+                return;
+            }
+            let configuration = JSON.parse(data);
+            configuration.type = configuration.type || 'undefined';
+            let id = 2;
+            if (!configuration.type.includes('map')) {
+                id = dialog.showMessageBox({
+                    title: 'Type "map" not specified in configuration file',
+                    type: 'warning',
+                    buttons: ['Cancel', 'Add anyway'],
+                    message: `The type specified in the configuration is: ${configuration.type}`,
+                    detail: `trying to add this map could result in an error`,
+                    noLink: true
+                });
+            }
+            if (id === 1) {
+                configuration.type = 'map';
+            }
+            if (id >= 1) {
+                configuration.basePath = MapIO.basePath(configuration, filename[0]);
+                configuration = MapIO.buildConfiguration(configuration);
+                configuration.new = true;
+                Util.merge(configuration, MapIO.baseConfiguration());
+                MapEdit.previewModal(configuration, next);
+            }
+        });
+    }
+
     static loadMapfromFile(cl) {
         dialog.showOpenDialog({
             title: "Select a configuration file",
@@ -47,36 +80,7 @@ class MapIO {
                 extensions: ['mapconfig', 'json']
             }]
         }, (filename) => {
-            if (filename === undefined) return;
-            fs.readFile(filename[0], 'utf-8', (err, data) => {
-                if (err) {
-                    this.fire('error', err.message);
-                    return;
-                }
-                let configuration = JSON.parse(data);
-                configuration.type = configuration.type || 'undefined';
-                let id = 2;
-                if (!configuration.type.includes('map')) {
-                    id = dialog.showMessageBox({
-                        title: 'Type "map" not specified in configuration file',
-                        type: 'warning',
-                        buttons: ['Cancel', 'Add anyway'],
-                        message: `The type specified in the configuration is: ${configuration.type}`,
-                        detail: `trying to add this map could result in an error`,
-                        noLink: true
-                    });
-                }
-                if (id === 1) {
-                    configuration.type = 'map';
-                }
-                if (id >= 1) {
-                    configuration.basePath = MapIO.basePath(configuration, filename[0]);
-                    configuration = MapIO.buildConfiguration(configuration);
-                    configuration.new = true;
-                    Util.merge(configuration, MapIO.baseConfiguration());
-                    MapEdit.previewModal(configuration, cl);
-                }
-            });
+            MapIO.loadMap(filename, cl);
         });
     }
 
@@ -441,8 +445,8 @@ class MapIO {
                             l.pixelsUrlTemplate = l.pixelsUrlTemplate.replace(conf.basePath, "");
                             break;
                         case "imageLayer":
-                           l.imageUrl = l.imageUrl.replace(conf.basePath,"");
-                          break;
+                            l.imageUrl = l.imageUrl.replace(conf.basePath, "");
+                            break;
                         default:
                     }
                     delete l.basePath;

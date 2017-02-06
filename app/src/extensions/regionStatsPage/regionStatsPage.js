@@ -90,15 +90,11 @@ class regionStatsPage extends GuiExtension {
     }
 
     addMapToSidebar(map) {
-        let title = document.createElement('STRONG');
-        title.innerHTML = map.name;
-
-        let body = new ToggleElement(document.createElement('DIV'));
 
         this.sidebar.addItem({
             id: `${map.id}`,
-            title: title,
-            body: body,
+            title: map.name,
+            key: map.authors,
             toggle: {justOne:true}, //just one item is activable at the same time
             onclick: {
                 active: () => {

@@ -465,7 +465,6 @@ class mapPage extends GuiExtension {
             this.initRegionActions(configuration, force);
             this.showConfiguration(configuration);
             this.mapManager.setConfiguration(configuration, force);
-            this.sidebar.list.items[`${configuration.id}`].element.getElementsByTagName('STRONG')[0].innerHTML = configuration.name; //set the correct name
             this.sidebarRegions.show();
             this.sidebar.layerList.hide();
         } else {
@@ -600,6 +599,7 @@ class mapPage extends GuiExtension {
         this.sidebar.addItem({
             id: `${configuration.id}`,
             title: title,
+            key: `${configuration.name} ${configuration.date} ${configuration.authors}`,
             body: body,
             icon: ic,
             toggle: {justOne:true},
@@ -739,6 +739,7 @@ class mapPage extends GuiExtension {
             this.sidebarRegions.addItem({
                 id: layerConfig.id,
                 title: c,
+                key: layerConfig.name,
                 toggle: true,
                 onclick: {
                     active: () => {
@@ -747,11 +748,12 @@ class mapPage extends GuiExtension {
                         layer.setStyle({
                             fillOpacity: 0.8
                         });
-                        this.gui.notify(`${layerConfig.name} selected`);
+                        this.gui.notify(`${layerConfig.name} selected, (${this.selectedRegions.length} tot)`);
                         //this.gui.notify(`${layerConfig.name} => ${Util.stringify(layerConfig.stats) || ' '} _`); //region stats in footbar
                     },
                     deactive: () => {
                         this.selectedRegions.splice(this.selectedRegions.indexOf(layer), 1);
+                        this.gui.notify(`${layerConfig.name} deselected, (${this.selectedRegions.length} tot)`);
                         layer.setStyle({
                             fillOpacity: 0.3
                         });
@@ -823,6 +825,8 @@ class mapPage extends GuiExtension {
             console.log(e);
             return;
         }
+        this.sidebar.list.setKey(configuration.id, configuration.authors);
+        this.sidebar.list.setTitle(configuration.id, configuration.name);
         this.maps[configuration.id] = configuration;
         this.switchMap(configuration, true);
         this.mapPane.show();

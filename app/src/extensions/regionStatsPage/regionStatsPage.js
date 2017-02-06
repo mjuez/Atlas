@@ -81,7 +81,6 @@ class regionStatsPage extends GuiExtension {
     loadWorkspaceData() {
         if (this.gui.workspace.spaces.mapPage) {
             var maps = this.gui.workspace.spaces.mapPage;
-
             Object.keys(maps).map((key) => {
                 let map = maps[key];
                 this.addMapToSidebar(map);
@@ -144,19 +143,16 @@ class regionStatsPage extends GuiExtension {
 
     createRow(stats, regionName) {
         let row = {
-            "1": {
+            "region": {
                 col_name: "region",
                 col_value: regionName
             }
         }
-
-        var i = 2;
         Object.keys(stats).map((key) => {
-            row[i] = {
+            row[key] = {
                 col_name: key,
                 col_value: stats[key]
             };
-            i++;
         });
 
         return row;

@@ -853,7 +853,7 @@ class mapPage extends GuiExtension {
         this.mapManager.getLayers('pixelsLayer').map((pixel) => {
             this.computePolygonPixels(polygon, pixel, (m) => {
                 polygon._configuration.stats[`${pixel.name}_raw_sum`] = m.sum;
-                this.gui.notify(`${polygon._configuration.name} computed with ${pixel.name}, ${m.sum} total summed in ${m.time[0]}.${m.time[1].toString()} seconds`);
+                this.gui.notify(`${polygon._configuration.name} computed with ${pixel.name},  total summed in ${m.time[0]}.${m.time[1].toString()} seconds`);
                 Util.notifyOS(`${polygon._configuration.name}: ${m.sum} internal pixels from  ${pixel.name}`);
             });
 

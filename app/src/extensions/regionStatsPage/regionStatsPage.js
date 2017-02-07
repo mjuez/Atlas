@@ -27,73 +27,6 @@ const Table = require('Table');
 const icon = "fa fa-area-chart";
 const toggleButtonId = 'regionStatsPageToggleButton';
 
-const columnsFormat = {
-    1 : {
-        base_column : "region",
-        column_name : "Region"
-    },
-    2 : {
-        base_column : "Centroids DAPI Alg",
-        column_name : "Centroids DAPI (alg)"
-    },
-    3 : {
-        base_column : "Centroids GAD alg",
-        column_name : "Centroids GAD (alg)"
-    },
-    4 : {
-        base_column : "centroid GAD manual",
-        column_name : "Centroids GAD (man)"
-    },
-    5 : {
-        base_column : "Centroids NeuN alg",
-        column_name : "Centroids NeuN (alg)"
-    },
-    6 : {
-        base_column : "area_cal",
-        column_name : "Area (cal)"
-    },
-    7 : {
-        base_column : "area_cal density Centroids DAPI Alg",
-        column_name : "Area (cal) dens. cent. DAPI (alg)"
-    },
-    8 : {
-        base_column : "area_cal density Centroids GAD alg",
-        column_name : "Area (cal) dens. cent. GAD (alg)"
-    },
-    9 : {
-        base_column : "area_cal density centroid GAD manual",
-        column_name : "Area (cal) dens. cent. GAD (man)"
-    },
-    10 : {
-        base_column : "area_cal density Centroids NeuN alg",
-        column_name : "Area (cal) dens. cent. NeuN (alg)"
-    },
-    11 : {
-        base_column : "area_px",
-        column_name : "Area (px)"
-    },
-    12 : {
-        base_column : "volume_cal",
-        column_name : "Volume (cal)"
-    },
-    13 : {
-        base_column : "volume_cal density Centroids DAPI Alg",
-        column_name : "Volume (cal) dens. cent. DAPI (alg)"
-    },
-    14 : {
-        base_column : "volume_cal density Centroids GAD alg",
-        column_name : "Volume (cal) dens. cent. GAD (alg)"
-    },
-    15 : {
-        base_column : "volume_cal density centroid GAD manual",
-        column_name : "Volume (cal) dens. cent. DAPI (man)"
-    },
-    16 : {
-        base_column : "volume_cal density Centroids NeuN alg",
-        column_name : "Volume (cal) dens. cent. NeuN (alg)"
-    },
-};
-
 class regionStatsPage extends GuiExtension {
 
     constructor(gui) {
@@ -131,7 +64,7 @@ class regionStatsPage extends GuiExtension {
     }
 
     addSidebar() {
-        this.sidebar = new Sidebar(this.element); //appendChild (?)
+        this.sidebar = new Sidebar(this.element);
         this.sidebar.addList();
         this.sidebar.list.addSearch({
             placeholder: "Search maps"
@@ -148,7 +81,6 @@ class regionStatsPage extends GuiExtension {
     loadWorkspaceData() {
         if (this.gui.workspace.spaces.mapPage) {
             var maps = this.gui.workspace.spaces.mapPage;
-
             Object.keys(maps).map((key) => {
                 let map = maps[key];
                 this.addMapToSidebar(map);
@@ -157,18 +89,15 @@ class regionStatsPage extends GuiExtension {
     }
 
     addMapToSidebar(map) {
-        let title = document.createElement('STRONG');
-        title.innerHTML = map.name;
-
-        let body = new ToggleElement(document.createElement('DIV'));
 
         this.sidebar.addItem({
             id: `${map.id}`,
-            title: title,
-            body: body,
-            toggle: true,
+            title: map.name,
+            key: map.authors,
+            toggle: {justOne:true}, //just one item is activable at the same time
             onclick: {
                 active: () => {
+                  this.cleanPane(); // clean the pane to avoid more than one table to be displayed
                     this.showRegionsStats(map);
                 },
                 deactive: () => {
@@ -183,27 +112,28 @@ class regionStatsPage extends GuiExtension {
             var polygons = map.layers.drawnPolygons.polygons;
             var table = new Table();
             Object.keys(polygons).map((key) => {
-                if(polygons[key].stats){
-                    let row = polygons[key].stats;
-                    row["region"] = polygons[key].name;
-                    table.addRow(row, columnsFormat);
+                if (polygons[key].stats) {
+                    let row = this.createRow(polygons[key].stats, polygons[key].name);
+                    table.addRow(row);
                 }
             });
 
-            if(table.tbody.hasChildNodes()){
+            if (table.tbody.hasChildNodes()) {
                 let exportContainer = document.createElement('DIV');
                 exportContainer.className = "padded";
                 let exportButton = document.createElement('BUTTON');
                 exportButton.innerHTML = "Export statistics to CSV";
                 exportButton.className = "btn btn-default";
-                exportButton.onclick = function() { return table.exportToCSV(); };
+                exportButton.onclick = function() {
+                    return table.exportToCSV();
+                };
                 exportContainer.appendChild(exportButton);
                 this.pane.element.appendChild(exportContainer);
                 this.pane.element.appendChild(table.element);
-            }   
+            }
         }
 
-        if(!this.pane.element.hasChildNodes()){
+        if (!this.pane.element.hasChildNodes()) {
             let noStats = document.createElement('DIV');
             noStats.className = "padded";
             noStats.innerHTML = "Selected map has no regions statistics.";
@@ -211,8 +141,25 @@ class regionStatsPage extends GuiExtension {
         }
     }
 
-    cleanPane(){
-        while(this.pane.element.firstChild){
+    createRow(stats, regionName) {
+        let row = {
+            "region": {
+                col_name: "region",
+                col_value: regionName
+            }
+        }
+        Object.keys(stats).map((key) => {
+            row[key] = {
+                col_name: key,
+                col_value: stats[key]
+            };
+        });
+
+        return row;
+    }
+
+    cleanPane() {
+        while (this.pane.element.firstChild) {
             this.pane.element.removeChild(this.pane.element.firstChild);
         }
     }

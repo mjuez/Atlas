@@ -11,7 +11,7 @@
 }
 
 .sidebar.show {
-    display: ;
+    display: block;
 }
 
 .sidebar.hide {

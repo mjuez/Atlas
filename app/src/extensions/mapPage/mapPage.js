@@ -453,17 +453,9 @@ class mapPage extends GuiExtension {
 
     switchMap(configuration, force) {
         if (configuration) {
-            this.sidebar.list.deactiveAll();
-            this.sidebar.list.applyAll((item) => {
-                item.body.hide();
-            });
             if ((configuration != this.mapManager._configuration) || force) {
                 this.sidebar.layerList.clean();
             }
-
-            this.sidebarRegions.list.applyAll((item) => {
-                item.element.className = 'list-group-item';
-            });
             this.selectedRegions.map((pol) => {
                 pol.setStyle({
                     fillOpacity: 0.3
@@ -473,8 +465,6 @@ class mapPage extends GuiExtension {
             this.initRegionActions(configuration, force);
             this.showConfiguration(configuration);
             this.mapManager.setConfiguration(configuration, force);
-            this.sidebar.list.items[`${configuration.id}`].element.getElementsByTagName('STRONG')[0].innerHTML = configuration.name; //set the correct name
-            this.sidebar.list.activeOne(`${configuration.id}`);
             this.sidebarRegions.show();
             this.sidebar.layerList.hide();
         } else {
@@ -609,9 +599,10 @@ class mapPage extends GuiExtension {
         this.sidebar.addItem({
             id: `${configuration.id}`,
             title: title,
+            key: `${configuration.name} ${configuration.date} ${configuration.authors}`,
             body: body,
             icon: ic,
-            toggle: true,
+            toggle: {justOne:true},
             onclick: {
                 active: () => {
                     this.switchMap(this.maps[configuration.id]);
@@ -739,7 +730,7 @@ class mapPage extends GuiExtension {
             inp.placeholder = 'Region name';
             inp.value = layerConfig.name;
             inp.size = layerConfig.name.length + 1;
-            let c = document.createElement('DIV');
+            let c = document.createElement('STRONG');
             c.appendChild(inp);
             c.appendChild(inpC);
             c.oncontextmenu = (event) => {
@@ -748,6 +739,7 @@ class mapPage extends GuiExtension {
             this.sidebarRegions.addItem({
                 id: layerConfig.id,
                 title: c,
+                key: layerConfig.name,
                 toggle: true,
                 onclick: {
                     active: () => {
@@ -756,10 +748,12 @@ class mapPage extends GuiExtension {
                         layer.setStyle({
                             fillOpacity: 0.8
                         });
-                        this.gui.notify(`${layerConfig.name} => ${Util.stringify(layerConfig.stats) || ' '} _`);
+                        this.gui.notify(`${layerConfig.name} selected, (${this.selectedRegions.length} tot)`);
+                        //this.gui.notify(`${layerConfig.name} => ${Util.stringify(layerConfig.stats) || ' '} _`); //region stats in footbar
                     },
                     deactive: () => {
                         this.selectedRegions.splice(this.selectedRegions.indexOf(layer), 1);
+                        this.gui.notify(`${layerConfig.name} deselected, (${this.selectedRegions.length} tot)`);
                         layer.setStyle({
                             fillOpacity: 0.3
                         });
@@ -831,6 +825,8 @@ class mapPage extends GuiExtension {
             console.log(e);
             return;
         }
+        this.sidebar.list.setKey(configuration.id, configuration.authors);
+        this.sidebar.list.setTitle(configuration.id, configuration.name);
         this.maps[configuration.id] = configuration;
         this.switchMap(configuration, true);
         this.mapPane.show();
@@ -857,7 +853,7 @@ class mapPage extends GuiExtension {
         this.mapManager.getLayers('pixelsLayer').map((pixel) => {
             this.computePolygonPixels(polygon, pixel, (m) => {
                 polygon._configuration.stats[`${pixel.name}_raw_sum`] = m.sum;
-                this.gui.notify(`${polygon._configuration.name} computed with ${pixel.name}, ${m.sum} total summed in ${m.time[0]}.${m.time[1].toString()} seconds`);
+                this.gui.notify(`${polygon._configuration.name} computed with ${pixel.name},  total summed in ${m.time[0]}.${m.time[1].toString()} seconds`);
                 Util.notifyOS(`${polygon._configuration.name}: ${m.sum} internal pixels from  ${pixel.name}`);
             });
 

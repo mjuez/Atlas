@@ -81,7 +81,6 @@ class regionStatsPage extends GuiExtension {
     loadWorkspaceData() {
         if (this.gui.workspace.spaces.mapPage) {
             var maps = this.gui.workspace.spaces.mapPage;
-
             Object.keys(maps).map((key) => {
                 let map = maps[key];
                 this.addMapToSidebar(map);
@@ -90,18 +89,15 @@ class regionStatsPage extends GuiExtension {
     }
 
     addMapToSidebar(map) {
-        let title = document.createElement('STRONG');
-        title.innerHTML = map.name;
-
-        let body = new ToggleElement(document.createElement('DIV'));
 
         this.sidebar.addItem({
             id: `${map.id}`,
-            title: title,
-            body: body,
-            toggle: true,
+            title: map.name,
+            key: map.authors,
+            toggle: {justOne:true}, //just one item is activable at the same time
             onclick: {
                 active: () => {
+                  this.cleanPane(); // clean the pane to avoid more than one table to be displayed
                     this.showRegionsStats(map);
                 },
                 deactive: () => {
@@ -128,7 +124,9 @@ class regionStatsPage extends GuiExtension {
                 let exportButton = document.createElement('BUTTON');
                 exportButton.innerHTML = "Export statistics to CSV";
                 exportButton.className = "btn btn-default";
-                exportButton.onclick = function () { return table.exportToCSV(); };
+                exportButton.onclick = function() {
+                    return table.exportToCSV();
+                };
                 exportContainer.appendChild(exportButton);
                 this.pane.element.appendChild(exportContainer);
                 this.pane.element.appendChild(table.element);
@@ -145,19 +143,16 @@ class regionStatsPage extends GuiExtension {
 
     createRow(stats, regionName) {
         let row = {
-            "1" : {
-                col_name : "region",
-                col_value : regionName
+            "region": {
+                col_name: "region",
+                col_value: regionName
             }
         }
-
-        var i = 2;
         Object.keys(stats).map((key) => {
-            row[i] = {
-                col_name : key,
-                col_value : stats[key]
+            row[key] = {
+                col_name: key,
+                col_value: stats[key]
             };
-            i++;
         });
 
         return row;

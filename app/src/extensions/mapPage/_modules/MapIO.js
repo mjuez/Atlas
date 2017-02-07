@@ -356,6 +356,19 @@ class MapIO {
             Util.setOne(config, 'color', ['COLOR', 'Color', '__color']);
 
         }
+        if (config.type.includes('pixelsLayer')) {
+            config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}points.png`;
+            config.pixelsUrlTemplate = config.pixelsUrlTemplate || '';
+            if (config.pixelsUrlTemplate.startsWith("http://") |
+                config.pixelsUrlTemplate.startsWith("file://") |
+                config.pixelsUrlTemplate.startsWith("https://")) {
+                config.basePath = '';
+            }
+            if (config.pixelsUrlTemplate.startsWith(config.basePath)) {
+                config.basePath = '';
+            }
+            config.pixelsUrlTemplate = config.basePath + config.pixelsUrlTemplate;
+        }
         if (config.type.includes('guideLayer')) {
             config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}grid.png`;
             config.__color = 'blue';

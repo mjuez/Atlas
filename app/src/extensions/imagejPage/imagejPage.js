@@ -42,6 +42,7 @@ const Grid = require('Grid');
 const FolderSelector = require('FolderSelector');
 const Input = require('Input');
 const ButtonsContainer = require('ButtonsContainer');
+const fs = require('fs');
 
 class imagej extends GuiExtension {
 
@@ -104,6 +105,14 @@ class imagej extends GuiExtension {
             click: () => {
                 this.createMap(true);
             }
+        }));
+
+        menu.append(new MenuItem({
+            label: "Object detection",
+            type: "normal",
+            click: () => {
+                this.objectDetection();
+            }
         }))
 
         this.menu = new MenuItem({
@@ -136,7 +145,6 @@ class imagej extends GuiExtension {
         exec(`java -jar ij.jar -batchpath ${macro}.ijm ${args}`, {
             cwd: this.imagejpath
         }, (error, stdout, stderr) => {
-            console.log(stderr);
             if (error) {
                 Util.notifyOS(`imageJ exec error: ${error}`);
                 console.log(error);
@@ -150,7 +158,7 @@ class imagej extends GuiExtension {
         this.gui.notify(`ImageJ macro from ${macro} launched`);
     }
 
-    runHeadless(cmnd, arg, cl) {
+    /*runHeadless(cmnd, arg, cl) {
         exec(`${this.imagejcmnd} --ij2 --run plugins/obj_detection/obj_detection_folder.ijm  '${arg}'`, {
             cwd: this.imagejpath
         }, (error, stdout, stderr) => {
@@ -166,7 +174,7 @@ class imagej extends GuiExtension {
             this.gui.notify(`ImageJ macro finish and closed`);
         });
         this.gui.notify(`ImageJ macro from ${cmnd} launched`);
-    }
+    }*/
 
     createMap(isMap) {
         dialog.showOpenDialog({
@@ -174,7 +182,7 @@ class imagej extends GuiExtension {
             type: 'normal'
         }, (filepaths) => {
             if (filepaths) {
-                this.showParametersModal((modal, params) => {
+                this.showMapCreationParamsModal((modal, params) => {
                     let use = "";
                     if (params.use) {
                         use = "use ";
@@ -200,7 +208,7 @@ class imagej extends GuiExtension {
         });
     }
 
-    showParametersModal(next) {
+    showMapCreationParamsModal(next) {
         var modal = new Modal({
             title: "Map creator options",
             width: "500px",
@@ -293,8 +301,6 @@ class imagej extends GuiExtension {
         grid.addElement(lblOutputFolder, 6, 0);
         grid.addElement(fldOutputFolder.element, 6, 1);
 
-        body.appendChild(grid.element);
-
         let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
         buttonsContainer.addButton({
             id: "CreateMap00",
@@ -330,7 +336,210 @@ class imagej extends GuiExtension {
         let footer = document.createElement('DIV');
         footer.appendChild(buttonsContainer.element);
 
-        modal.addBody(body);
+        modal.addBody(grid.element);
+        modal.addFooter(footer);
+        modal.show();
+    }
+
+    objectDetection() {
+        dialog.showOpenDialog({
+            title: 'Image object detection',
+            type: 'normal'
+        }, (filepaths) => {
+            if (filepaths) {
+                this.showObjectDetectionParamsModal((modal, params) => {
+                    let macro = "objectdetector";
+                    let args = `"${filepaths[0]}#${params.rmin}#${params.rmax}#${params.by}#${params.thrMethod}#${params.min}#${params.max}#${params.fraction}#${params.toll}#${params.path}"`;
+                    this.run(macro, args, (stdout) => {
+                        let config = Util.Layers.createJSONConfiguration(filepaths[0]);
+                        fs.writeFile(`${params.path}${path.sep}points${path.sep}${config.name}.json`, JSON.stringify(config, null, 2), (err) => {
+                            if (err) {
+                                Util.notifyOS(`Can't save JSON configuration file! Error: ${err}`);
+                            }
+
+                            Util.notifyOS(`Object detection task finished.`);
+                            this.gui.notify(`Object detection task finished.`);
+                        });
+                    });
+                    this.gui.notify(`Performing object detection...`);
+                    modal.destroy();
+                });
+            }
+        });
+    }
+
+    showObjectDetectionParamsModal(next) {
+        var modal = new Modal({
+            title: "Object detection options",
+            width: "500px",
+            height: "auto"
+        });
+
+        let body = document.createElement("DIV");
+        let grid = new Grid(9, 2);
+
+        let numRMin = Input.input({
+            type: "number",
+            id: "numrmin",
+            value: "1",
+            min: "1",
+            max: "15"
+        });
+        let lblRMin = document.createElement("LABEL");
+        lblRMin.htmlFor = "numrmin";
+        lblRMin.innerHTML = "Minimum radius: ";
+        grid.addElement(lblRMin, 0, 0);
+        grid.addElement(numRMin, 0, 1);
+
+        let numRMax = Input.input({
+            type: "number",
+            id: "numrmax",
+            value: "5",
+            min: "1",
+            max: "15"
+        });
+        let lblRMax = document.createElement("LABEL");
+        lblRMax.htmlFor = "numrmax";
+        lblRMax.innerHTML = "Maximum radius: ";
+        grid.addElement(lblRMax, 1, 0);
+        grid.addElement(numRMax, 1, 1);
+
+        let numBy = Input.input({
+            type: "number",
+            id: "numby",
+            value: "1",
+            min: "0"
+        });
+        let lblBy = document.createElement("LABEL");
+        lblBy.htmlFor = "numby";
+        lblBy.innerHTML = "By: ";
+        grid.addElement(lblBy, 2, 0);
+        grid.addElement(numBy, 2, 1);
+
+        let selThrMethod = Input.selectInput({
+            label: "Threshold method",
+            choices: [
+                "Default",
+                "Huang",
+                "Intermodes",
+                "IsoData",
+                "Li",
+                "MaxEntropy",
+                "Mean",
+                "MinError(I)",
+                "Minimum",
+                "Moments",
+                "Otsu",
+                "Percentile",
+                "RenyiEntropy",
+                "Shambhag",
+                "Triangle",
+                "Yen"
+            ],
+            className: "simple form-control",
+            value: "Moments"
+        });
+        let lblThrMethod = document.createElement("LABEL");
+        lblThrMethod.htmlFor = "selthrmethod";
+        lblThrMethod.innerHTML = "Threshold method: ";
+        grid.addElement(lblThrMethod, 3, 0);
+        grid.addElement(selThrMethod, 3, 1);
+
+        let numMin = Input.input({
+            type: "number",
+            id: "nummin",
+            value: "1",
+            min: "0"
+        });
+        let lblMin = document.createElement("LABEL");
+        lblMin.htmlFor = "nummin";
+        lblMin.innerHTML = "Minimum: ";
+        grid.addElement(lblMin, 4, 0);
+        grid.addElement(numMin, 4, 1);
+
+        let numMax = Input.input({
+            type: "number",
+            id: "nummax",
+            value: "-1",
+            min: "-1"
+        });
+        let lblMax = document.createElement("LABEL");
+        lblMax.htmlFor = "nummax";
+        lblMax.innerHTML = "Maximum: ";
+        grid.addElement(lblMax, 5, 0);
+        grid.addElement(numMax, 5, 1);
+
+        let numFraction = Input.input({
+            type: "number",
+            id: "numfraction",
+            value: "0.500",
+            min: "0",
+            max: "1",
+            step: "0.001"
+        });
+        let lblFraction = document.createElement("LABEL");
+        lblFraction.htmlFor = "numfraction";
+        lblFraction.innerHTML = "Fraction: ";
+        grid.addElement(lblFraction, 6, 0);
+        grid.addElement(numFraction, 6, 1);
+
+        let numToll = Input.input({
+            type: "number",
+            id: "numtoll",
+            value: "0",
+            min: "0"
+        });
+        let lblToll = document.createElement("LABEL");
+        lblToll.htmlFor = "numtoll";
+        lblToll.innerHTML = "Tolerance: ";
+        grid.addElement(lblToll, 7, 0);
+        grid.addElement(numToll, 7, 1);
+
+        let fldOutputFolder = new FolderSelector("fileoutputfolder");
+        let lblOutputFolder = document.createElement("LABEL");
+        lblOutputFolder.htmlFor = "fileoutputfolder";
+        lblOutputFolder.innerHTML = "Output folder: ";
+        grid.addElement(lblOutputFolder, 8, 0);
+        grid.addElement(fldOutputFolder.element, 8, 1);
+
+        let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
+        buttonsContainer.addButton({
+            id: "OkDetection00",
+            text: "Ok",
+            action: () => {
+                if (typeof next === 'function') {
+                    if (fldOutputFolder.getFolderRoute()) {
+                        let params = {
+                            rmin: numRMin.value || "[]",
+                            rmax: numRMax.value || "[]",
+                            by: numBy.value || "[]",
+                            thrMethod: selThrMethod.value,
+                            min: numMin.value || "[]",
+                            max: numMax.value || "[]",
+                            fraction: numFraction.value || "[]",
+                            toll: numToll.value || "[]",
+                            path: fldOutputFolder.getFolderRoute()
+                        }
+                        next(modal, params);
+                    } else {
+                        dialog.showErrorBox("Can't detect objects", "You must choose an output folder where results will be saved.");
+                    }
+                }
+            },
+            className: "btn-default"
+        });
+        buttonsContainer.addButton({
+            id: "CancelDetection00",
+            text: "Cancel",
+            action: () => {
+                modal.destroy();
+            },
+            className: "btn-default"
+        });
+        let footer = document.createElement('DIV');
+        footer.appendChild(buttonsContainer.element);
+
+        modal.addBody(grid.element);
         modal.addFooter(footer);
         modal.show();
     }

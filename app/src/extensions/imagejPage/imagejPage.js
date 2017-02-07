@@ -142,7 +142,7 @@ class imagej extends GuiExtension {
 
 
     run(macro, args, next) {
-        exec(`java -jar ij.jar -batchpath ${macro}.ijm ${args}`, {
+        exec(`java -jar ij.jar -batchpath Atlas/${macro}.ijm ${args}`, {
             cwd: this.imagejpath
         }, (error, stdout, stderr) => {
             if (error) {
@@ -191,12 +191,8 @@ class imagej extends GuiExtension {
                     if (isMap) {
                         create = "create ";
                     }
-                    let macro = "mapcreator";
-                    if (params.merge) {
-                        macro += "withmerge";
-                    }
-
-                    let args = `"${filepaths[0]}#map=${params.map} pixel=${params.pixel} maximum=${params.maximum} slice=${params.slice} ${use}${create}choose=${params.path}"`;
+                    let macro = "MapCreator";
+                    let args = `"${filepaths[0]}#map=${params.map} pixel=${params.pixel} maximum=${params.maximum} slice=${params.slice} ${use}${create}choose=${params.path}#${params.merge}"`;
                     this.run(macro, args, (stdout) => {
                         modal.destroy();
                         MapIO.loadMap([`${params.path}${path.sep}${params.map}${path.sep}${params.map}.json`], (conf) => {
@@ -348,7 +344,7 @@ class imagej extends GuiExtension {
         }, (filepaths) => {
             if (filepaths) {
                 this.showObjectDetectionParamsModal((modal, params) => {
-                    let macro = "objectdetector";
+                    let macro = "ObjectDetector";
                     let args = `"${filepaths[0]}#${params.rmin}#${params.rmax}#${params.by}#${params.thrMethod}#${params.min}#${params.max}#${params.fraction}#${params.toll}#${params.path}"`;
                     this.run(macro, args, (stdout) => {
                         let config = Util.Layers.createJSONConfiguration(filepaths[0]);

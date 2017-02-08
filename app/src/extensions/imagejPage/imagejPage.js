@@ -107,13 +107,27 @@ class imagej extends GuiExtension {
             }
         }));
 
-        menu.append(new MenuItem({
-            label: "Object detection",
+        let objDetectionSubmenu = new Menu();
+        objDetectionSubmenu.append(new MenuItem({
+            label: "Single image",
             type: "normal",
             click: () => {
-                this.objectDetection();
+                this.objectDetection(false);
             }
-        }))
+        }));
+
+        objDetectionSubmenu.append(new MenuItem({
+            label: "Folder",
+            type: "normal",
+            click: () => {
+                this.objectDetection(true);
+            }
+        }));
+
+        menu.append(new MenuItem({
+            label: "Object detection",
+            submenu: objDetectionSubmenu
+        }));
 
         this.menu = new MenuItem({
             label: "Imagej",
@@ -336,25 +350,36 @@ class imagej extends GuiExtension {
         modal.show();
     }
 
-    objectDetection() {
+    objectDetection(isFolder) {
+        let props = ['openFile'];
+        if (isFolder) {
+            props = ['openDirectory'];
+        }
         dialog.showOpenDialog({
             title: 'Image object detection',
-            type: 'normal'
+            type: 'normal',
+            properties: props
         }, (filepaths) => {
             if (filepaths) {
+                console.log(filepaths[0]);
                 this.showObjectDetectionParamsModal((modal, params) => {
                     let macro = "ObjectDetector";
-                    let args = `"${filepaths[0]}#${params.rmin}#${params.rmax}#${params.by}#${params.thrMethod}#${params.min}#${params.max}#${params.fraction}#${params.toll}#${params.path}"`;
+                    let args = `"${isFolder}#${filepaths[0]}#${params.rmin}#${params.rmax}#${params.by}#${params.thrMethod}#${params.min}#${params.max}#${params.fraction}#${params.toll}#${params.path}"`;
                     this.run(macro, args, (stdout) => {
-                        let config = Util.Layers.createJSONConfiguration(filepaths[0]);
-                        fs.writeFile(`${params.path}${path.sep}points${path.sep}${config.name}.json`, JSON.stringify(config, null, 2), (err) => {
-                            if (err) {
-                                Util.notifyOS(`Can't save JSON configuration file! Error: ${err}`);
-                            }
-
+                        if (!isFolder) {
+                            let config = Util.Layers.createJSONConfiguration(filepaths[0]);
+                            fs.writeFile(`${params.path}${path.sep}points${path.sep}${config.name}.json`, JSON.stringify(config, null, 2), (err) => {
+                                if (err) {
+                                    Util.notifyOS(`Can't save JSON configuration file! Error: ${err}`);
+                                }
+                                Util.notifyOS(`Object detection task finished.`);
+                                this.gui.notify(`Object detection task finished.`);
+                            });
+                        }else{
+                            // TODO
                             Util.notifyOS(`Object detection task finished.`);
                             this.gui.notify(`Object detection task finished.`);
-                        });
+                        }  
                     });
                     this.gui.notify(`Performing object detection...`);
                     modal.destroy();

@@ -207,7 +207,6 @@ class imagej extends GuiExtension {
     showMapCreationParamsModal(next) {
         var modal = new Modal({
             title: "Map creator options",
-            width: "500px",
             height: "auto"
         });
 
@@ -299,6 +298,14 @@ class imagej extends GuiExtension {
 
         let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
         buttonsContainer.addButton({
+            id: "CancelMap00",
+            text: "Cancel",
+            action: () => {
+                modal.destroy();
+            },
+            className: "btn-default"
+        });
+        buttonsContainer.addButton({
             id: "CreateMap00",
             text: "Create",
             action: () => {
@@ -318,14 +325,6 @@ class imagej extends GuiExtension {
                         dialog.showErrorBox("Can't create map", "You must choose an output folder.");
                     }
                 }
-            },
-            className: "btn-default"
-        });
-        buttonsContainer.addButton({
-            id: "CancelMap00",
-            text: "Cancel",
-            action: () => {
-                modal.destroy();
             },
             className: "btn-default"
         });
@@ -367,7 +366,6 @@ class imagej extends GuiExtension {
     showObjectDetectionParamsModal(next) {
         var modal = new Modal({
             title: "Object detection options",
-            width: "500px",
             height: "auto"
         });
 
@@ -500,6 +498,14 @@ class imagej extends GuiExtension {
 
         let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
         buttonsContainer.addButton({
+            id: "CancelDetection00",
+            text: "Cancel",
+            action: () => {
+                modal.destroy();
+            },
+            className: "btn-default"
+        });
+        buttonsContainer.addButton({
             id: "OkDetection00",
             text: "Ok",
             action: () => {
@@ -521,14 +527,6 @@ class imagej extends GuiExtension {
                         dialog.showErrorBox("Can't detect objects", "You must choose an output folder where results will be saved.");
                     }
                 }
-            },
-            className: "btn-default"
-        });
-        buttonsContainer.addButton({
-            id: "CancelDetection00",
-            text: "Cancel",
-            action: () => {
-                modal.destroy();
             },
             className: "btn-default"
         });

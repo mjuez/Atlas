@@ -80,7 +80,6 @@ class MapEdit {
         let newlayers = Util.clone(conf.layers);
         let modal = new Modal({
             title: `Edit ${conf.name} layers`,
-            width: '800px',
             height: 'auto'
         });
         let body = document.createElement('DIV');
@@ -210,7 +209,6 @@ class MapEdit {
         let newconf = Util.clone(conf);
         let modal = new Modal({
             title: `${conf.name}`,
-            width: '400px',
             height: 'auto'
         });
         let body = document.createElement('DIV');
@@ -286,20 +284,20 @@ class MapEdit {
         }
         let Bc = new ButtonsContainer(document.createElement('DIV'));
         Bc.addButton({
+            id: 'CancelMap00',
+            text: 'Cancel',
+            action: () => {
+                modal.destroy();
+            },
+            className: 'btn-default'
+        });
+        Bc.addButton({
             id: 'AddMap00',
             text: text,
             action: () => {
                 if (typeof cl === 'function') {
                     cl(newconf);
                 }
-                modal.destroy();
-            },
-            className: 'btn-default'
-        });
-        Bc.addButton({
-            id: 'CancelMap00',
-            text: 'Cancel',
-            action: () => {
                 modal.destroy();
             },
             className: 'btn-default'

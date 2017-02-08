@@ -177,7 +177,7 @@ class MapIO {
                 if (configuration.basePath.startsWith('/home')) {
                     configuration.source = 'local';
                 }
-                if (configuration.basePath.startsWith('file')) {
+                if (configuration.basePath.startsWith('file://')) {
                     configuration.source = 'local';
                 }
                 if (configuration.basePath.startsWith('C:')) {
@@ -189,22 +189,6 @@ class MapIO {
             configuration.source = 'remote';
         }
         configuration.source = configuration.source || 'local';
-
-        if (!configuration.name) {
-            if (configuration.Name) {
-                configuration.name = configuration.Name;
-                delete configuration.Name;
-            } else if (configuration.NAME) {
-                configuration.name = configuration.NAME;
-                delete configuration.NAME;
-            } else if (configuration.alias) {
-                configuration.name = configuration.alias.replace(" ", "_");
-            }
-        }
-
-        configuration.size_cal = configuration.size_cal || 1;
-        configuration.depth_cal = configuration.depth_cal || 1;
-
         let layers = configuration.layers;
         let tiles = configuration.tilesLayers;
         let points = configuration.pointsLayers;
@@ -225,23 +209,13 @@ class MapIO {
             regions
         }
 
-        if (!configuration.authors) {
-            if (configuration.author) {
-                configuration.authors = configuration.author;
-            } else if (configuration.auth) {
-                configuration.authors = configuration.auth;
-            } else if (configuration.AUTHORS) {
-                configuration.authors = configuration.AUTHORS;
-            } else if (configuration.AUTHOR) {
-                configuration.authors = configuration.AUTHORS;
-            } else {
-                configuration.authors = "Unknown";
-            }
-        }
+        configuration._name = 'map';
+        Util.setOne(configuration,'name','NAME','Name','title','TITLE','Title','_name');
+        configuration._auth = 'Unknown';
+        Util.setOne(configuration,'authors','AUTHORS','auth','AUTH','Authors','AUTHS','auth','author','AUTHOR','Author','_auth');
 
         configuration.layers = {};
-        let id = 0;
-
+        let id = 0; //use a unique id for every layer
         for (var a in alls) {
             for (var lay in alls[a]) {
                 if (typeof alls[a][lay] === 'string' || alls[a][lay] instanceof String) {
@@ -265,7 +239,7 @@ class MapIO {
                 }
             }
         }
-        //now the layers configurations are stored in configuration.layers
+        //now the layers configurations are stored in configuration.layers so we delete all the rest
         delete configuration.tilesLayers;
         delete configuration.pointsLayers;
         delete configuration.pixelsLayers;
@@ -274,6 +248,8 @@ class MapIO {
         delete configuration.gridLayers;
         delete configuration.polygons;
         delete configuration.regions
+
+        //return the clean configuration
         return configuration;
     }
 
@@ -293,15 +269,16 @@ class MapIO {
 
         if (config.type.includes('tilesLayer')) {
             config.tilesUrlTemplate = config.tilesUrlTemplate || '';
-            if (config.tilesUrlTemplate.startsWith("http://") |
-                config.tilesUrlTemplate.startsWith("file://") |
-                config.tilesUrlTemplate.startsWith("https://")) {
+            if (config.tilesUrlTemplate.startsWith("http://") ||
+                config.tilesUrlTemplate.startsWith("file://") ||
+                config.tilesUrlTemplate.startsWith("https://") ||
+                path.isAbsolute(config.tilesUrlTemplate)) {
                 config.basePath = '';
             }
             if (config.tilesUrlTemplate.includes(config.basePath)) {
                 config.basePath = '';
             }
-            config.tilesUrlTemplate = config.basePath + config.tilesUrlTemplate; //join basepath and tilesUrltemplate
+            config.tilesUrlTemplate = path.join(config.basePath, config.tilesUrlTemplate); //join basepath and tilesUrltemplate
 
             config.maxZoom = Number(config.maxZoom) || 0;
             config.minZoom = Number(config.minZoom) || 0;
@@ -315,6 +292,8 @@ class MapIO {
             config.tileSize = config.tileSize || 256;
             config.size = Math.max(1, Number(config.size || config.tileSize || 256));
             config.size_cal = config.size_cal || config.size || 256;
+            config.deth_cal = config.depth_cal || 1;
+            config.unit_cal = config.unit_cal || 'u';
 
             if (Array.isArray(config.tileSize)) {
                 config.bounds = config.bounds || [
@@ -347,60 +326,64 @@ class MapIO {
             config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}points.png`;
             config.pointsUrlTemplate = config.pointsUrlTemplate || '';
             config.excludeCF = config.excludeCF || false;
-            if (config.pointsUrlTemplate.startsWith("http://") |
-                config.pointsUrlTemplate.startsWith("file://") |
-                config.pointsUrlTemplate.startsWith("https://")) {
+            if (config.pointsUrlTemplate.startsWith("http://") ||
+                config.pointsUrlTemplate.startsWith("file://") ||
+                config.pointsUrlTemplate.startsWith("https://") ||
+                path.isAbsolute(config.pointsUrlTemplate)) {
                 config.basePath = '';
             }
             if (config.pointsUrlTemplate.startsWith(config.basePath)) {
                 config.basePath = '';
             }
-            config.pointsUrlTemplate = config.basePath + config.pointsUrlTemplate;
+            config.pointsUrlTemplate = path.join(config.basePath, config.pointsUrlTemplate);
             config.__color = 'red';
             Util.setOne(config, 'color', ['COLOR', 'Color', '__color']);
 
         }
         if (config.type.includes('pixelsLayer')) {
-            config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}points.png`;
+            config.previewImageUrl = path.join(app.getAppPath(), 'images', 'points.png');
             config.pixelsUrlTemplate = config.pixelsUrlTemplate || '';
-            if (config.pixelsUrlTemplate.startsWith("http://") |
-                config.pixelsUrlTemplate.startsWith("file://") |
-                config.pixelsUrlTemplate.startsWith("https://")) {
+            if (config.pixelsUrlTemplate.startsWith("http://") ||
+                config.pixelsUrlTemplate.startsWith("file://") ||
+                config.pixelsUrlTemplate.startsWith("https://") ||
+                path.isAbsolute(config.pixelsUrlTemplate)) {
                 config.basePath = '';
             }
             if (config.pixelsUrlTemplate.startsWith(config.basePath)) {
                 config.basePath = '';
             }
-            config.pixelsUrlTemplate = config.basePath + config.pixelsUrlTemplate;
+            config.pixelsUrlTemplate = path.join(config.basePath, config.pixelsUrlTemplate);
         }
         if (config.type.includes('guideLayer')) {
-            config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}grid.png`;
+            config.previewImageUrl = path.join(app.getAppPath(), 'images', 'grid.png');
             config.__color = 'blue';
             Util.setOne(config, 'color', ['COLOR', 'Color', '__color']);
         }
         if (config.type.includes('gridLayer')) {
-            config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}grid.png`;
+            config.previewImageUrl = path.join(app.getAppPath(), 'images', 'grid.png');
             config.__color = 'blue';
             Util.setOne(config, 'color', ['COLOR', 'Color', '__color']);
 
         }
         if (config.type.includes('imageLayer')) {
             config.imageUrl = config.imageUrl || '';
-            if (config.imageUrl.startsWith("http://") |
-                config.imageUrl.startsWith("file://") |
-                config.imageUrl.startsWith("https://")) {
+            if (config.imageUrl.startsWith("http://") ||
+                config.imageUrl.startsWith("file://") ||
+                config.imageUrl.startsWith("https://") ||
+                path.isAbsolute(config.imageUrl)) {
                 config.basePath = '';
             }
             if (config.imageUrl.includes(config.basePath)) {
                 config.basePath = '';
             }
-            config.imageUrl = config.basePath + config.imageUrl;
+            config.imageUrl = path.join(config.basePath, config.imageUrl);
             config.previewImageUrl = config.imageUrl;
 
         }
         if (config.type.includes('drawnPolygons')) {
-            config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}regions.png`;
+            config.previewImageUrl = path.join(app.getAppPath(), 'images', 'regions.png');
         }
+        delete config.basePath; //because we joined all in the path
         return config;
     }
 
@@ -462,11 +445,11 @@ class MapIO {
                             break;
                         default:
                     }
-                    delete l.basePath;
+                    delete l.basePath; //delete the base path from layer configuration if present (should not be)
                     delete l.previewImageUrl //delete the previewImageUrl it will be created again from the tiles url
                     return l;
                 });
-                delete conf.basePath;
+                delete conf.basePath; //delete the base path from the map configuration (in this way it will be created again when the map will be loaded)
                 let content = JSON.stringify(conf);
                 fs.writeFile(path, content, (error) => {
                     if (error) {

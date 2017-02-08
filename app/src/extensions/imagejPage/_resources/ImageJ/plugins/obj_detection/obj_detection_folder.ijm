@@ -74,7 +74,7 @@ for (i = 0; i < list.length; i++){
   rename(titleOriginal);
   run("ObjCounter",  "threshold=1 slice="+floor(depth)+" min. ="+min+" max.="+max +" fraction="+fraction+" tollerance="+toll+" objects export_points");
   save(outFolderO+"/objects_"+titleOriginal);
-  close();
+  //close();
   saveAs("Results", outFolderP + "/points_"+titleOriginal+".csv");
   close("*");
   }

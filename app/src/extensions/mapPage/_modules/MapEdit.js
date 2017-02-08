@@ -270,10 +270,12 @@ class MapEdit {
                 let layer = conf.layers[Object.keys(conf.layers)[inp.selectedIndex]];
                 MapEdit.layerPreviewImage(layer, right);
                 MapEdit.layerPreviewInfo(layer, right);
+                MapEdit.layerRemoveButton(newconf, layer, right);
             }
         });
         MapEdit.layerPreviewImage(conf.layers[Object.keys(conf.layers)[0]], right);
         MapEdit.layerPreviewInfo(conf.layers[Object.keys(conf.layers)[0]], right);
+        MapEdit.layerRemoveButton(newconf, conf.layers[Object.keys(conf.layers)[0]], right);
         let text;
         switch (conf.new) {
             case true:
@@ -307,6 +309,27 @@ class MapEdit {
         modal.addBody(body);
         modal.addFooter(footer);
         modal.show();
+    }
+
+    static layerRemoveButton(conf, layer, parent) {
+        let a = new ButtonsContainer(document.createElement('DIV'));
+        a.addButton({
+            id: 'removelayerbutton',
+            text: 'Remove layer',
+            className : 'btn-positive',
+            toggle: true,
+            groupId: 'xxxx',
+            action: {
+              active:(btn) => {
+                delete conf.layers[layer.name]; //delete the layer
+                btn.innerHTML = 'Layer removed';
+            },
+            deactive: (btn)=>{
+              conf.layers[layer.name] = layer; //re-add the layer the only problem is that it changes the order of the layers...it's ok
+              btn.innerHTML = 'Remove layer'
+            } }
+        });
+        parent.appendChild(a.element);
     }
 
 

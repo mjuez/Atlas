@@ -43,8 +43,6 @@ const FolderSelector = require('FolderSelector');
 const Input = require('Input');
 const ButtonsContainer = require('ButtonsContainer');
 const fs = require('fs');
-const Input = require('Input');
-const ButtonsContainer = require('ButtonsContainer');
 
 class imagej extends GuiExtension {
 

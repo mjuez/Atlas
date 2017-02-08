@@ -196,7 +196,7 @@ class imagej extends GuiExtension {
             type: 'normal'
         }, (filepaths) => {
             if (filepaths) {
-                this.showMapCreationParamsModal((modal, params) => {
+                this.showMapCreationParamsModal(filepaths[0], (modal, params) => {
                     let use = "";
                     if (params.use) {
                         use = "use ";
@@ -218,7 +218,7 @@ class imagej extends GuiExtension {
         });
     }
 
-    showMapCreationParamsModal(next) {
+    showMapCreationParamsModal(imagePath, next) {
         var modal = new Modal({
             title: "Map creator options",
             height: "auto"
@@ -295,7 +295,8 @@ class imagej extends GuiExtension {
             type: "number",
             id: "numusedslice",
             value: "1",
-            min: "1"
+            min: "1",
+            max: Util.Image.getTotalSlices(imagePath)
         });
         let lblUsedSlice = document.createElement("LABEL");
         lblUsedSlice.htmlFor = "numusedslice";

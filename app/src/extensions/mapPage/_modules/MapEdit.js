@@ -375,7 +375,7 @@ class MapEdit {
                     label: 'Original Size',
                     className: 'simple form-control',
                     parent: parent,
-                    type: 'numeric',
+                    type: 'number',
                     value: layer.original_size || 256,
                     placeholder: 'original size',
                     oninput: (inp) => {
@@ -534,7 +534,7 @@ class MapEdit {
                     label: 'Original Size',
                     className: 'simple form-control',
                     parent: parent,
-                    type: 'numeric',
+                    type: 'number',
                     value: layer.original_size || 256,
                     placeholder: 'original size',
                     oninput: (inp) => {

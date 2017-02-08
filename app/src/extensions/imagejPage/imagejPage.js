@@ -367,19 +367,20 @@ class imagej extends GuiExtension {
                     let args = `"${isFolder}#${filepaths[0]}#${params.rmin}#${params.rmax}#${params.by}#${params.thrMethod}#${params.min}#${params.max}#${params.fraction}#${params.toll}#${params.path}"`;
                     this.run(macro, args, (stdout) => {
                         if (!isFolder) {
-                            let config = Util.Layers.createJSONConfiguration(filepaths[0]);
-                            fs.writeFile(`${params.path}${path.sep}points${path.sep}${config.name}.json`, JSON.stringify(config, null, 2), (err) => {
-                                if (err) {
-                                    Util.notifyOS(`Can't save JSON configuration file! Error: ${err}`);
-                                }
-                                Util.notifyOS(`Object detection task finished.`);
-                                this.gui.notify(`Object detection task finished.`);
+                            Util.Layers.createJSONConfiguration(filepaths[0], params.path, (config) => {
+                                fs.writeFile(`${params.path}${path.sep}points${path.sep}${config.name}.json`, JSON.stringify(config, null, 2), (err) => {
+                                    if (err) {
+                                        Util.notifyOS(`Can't save JSON configuration file! Error: ${err}`);
+                                    }
+                                    Util.notifyOS(`Object detection task finished.`);
+                                    this.gui.notify(`Object detection task finished.`);
+                                });
                             });
-                        }else{
+                        } else {
                             // TODO
                             Util.notifyOS(`Object detection task finished.`);
                             this.gui.notify(`Object detection task finished.`);
-                        }  
+                        }
                     });
                     this.gui.notify(`Performing object detection...`);
                     modal.destroy();

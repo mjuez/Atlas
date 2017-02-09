@@ -468,6 +468,7 @@ class mapPage extends GuiExtension {
             this.mapManager.setConfiguration(configuration, force);
             this.sidebarRegions.show();
             this.sidebar.layerList.hide();
+            //this.sidebar.list.activeJustOne(configuration.id);
         } else {
             this.switchMap(this.mapManager._configuration);
         }

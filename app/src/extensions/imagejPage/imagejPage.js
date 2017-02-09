@@ -396,7 +396,6 @@ class imagej extends GuiExtension {
             properties: props
         }, (filepaths) => {
             if (filepaths) {
-                console.log(filepaths[0]);
                 this.showObjectDetectionParamsModal((modal, params) => {
                     let macro = "ObjectDetector";
                     let args = `"${isFolder}#${filepaths[0]}#${params.rmin}#${params.rmax}#${params.by}#${params.thrMethod}#${params.min}#${params.max}#${params.fraction}#${params.toll}#${params.path}"`;

@@ -42,7 +42,7 @@ const Grid = require('Grid');
 const FolderSelector = require('FolderSelector');
 const ButtonsContainer = require('ButtonsContainer');
 const fs = require('fs');
-
+const MapCreatorTask = require('MapCreatorTask');
 const Input = require('Input');
 
 class imagej extends GuiExtension {
@@ -230,166 +230,16 @@ class imagej extends GuiExtension {
             type: 'normal'
         }, (filepaths) => {
             if (filepaths) {
-                this.showMapCreationParamsModal(filepaths[0], (modal, params) => {
-                    let use = "";
-                    if (params.use) {
-                        use = "use ";
-                    }
-                    let create = "";
-                    if (isMap) {
-                        create = "create ";
-                    }
-                    let macro = "MapCreator";
-                    let args = `"${filepaths[0]}#map=${params.map} pixel=${params.pixel} maximum=${params.maximum} slice=${params.slice} ${use}${create}choose=${params.path}#${params.merge}"`;
-                    this.run(macro, args, (stdout) => {
-                        modal.destroy();
-                        MapIO.loadMap([`${params.path}${path.sep}${params.map}${path.sep}${params.map}.json`], (conf) => {
-                            this.gui.extensionsManager.extensions.mapPage.addNewMap(conf);
-                        });
-                    });
-                });
-            }
-        });
-    }
-
-    showMapCreationParamsModal(imagePath, next) {
-        var modal = new Modal({
-            title: "Map creator options",
-            height: "auto"
-        });
-
-        let body = document.createElement("DIV");
-        body.className = "padded";
-        let grid = new Grid(7, 2);
-
-        let txtMapName = Input.input({
-            type: "text",
-            id: "txtmapname",
-            value: "map"
-        });
-        let lblMapName = document.createElement("LABEL");
-        lblMapName.htmlFor = "txtmapname";
-        lblMapName.innerHTML = "Map name: ";
-        grid.addElement(lblMapName, 0, 0);
-        grid.addElement(txtMapName, 0, 1);
-
-        let txtPixelTiles = Input.input({
-            type: "text",
-            id: "txtpixeltiles",
-            value: "256"
-        });
-        let lblPixelTiles = document.createElement("LABEL");
-        lblPixelTiles.htmlFor = "txtpixeltiles";
-        lblPixelTiles.innerHTML = "Pixel tiles dimension: ";
-        grid.addElement(lblPixelTiles, 1, 0);
-        grid.addElement(txtPixelTiles, 1, 1);
-
-        let numMaximumZoom = Input.input({
-            type: "number",
-            id: "nummaximumzoom",
-            value: "5",
-            min: "0",
-            max: "8"
-        });
-        let lblMaximumZoom = document.createElement("LABEL");
-        lblMaximumZoom.htmlFor = "nummaximumzoom";
-        lblMaximumZoom.innerHTML = "Maximum zoom: ";
-        grid.addElement(lblMaximumZoom, 2, 0);
-        grid.addElement(numMaximumZoom, 2, 1);
-
-        let numSlices = Util.Image.getTotalSlices(imagePath);
-
-        let checkUseAllSlice = Input.input({
-            type: "checkbox",
-            id: "useallslice",
-            onchange: (e) => {
-                checkMergeAllSlices.disabled = checkUseAllSlice.checked;
-                numUsedSlice.disabled = checkUseAllSlice.checked;
-            }
-        });
-        let lblUseAllSlice = document.createElement("LABEL");
-        lblUseAllSlice.htmlFor = "useallslice";
-        lblUseAllSlice.innerHTML = "Use all slice: ";
-        grid.addElement(lblUseAllSlice, 3, 0);
-        grid.addElement(checkUseAllSlice, 3, 1);
-
-        let checkMergeAllSlices = Input.input({
-            type: "checkbox",
-            id: "mergeallslices",
-            onchange: (e) => {
-                checkUseAllSlice.disabled = checkMergeAllSlices.checked;
-                numUsedSlice.disabled = checkMergeAllSlices.checked;
-            }
-        });
-        let lblMergeAllSlices = document.createElement("LABEL");
-        lblMergeAllSlices.htmlFor = "mergeallslices";
-        lblMergeAllSlices.innerHTML = "Merge all slices: ";
-        grid.addElement(lblMergeAllSlices, 4, 0);
-        grid.addElement(checkMergeAllSlices, 4, 1);
-
-        if(numSlices == 1){
-            checkMergeAllSlices.disabled = true;
-            checkUseAllSlice.disabled = true;
-        }
-
-        let numUsedSlice = Input.input({
-            type: "number",
-            id: "numusedslice",
-            value: "1",
-            min: "1",
-            max: numSlices
-        });
-        let lblUsedSlice = document.createElement("LABEL");
-        lblUsedSlice.htmlFor = "numusedslice";
-        lblUsedSlice.innerHTML = "Slice to be used: ";
-        grid.addElement(lblUsedSlice, 5, 0);
-        grid.addElement(numUsedSlice, 5, 1);
-
-        let fldOutputFolder = new FolderSelector("fileoutputfolder");
-        let lblOutputFolder = document.createElement("LABEL");
-        lblOutputFolder.htmlFor = "fileoutputfolder";
-        lblOutputFolder.innerHTML = "Output folder: ";
-        grid.addElement(lblOutputFolder, 6, 0);
-        grid.addElement(fldOutputFolder.element, 6, 1);
-
-        let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
-        buttonsContainer.addButton({
-            id: "CancelMap00",
-            text: "Cancel",
-            action: () => {
-                modal.destroy();
-            },
-            className: "btn-default"
-        });
-        buttonsContainer.addButton({
-            id: "CreateMap00",
-            text: "Create",
-            action: () => {
-                if (typeof next === 'function') {
-                    if (fldOutputFolder.getFolderRoute()) {
-                        let params = {
-                            map: txtMapName.value || "[]",
-                            pixel: txtPixelTiles.value || "[]",
-                            maximum: numMaximumZoom.value || "[]",
-                            slice: numUsedSlice.value || "[]",
-                            use: checkUseAllSlice.checked,
-                            merge: checkMergeAllSlices.checked,
-                            path: fldOutputFolder.getFolderRoute()
-                        }
-                        next(modal, params);
-                    } else {
-                        dialog.showErrorBox("Can't create map", "You must choose an output folder.");
-                    }
+                let details;
+                if(isMap){
+                    details = `Map: ${path.basename(filepaths[0])}`;
+                }else{
+                    details = `Layer: ${path.basename(filepaths[0])}`;
                 }
-            },
-            className: "btn-default"
+                let mapCreatorTask = new MapCreatorTask(details, isMap, this.gui);
+                mapCreatorTask.run(filepaths[0]);
+            }
         });
-        let footer = document.createElement('DIV');
-        footer.appendChild(buttonsContainer.element);
-
-        modal.addBody(grid.element);
-        modal.addFooter(footer);
-        modal.show();
     }
 
     objectDetection(isFolder) {

@@ -339,3 +339,22 @@ img.imageicon {
 .folderselector {
     display: none;
 }
+
+.task {
+    display: table;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #888;
+}
+
+.task .info {
+    display: table-cell;
+}
+
+.task .actions {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+}

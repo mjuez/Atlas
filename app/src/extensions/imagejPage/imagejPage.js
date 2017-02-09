@@ -40,9 +40,10 @@ const path = require('path');
 const Modal = require('Modal');
 const Grid = require('Grid');
 const FolderSelector = require('FolderSelector');
-const Input = require('Input');
 const ButtonsContainer = require('ButtonsContainer');
 const fs = require('fs');
+
+const Input = require('Input');
 
 class imagej extends GuiExtension {
 
@@ -189,7 +190,7 @@ class imagej extends GuiExtension {
 
 
     run(macro, args, next) {
-        exec(`java -jar ij.jar -batchpath Atlas/${macro}.ijm ${args}`, {
+        exec(`java -Xmx${this.memory}m -Xss${this.stackMemory}m -jar ij.jar -batchpath Atlas/${macro}.ijm ${args}`, {
             cwd: this.imagejpath
         }, (error, stdout, stderr) => {
             if (error) {

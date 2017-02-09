@@ -7,6 +7,9 @@ mergeSlices = argument[2];
 
 open(image);
 if(mergeSlices == "true"){
-    run("Z Project...", "projection=[Max Intensity]");
+    nslice=nSlices();
+    if(nslice > 1){
+        run("Z Project...", "projection=[Max Intensity]");
+    }
 }
 run("Map creator", mapCreatorParams);

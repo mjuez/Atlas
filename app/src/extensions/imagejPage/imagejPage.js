@@ -611,7 +611,6 @@ class imagej extends GuiExtension {
             properties: props
         }, (filepaths) => {
             if (filepaths) {
-                console.log(filepaths[0]);
                 this.showHolesDetectionParamsModal((modal, params) => {
                     let macro = "HolesDetector";
                     let args = `"${isFolder}#${filepaths[0]}#${params.radius}#${params.threshold}#${params.path}"`;

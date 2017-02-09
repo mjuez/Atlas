@@ -61,6 +61,9 @@ class regionStatsPage extends GuiExtension {
         this.cleanPane();
         this.sidebar.list.clean();
         this.loadWorkspaceData();
+        this.cleanPane();
+        this.showRegionsStats(this.gui.extensionsManager.extensions.mapPage.mapManager._configuration);
+        this.sidebar.list.activeJustOne(this.gui.extensionsManager.extensions.mapPage.mapManager._configuration.id);
     }
 
     addSidebar() {

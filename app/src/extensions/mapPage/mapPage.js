@@ -625,6 +625,7 @@ class mapPage extends GuiExtension {
         this.maps[configuration.id] = configuration;
         configuration.new = false;
         this.switchMap(configuration);
+        this.sidebar.list.activeJustOne(configuration.id);
         this.mapPane.show();
         this.devPane.hide();
     }

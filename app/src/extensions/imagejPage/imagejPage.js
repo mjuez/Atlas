@@ -297,6 +297,8 @@ class imagej extends GuiExtension {
         grid.addElement(lblMaximumZoom, 2, 0);
         grid.addElement(numMaximumZoom, 2, 1);
 
+        let numSlices = Util.Image.getTotalSlices(imagePath);
+
         let checkUseAllSlice = Input.input({
             type: "checkbox",
             id: "useallslice",
@@ -325,12 +327,17 @@ class imagej extends GuiExtension {
         grid.addElement(lblMergeAllSlices, 4, 0);
         grid.addElement(checkMergeAllSlices, 4, 1);
 
+        if(numSlices == 1){
+            checkMergeAllSlices.disabled = true;
+            checkUseAllSlice.disabled = true;
+        }
+
         let numUsedSlice = Input.input({
             type: "number",
             id: "numusedslice",
             value: "1",
             min: "1",
-            max: Util.Image.getTotalSlices(imagePath)
+            max: numSlices
         });
         let lblUsedSlice = document.createElement("LABEL");
         lblUsedSlice.htmlFor = "numusedslice";

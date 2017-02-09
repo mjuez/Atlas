@@ -356,6 +356,7 @@ class mapPage extends GuiExtension {
 
 
     cleanMaps() {
+      this.mapManager.clean();
         if (Object.keys(this.maps)) {
             Object.keys(this.maps).map((id) => {
                 let map = this.maps[id];
@@ -557,6 +558,9 @@ class mapPage extends GuiExtension {
                     noLink: true
                 }, (id) => {
                     if (id > 0) {
+                        if (configuration == this.mapManager._configuration){
+                          this.mapManager.clean();
+                        }
                         this.sidebar.list.removeItem(`${configuration.id}`);
                         delete this.maps[configuration.id];
                     }

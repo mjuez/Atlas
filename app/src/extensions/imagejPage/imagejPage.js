@@ -180,6 +180,7 @@ class imagej extends GuiExtension {
             cwd: this.imagejpath
         }, (error, stdout, stderr) => {
             if (error) {
+              console.log(error);
                 Util.notifyOS(`ImageJ exec error: ${error}`);
                 return;
             }
@@ -190,7 +191,7 @@ class imagej extends GuiExtension {
 
 
     run(macro, args, next) {
-        exec(`java -Xmx${this.memory}m -Xss${this.stackMemory}m -jar ij.jar -batchpath Atlas/${macro}.ijm ${args}`, {
+        exec(`java -Xmx${this.memory}m -Xss${this.stackMemory}m -jar ij.jar -batchpath Atlas${path.separator}${macro}.ijm ${args}`, {
             cwd: this.imagejpath
         }, (error, stdout, stderr) => {
             if (error) {

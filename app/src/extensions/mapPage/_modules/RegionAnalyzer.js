@@ -18,7 +18,8 @@
 
 'use strict';
 
-const Observable = require('Observable');
+
+const ProgressBar = require('ProgressBar');
 const Task = require('Task');
 const Util = require('Util');
 const {
@@ -27,6 +28,10 @@ const {
 const {
     ipcRenderer
 } = require('electron');
+const {
+    ChildProcess
+} = require('child_process');
+
 
 
 
@@ -36,12 +41,12 @@ class RegionAnalyzer {
         this.gui = gui;
     }
 
-    areaPX(polygon) {
+    areaPx(polygon) {
         return this.mapManager.polygonArea(polygon.getLatLngs());
     }
 
     areaCal(polygon) {
-        return this.computeAreaPx(polygon) * (this.mapManager._configuration.size_cal * this.mapManager._configuration.size_cal) / (this.mapManager.getSize() * this.mapManager.getSize());
+        return this.areaPx(polygon) * (this.mapManager._configuration.size_cal * this.mapManager._configuration.size_cal) / (this.mapManager.getSize() * this.mapManager.getSize());
     }
 
     volumeCal(polygon) {
@@ -102,11 +107,10 @@ class PointsCounting extends Task {
                 case 'complete':
                     if (typeof callback === 'function') callback(m);
                     ch.kill();
-                    this.completed = true;
-                    this.fire('complete');
+                    this.taskManager.completeTask(this.id);
                     break;
                 case 'step':
-                    //this.gui.header.progressBar.setBar((m.prog / m.tot) * 100);
+                    this.progressBar.setBar((m.prog / m.tot) * 100);
                     ipcRenderer.send('setProgress', {
                         value: (m.prog / m.tot)
                     });
@@ -125,7 +129,36 @@ class PointsCounting extends Task {
             polygon: pol,
             points: this.points
         });
+        this.ch = ch;
+    }
 
+    cancel() {
+        super.cancel();
+        if (this.ch instanceof ChildProcess) {
+            this.ch.kill();
+        }
+    }
+
+    _createDOMElement() {
+        super._createDOMElement();
+        this.progressBar = new ProgressBar(this.customActions);
+    }
+
+    DOMActions() {
+        let actions = super.DOMActions();
+        // let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
+        // buttonsContainer.addButton({
+        //     id: "LoadMap00",
+        //     text: "Load map to workspace",
+        //     action: () => {
+        //         MapIO.loadMap([this.jsonMap], (conf) => {
+        //             this.gui.extensionsManager.extensions.mapPage.addNewMap(conf);
+        //         });
+        //     },
+        //     className: "btn btn-large btn-positive"
+        // });
+        // actions.appendChild(buttonsContainer.element);
+        return actions;
     }
 
 }
@@ -152,11 +185,10 @@ class PixelsCounting extends Task {
                 case 'complete':
                     if (typeof callback === 'function') callback(m);
                     ch.kill();
-                    this.completed = true;
-                    this.fire('complete');
+                    this.taskManager.completeTask(this.id);
                     break;
                 case 'step':
-                    //this.gui.header.progressBar.setBar((m.prog / m.tot) * 100);
+                    this.progressBar.setBar((m.prog / m.tot) * 100);
                     ipcRenderer.send('setProgress', {
                         value: (m.prog / m.tot)
                     });
@@ -175,6 +207,19 @@ class PixelsCounting extends Task {
             polygon: pol,
             pixels: this.pixels
         });
+        this.ch = ch;
+    }
+
+    cancel() {
+        super.cancel();
+        if (this.ch instanceof ChildProcess) {
+            this.ch.kill();
+        }
+    }
+
+    _createDOMElement() {
+        super._createDOMElement();
+        this.progressBar = new ProgressBar(this.customActions);
     }
 
 }

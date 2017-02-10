@@ -194,16 +194,6 @@ class imagej extends GuiExtension {
         return spawn('java',[`-Xmx${this.memory}m`, `-Xss${this.stackMemory}m`, `-jar`, `ij.jar`, `-batchpath`, `Atlas${path.sep}${macro}.ijm`, `${args}`], {
             cwd: this.imagejpath
         });
-        /*, (error, stdout, stderr) => {
-            if (typeof next === 'function') {
-                if (error) {
-                    next(error);
-                }
-                next(null, stdout);
-            }
-        });
-
-        return childProcess;*/
     }
 
     /*runHeadless(cmnd, arg, cl) {

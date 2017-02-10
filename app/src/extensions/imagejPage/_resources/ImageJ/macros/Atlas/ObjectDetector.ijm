@@ -78,4 +78,6 @@ function detectObjects(imagePath){
     save(outFolderO+"/objects_"+titleOriginal);
     saveAs("Results", outFolderP + "/points_"+titleOriginal+".csv");
     close("*");
+    selectWindow("Results");
+    run("Close"); 
 }

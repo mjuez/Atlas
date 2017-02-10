@@ -21,7 +21,7 @@
 "use strict";
 
 
-const computeRegionStats = require('./_modules/computeRegionStats.js');
+const RegionAnalyzer = require('./_modules/RegionAnalyzer.js');
 const Modal = require('Modal');
 const Workspace = require('Workspace');
 const Sidebar = require('Sidebar');
@@ -145,8 +145,10 @@ class mapPage extends GuiExtension {
             let map = L.map('map', arg);
             map.setView([-100, 100], 0);
             this.mapManager = L.mapManager(map);
+            this.regionAnalyzer = new RegionAnalyzer(this.mapManager, this.gui);
             this.listenMapManager();
             this.makeMenu();
+
 
             this.gui.workspace.addSpace(this, this.maps, false); //without overwriting
 
@@ -220,7 +222,7 @@ class mapPage extends GuiExtension {
             accelerator: 'CmdOrCtrl + Enter',
             click: () => {
                 this.selectedRegions.map((reg) => {
-                    computeRegionStats(reg, this.gui, this.mapManager);
+                    this.regionAnalyzer.computeRegionStats(reg);
                 });
             }
         }));
@@ -242,7 +244,7 @@ class mapPage extends GuiExtension {
             accelerator: 'CmdOrCtrl + Shift + Enter',
             click: () => {
                 this.mapManager.getLayers('polygon').map((reg) => {
-                    computeRegionStats(reg, this.gui, this.mapManager);
+                    this.regionAnalyzer.computeRegionStats(reg);
                 });
             }
         }));
@@ -700,10 +702,10 @@ class mapPage extends GuiExtension {
                 label: 'Compute',
                 click: () => {
                     if (this.selectedRegions.length === 0) {
-                        computeRegionStats(layer,this.gui,this.mapManager);
+                        this.regionAnalyzer.computeRegionStats(layer);
                     } else {
                         this.selectedRegions.map((reg) => {
-                            computeRegionStats(reg,this.gui,this.mapManager);
+                            this.regionAnalyzer.computeRegionStats(reg);
                         });
                     }
 

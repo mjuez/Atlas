@@ -45,6 +45,7 @@ const ButtonsContainer = require('ButtonsContainer');
 const fs = require('fs');
 const MapCreatorTask = require('MapCreatorTask');
 const ObjectDetectionTask = require('ObjectDetectionTask');
+const HolesDetectionTask = require('HolesDetectionTask');
 const Input = require('Input');
 
 class imagej extends GuiExtension {
@@ -267,108 +268,16 @@ class imagej extends GuiExtension {
             properties: props
         }, (filepaths) => {
             if (filepaths) {
-                this.showHolesDetectionParamsModal((modal, params) => {
-                    let macro = "HolesDetector";
-                    let args = `"${isFolder}#${filepaths[0]}#${params.radius}#${params.threshold}#${params.path}"`;
-                    let layerType = `pixels`;
-                    this.run(macro, args, (stdout) => {
-                        if (!isFolder) {
-                            Util.Layers.createJSONConfiguration(filepaths[0], params.path, layerType, (config) => {
-                                fs.writeFile(`${params.path}${path.sep}holes_pixels${path.sep}${config.name}.json`, JSON.stringify(config, null, 2), (err) => {
-                                    if (err) {
-                                        Util.notifyOS(`Can't save JSON configuration file! Error: ${err}`);
-                                    }
-                                    Util.notifyOS(`Object detection task finished.`);
-                                    this.gui.notify(`Object detection task finished.`);
-                                });
-                            });
-                        } else {
-                            // TODO
-                            Util.notifyOS(`Holes detection task finished.`);
-                            this.gui.notify(`Holes detection task finished.`);
-                        }
-                    });
-                    this.gui.notify(`Performing holes detection...`);
-                    modal.destroy();
-                });
+                let details;
+                if (isFolder) {
+                    details = `Folder: ${path.basename(filepaths[0])}`;
+                } else {
+                    details = `Image: ${path.basename(filepaths[0])}`;
+                }
+                let holesDetectionTask = new HolesDetectionTask(details, isFolder, this.gui);
+                holesDetectionTask.run(filepaths[0]);
             }
         });
-    }
-
-    showHolesDetectionParamsModal(next) {
-        var modal = new Modal({
-            title: "Object detection options",
-            height: "auto"
-        });
-
-        let body = document.createElement("DIV");
-        let grid = new Grid(3, 2);
-
-        let numRadius = Input.input({
-            type: "number",
-            id: "numradius",
-            value: "10",
-            min: "0"
-        });
-        let lblRadius = document.createElement("LABEL");
-        lblRadius.htmlFor = "numradius";
-        lblRadius.innerHTML = "Radius of median filter: ";
-        grid.addElement(lblRadius, 0, 0);
-        grid.addElement(numRadius, 0, 1);
-
-        let numThreshold = Input.input({
-            type: "number",
-            id: "numthreshold",
-            value: "250",
-            min: "0"
-        });
-        let lblThreshold = document.createElement("LABEL");
-        lblThreshold.htmlFor = "numthreshold";
-        lblThreshold.innerHTML = "Threshold: ";
-        grid.addElement(lblThreshold, 1, 0);
-        grid.addElement(numThreshold, 1, 1);
-
-        let fldOutputFolder = new FolderSelector("fileoutputfolder");
-        let lblOutputFolder = document.createElement("LABEL");
-        lblOutputFolder.htmlFor = "fileoutputfolder";
-        lblOutputFolder.innerHTML = "Output folder: ";
-        grid.addElement(lblOutputFolder, 2, 0);
-        grid.addElement(fldOutputFolder.element, 2, 1);
-
-        let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
-        buttonsContainer.addButton({
-            id: "CancelDetection00",
-            text: "Cancel",
-            action: () => {
-                modal.destroy();
-            },
-            className: "btn-default"
-        });
-        buttonsContainer.addButton({
-            id: "OkDetection00",
-            text: "Ok",
-            action: () => {
-                if (typeof next === 'function') {
-                    if (fldOutputFolder.getFolderRoute()) {
-                        let params = {
-                            radius: numRadius.value || "[]",
-                            threshold: numThreshold.value || "[]",
-                            path: fldOutputFolder.getFolderRoute()
-                        }
-                        next(modal, params);
-                    } else {
-                        dialog.showErrorBox("Can't detect holes", "You must choose an output folder where results will be saved.");
-                    }
-                }
-            },
-            className: "btn-default"
-        });
-        let footer = document.createElement('DIV');
-        footer.appendChild(buttonsContainer.element);
-
-        modal.addBody(grid.element);
-        modal.addFooter(footer);
-        modal.show();
     }
 
     configImageJ() {

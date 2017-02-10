@@ -190,7 +190,7 @@ class imagej extends GuiExtension {
 
 
     run(macro, args, next) {
-        exec(`java -Xmx${this.memory}m -Xss${this.stackMemory}m -jar ij.jar -batchpath Atlas/${macro}.ijm ${args}`, {
+        let childProcess = exec(`java -Xmx${this.memory}m -Xss${this.stackMemory}m -jar ij.jar -batchpath Atlas/${macro}.ijm ${args}`, {
             cwd: this.imagejpath
         }, (error, stdout, stderr) => {
             if (error) {
@@ -204,6 +204,8 @@ class imagej extends GuiExtension {
             this.gui.notify(`ImageJ macro finish and closed`);
         });
         this.gui.notify(`ImageJ macro from ${macro} launched`);
+
+        return childProcess;
     }
 
     /*runHeadless(cmnd, arg, cl) {

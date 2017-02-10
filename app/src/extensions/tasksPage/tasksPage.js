@@ -46,18 +46,20 @@ class tasksPage extends GuiExtension {
         });
         this.addPane();
         this.element.appendChild(this.pane.element);
-        taskManager.addEventListener("change", () => {
-            this.fillSections();
-        });
+        taskManager.on("change", this.taskManagerChangeListener());
     }
 
     deactivate() {
         this.element.removeChild(this.pane.element);
         this.removeToggleButton(toggleButtonId);
-        taskManager.removeEventListener("change", () => {
-            this.fillSections();
-        });
+        taskManager.removeListener("change", this.taskManagerChangeListener());
         super.deactivate();
+    }
+
+    taskManagerChangeListener(){
+        return () => {
+            this.fillSections();
+        };
     }
 
     show() {
@@ -99,7 +101,7 @@ class tasksPage extends GuiExtension {
                 this.completedTasksContainer.appendChild(task.DOMElement);
             } else {
                 this.runningTasksContainer.appendChild(task.DOMElement);
-                task.addEventListener("complete", () => {
+                task.on("complete", () => {
                     task.showActions();
                     this.runningTasksContainer.removeChild(task.DOMElement);
                     this.completedTasksContainer.appendChild(task.DOMElement);

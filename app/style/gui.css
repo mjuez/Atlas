@@ -340,6 +340,10 @@ img.imageicon {
     display: none;
 }
 
+#ButtonGrouptasksPage {
+    float: right;
+}
+
 .task {
     display: table;
     width: 100%;

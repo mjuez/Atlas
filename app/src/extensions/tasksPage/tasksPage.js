@@ -25,7 +25,7 @@ const ToggleElement = require('ToggleElement');
 const Table = require('Table');
 const taskManager = require('TaskManager');
 
-const icon = "fa fa-area-chart";
+const icon = "fa fa-tasks";
 const toggleButtonId = 'tasksPageToggleButton';
 
 class tasksPage extends GuiExtension {

@@ -56,7 +56,7 @@ class tasksPage extends GuiExtension {
         super.deactivate();
     }
 
-    taskManagerChangeListener(){
+    taskManagerChangeListener() {
         return () => {
             this.fillSections();
         };
@@ -101,13 +101,20 @@ class tasksPage extends GuiExtension {
                 this.completedTasksContainer.appendChild(task.DOMElement);
             } else {
                 this.runningTasksContainer.appendChild(task.DOMElement);
-                task.on("complete", () => {
-                    task.showActions();
-                    this.runningTasksContainer.removeChild(task.DOMElement);
-                    this.completedTasksContainer.appendChild(task.DOMElement);
-                });
             }
         });
+
+        if (!this.runningTasksContainer.firstChild) {
+            let message = document.createElement('SPAN');
+            message.innerHTML = 'Currently there are no running tasks.';
+            this.runningTasksContainer.appendChild(message);
+        }
+
+        if (!this.completedTasksContainer.firstChild) {
+            let message = document.createElement('SPAN');
+            message.innerHTML = 'Currently there are no completed tasks.';
+            this.completedTasksContainer.appendChild(message);
+        }
     }
 
     cleanSections() {

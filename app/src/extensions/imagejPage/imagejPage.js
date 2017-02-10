@@ -28,7 +28,8 @@ const {
     MenuItem
 } = require('electron').remote;
 const {
-    exec
+    exec,
+    spawn
 } = require('child_process');
 const GuiExtension = require('GuiExtension');
 const ToggleElement = require('ToggleElement');
@@ -189,23 +190,20 @@ class imagej extends GuiExtension {
     }
 
 
-    run(macro, args, next) {
-        let childProcess = exec(`java -Xmx${this.memory}m -Xss${this.stackMemory}m -jar ij.jar -batchpath Atlas/${macro}.ijm ${args}`, {
+    run(macro, args) {
+        return spawn('java',[`-Xmx${this.memory}m`, `-Xss${this.stackMemory}m`, `-jar`, `ij.jar`, `-batchpath`, `Atlas${path.sep}${macro}.ijm`, `${args}`], {
             cwd: this.imagejpath
-        }, (error, stdout, stderr) => {
-            if (error) {
-                Util.notifyOS(`imageJ exec error: ${error}`);
-                console.log(error);
-                return;
-            }
-            if (typeof next === 'function') {
-                next(stdout);
-            }
-            this.gui.notify(`ImageJ macro finish and closed`);
         });
-        this.gui.notify(`ImageJ macro from ${macro} launched`);
+        /*, (error, stdout, stderr) => {
+            if (typeof next === 'function') {
+                if (error) {
+                    next(error);
+                }
+                next(null, stdout);
+            }
+        });
 
-        return childProcess;
+        return childProcess;*/
     }
 
     /*runHeadless(cmnd, arg, cl) {
@@ -233,9 +231,9 @@ class imagej extends GuiExtension {
         }, (filepaths) => {
             if (filepaths) {
                 let details;
-                if(isMap){
+                if (isMap) {
                     details = `Map: ${path.basename(filepaths[0])}`;
-                }else{
+                } else {
                     details = `Layer: ${path.basename(filepaths[0])}`;
                 }
                 let mapCreatorTask = new MapCreatorTask(details, isMap, this.gui);

@@ -355,6 +355,20 @@ img.imageicon {
 
 .task .actions {
     display: table-cell;
-    text-align: right;
     vertical-align: middle;
+    width: 1%;
+}
+
+.task .actions .inner-container {
+    display: table;
+    box-sizing: border-box;
+    width: 1%;
+}
+
+.task .actions .inner-container .custom-actions,
+.task .actions .inner-container .cancel {
+    display: table-cell;
+    vertical-align: middle;
+    width: 1%;
+    padding-left: 5px;
 }

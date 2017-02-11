@@ -454,7 +454,7 @@ if (L != undefined) {
                     weight: lyjson.options.weight || lyjson.weight || 3,
                     fill: true,
                     fillColor: lyjson.options.fillColor || lyjson.fillColor || this.getDrawingColor(),
-                    fillOpacity: lyjson.options.fillOpacity || lyjson.fillOpacity || 0.2
+                    fillOpacity: lyjson.options.fillOpacity || lyjson.fillOpacity || 0.3
                 });
             } else { //assume the layer is already a L.polygon
                 lyjson = {
@@ -600,10 +600,12 @@ if (L != undefined) {
         addDrawnPolygons: function(layerConfig) {
             if (Array.isArray(layerConfig.polygons)) {
                 layerConfig.polygons.map((pol) => {
+                    pol.options.fillOpacity = 0.3;
                     this.addPolygon(pol);
                 });
             } else { //assume is an object
                 Object.keys(layerConfig.polygons).map((key) => {
+                    layerConfig.polygons[key].options.fillOpacity = 0.3;
                     this.addPolygon(layerConfig.polygons[key]);
                 });
             }

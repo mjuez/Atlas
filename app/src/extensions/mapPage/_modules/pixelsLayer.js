@@ -134,10 +134,14 @@ class pixelsLayer {
         const tot = l;
         var pixelsUrlTemplate = this.configuration.pixelsUrlTemplate;
         let res = 0;
-        let N=0;
+        let N = 0;
+        var done = false;
 
-        var step = (v, x, y)=> {
-            if (this.pointinpolygon([x, y], polygon) ) {
+        var step = (v, x, y) => {
+            if (this.pointinpolygon([x, y], polygon)) {
+                if (typeof v != 'number') {
+                    return;
+                }
                 res = res + v;
                 N++;
                 if (typeof cl === 'function') {
@@ -156,8 +160,8 @@ class pixelsLayer {
                 if (typeof complete === 'function') {
                     complete({
                         sum: res,
-                        mean: res/N,
-                        N:N,
+                        mean: res / N,
+                        N: N,
                         tot: tot,
                         time: t1
                     });

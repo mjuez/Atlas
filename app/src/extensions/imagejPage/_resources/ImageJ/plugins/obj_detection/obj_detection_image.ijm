@@ -30,7 +30,7 @@ max=width*height*nslice;
 
 factor=3/sqrt(2);
 rmin=factor*rmin-0.5;
-rmax=factor*rmin-0.5;
+rmax=factor*rmax-0.5;
 by=floor(factor*by-0.5);
 if (by<=0) by=1;
 if (rmin<1) rmin = 1;

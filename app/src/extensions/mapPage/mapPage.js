@@ -20,6 +20,8 @@
 
 "use strict";
 
+
+const RegionAnalyzer = require('./_modules/RegionAnalyzer.js');
 const Modal = require('Modal');
 const Workspace = require('Workspace');
 const Sidebar = require('Sidebar');
@@ -60,23 +62,6 @@ const {
     app
 } = require('electron').remote;
 
-
-
-function extractPolygonArray(polygon, scale) {
-    if (!scale) {
-        scale = 1;
-    }
-    //convert latlngs to a vector of coordinates
-    var vs = polygon[0].map(function(ltlng) {
-        return ([ltlng.lng * scale, -ltlng.lat * scale])
-    });
-
-    return vs;
-}
-
-
-
-
 class mapPage extends GuiExtension {
 
     constructor(gui) {
@@ -89,7 +74,6 @@ class mapPage extends GuiExtension {
             drawControls: true,
             layerControl: true
         };
-
     }
 
     activate() {
@@ -161,8 +145,10 @@ class mapPage extends GuiExtension {
             let map = L.map('map', arg);
             map.setView([-100, 100], 0);
             this.mapManager = L.mapManager(map);
+            this.regionAnalyzer = new RegionAnalyzer(this.mapManager, this.gui);
             this.listenMapManager();
             this.makeMenu();
+
 
             this.gui.workspace.addSpace(this, this.maps, false); //without overwriting
 
@@ -236,7 +222,7 @@ class mapPage extends GuiExtension {
             accelerator: 'CmdOrCtrl + Enter',
             click: () => {
                 this.selectedRegions.map((reg) => {
-                    this.computeRegionStats(reg);
+                    this.regionAnalyzer.computeRegionStats(reg);
                 });
             }
         }));
@@ -258,7 +244,7 @@ class mapPage extends GuiExtension {
             accelerator: 'CmdOrCtrl + Shift + Enter',
             click: () => {
                 this.mapManager.getLayers('polygon').map((reg) => {
-                    this.computeRegionStats(reg);
+                    this.regionAnalyzer.computeRegionStats(reg);
                 });
             }
         }));
@@ -356,6 +342,7 @@ class mapPage extends GuiExtension {
 
 
     cleanMaps() {
+        this.mapManager.clean();
         if (Object.keys(this.maps)) {
             Object.keys(this.maps).map((id) => {
                 let map = this.maps[id];
@@ -453,17 +440,9 @@ class mapPage extends GuiExtension {
 
     switchMap(configuration, force) {
         if (configuration) {
-            this.sidebar.list.deactiveAll();
-            this.sidebar.list.applyAll((item) => {
-                item.body.hide();
-            });
             if ((configuration != this.mapManager._configuration) || force) {
                 this.sidebar.layerList.clean();
             }
-
-            this.sidebarRegions.list.applyAll((item) => {
-                item.element.className = 'list-group-item';
-            });
             this.selectedRegions.map((pol) => {
                 pol.setStyle({
                     fillOpacity: 0.3
@@ -473,10 +452,9 @@ class mapPage extends GuiExtension {
             this.initRegionActions(configuration, force);
             this.showConfiguration(configuration);
             this.mapManager.setConfiguration(configuration, force);
-            this.sidebar.list.items[`${configuration.id}`].element.getElementsByTagName('STRONG')[0].innerHTML = configuration.name; //set the correct name
-            this.sidebar.list.activeOne(`${configuration.id}`);
             this.sidebarRegions.show();
             this.sidebar.layerList.hide();
+            //this.sidebar.list.activeJustOne(configuration.id);
         } else {
             this.switchMap(this.mapManager._configuration);
         }
@@ -567,6 +545,9 @@ class mapPage extends GuiExtension {
                     noLink: true
                 }, (id) => {
                     if (id > 0) {
+                        if (configuration == this.mapManager._configuration) {
+                            this.mapManager.clean();
+                        }
                         this.sidebar.list.removeItem(`${configuration.id}`);
                         delete this.maps[configuration.id];
                     }
@@ -609,9 +590,12 @@ class mapPage extends GuiExtension {
         this.sidebar.addItem({
             id: `${configuration.id}`,
             title: title,
+            key: `${configuration.name} ${configuration.date} ${configuration.authors}`,
             body: body,
             icon: ic,
-            toggle: true,
+            toggle: {
+                justOne: true
+            },
             onclick: {
                 active: () => {
                     this.switchMap(this.maps[configuration.id]);
@@ -630,6 +614,7 @@ class mapPage extends GuiExtension {
         this.maps[configuration.id] = configuration;
         configuration.new = false;
         this.switchMap(configuration);
+        this.sidebar.list.activeJustOne(configuration.id);
         this.mapPane.show();
         this.devPane.hide();
     }
@@ -717,10 +702,10 @@ class mapPage extends GuiExtension {
                 label: 'Compute',
                 click: () => {
                     if (this.selectedRegions.length === 0) {
-                        this.computeRegionStats(layer);
+                        this.regionAnalyzer.computeRegionStats(layer);
                     } else {
                         this.selectedRegions.map((reg) => {
-                            this.computeRegionStats(reg);
+                            this.regionAnalyzer.computeRegionStats(reg);
                         });
                     }
 
@@ -748,6 +733,7 @@ class mapPage extends GuiExtension {
             this.sidebarRegions.addItem({
                 id: layerConfig.id,
                 title: c,
+                key: layerConfig.name,
                 toggle: true,
                 onclick: {
                     active: () => {
@@ -756,10 +742,12 @@ class mapPage extends GuiExtension {
                         layer.setStyle({
                             fillOpacity: 0.8
                         });
-                        this.gui.notify(`${layerConfig.name} => ${Util.stringify(layerConfig.stats) || ' '} _`);
+                        this.gui.notify(`${layerConfig.name} selected, (${this.selectedRegions.length} tot)`);
+                        //this.gui.notify(`${layerConfig.name} => ${Util.stringify(layerConfig.stats) || ' '} _`); //region stats in footbar
                     },
                     deactive: () => {
                         this.selectedRegions.splice(this.selectedRegions.indexOf(layer), 1);
+                        this.gui.notify(`${layerConfig.name} deselected, (${this.selectedRegions.length} tot)`);
                         layer.setStyle({
                             fillOpacity: 0.3
                         });
@@ -770,7 +758,7 @@ class mapPage extends GuiExtension {
 
         this.mapManager.on('add:marker', (e) => {
             let mark = e.layer;
-            mark.on('contextmenu',(e)=>{
+            mark.on('contextmenu', (e) => {
 
             });
 
@@ -831,6 +819,8 @@ class mapPage extends GuiExtension {
             console.log(e);
             return;
         }
+        this.sidebar.list.setKey(configuration.id, configuration.authors);
+        this.sidebar.list.setTitle(configuration.id, configuration.name);
         this.maps[configuration.id] = configuration;
         this.switchMap(configuration, true);
         this.mapPane.show();
@@ -838,99 +828,6 @@ class mapPage extends GuiExtension {
     }
 
 
-    computeRegionStats(polygon) {
-        polygon._configuration.stats = polygon._configuration.stats || {};
-        polygon._configuration.stats.area_px = this.mapManager.polygonArea(polygon.getLatLngs());
-        polygon._configuration.stats.area_cal = polygon._configuration.stats.area_px * (this.mapManager._configuration.size_cal * this.mapManager._configuration.size_cal) / (this.mapManager.getSize() * this.mapManager.getSize());
-        polygon._configuration.stats.volume_cal = polygon._configuration.stats.area_cal * this.mapManager._configuration.depth_cal;
-
-        this.mapManager.getLayers('pointsLayer').map((point) => {
-            this.computePolygonPoint(polygon, point, (m) => {
-                polygon._configuration.stats[point.name] = m.N;
-                polygon._configuration.stats[`area_cal density ${point.name}`] = m.N / polygon._configuration.stats.area_cal;
-                polygon._configuration.stats[`volume_cal density ${point.name}`] = m.N / polygon._configuration.stats.volume_cal;
-                this.gui.notify(`${polygon._configuration.name} computed with ${point.name}, ${m.N} internal points counted in ${m.time[0]}.${m.time[1].toString()} seconds`);
-                Util.notifyOS(`${polygon._configuration.name}: ${m.N} internal points from  ${point.name}`);
-            });
-        });
-
-        this.mapManager.getLayers('pixelsLayer').map((pixel) => {
-            this.computePolygonPixels(polygon, pixel, (m) => {
-                polygon._configuration.stats[`${pixel.name}_raw_sum`] = m.sum;
-                this.gui.notify(`${polygon._configuration.name} computed with ${pixel.name}, ${m.sum} total summed in ${m.time[0]}.${m.time[1].toString()} seconds`);
-                Util.notifyOS(`${polygon._configuration.name}: ${m.sum} internal pixels from  ${pixel.name}`);
-            });
-
-
-        });
-
-
-    }
-
-    computePolygonPoint(polygon, points, callback) {
-        let scale = points.size / this.mapManager.getSize();
-        let pol = extractPolygonArray(polygon.getLatLngs(), scale);
-        let ch = fork(`${__dirname}/_modules/childCount.js`);
-        ch.on('message', (m) => {
-            switch (m.x) {
-                case 'complete':
-                    if (typeof callback === 'function') callback(m);
-                    ch.kill();
-                    break;
-                case 'step':
-                    this.gui.header.progressBar.setBar((m.prog / m.tot) * 100);
-                    ipcRenderer.send('setProgress', {
-                        value: (m.prog / m.tot)
-                    });
-                    this.gui.notify(`${(m.prog / m.tot)*100}%`);
-                    break;
-                case 'error':
-                    this.gui.notify(m.error + "error");
-                    ch.kill();
-                    break;
-                default:
-                    null
-            }
-        });
-        ch.send({
-            job: 'points',
-            polygon: pol,
-            points: points
-        });
-    }
-
-
-    computePolygonPixels(polygon, pixels, callback) {
-        let scale = pixels.size / this.mapManager.getSize();
-        let pol = extractPolygonArray(polygon.getLatLngs(), scale);
-        let ch = fork(`${__dirname}/_modules/childCount.js`);
-        ch.on('message', (m) => {
-            switch (m.x) {
-                case 'complete':
-                    if (typeof callback === 'function') callback(m);
-                    ch.kill();
-                    break;
-                case 'step':
-                    this.gui.header.progressBar.setBar((m.prog / m.tot) * 100);
-                    ipcRenderer.send('setProgress', {
-                        value: (m.prog / m.tot)
-                    });
-                    this.gui.notify(`${(m.prog / m.tot)*100}%`);
-                    break;
-                case 'error':
-                    this.gui.notify(m.error + "error");
-                    ch.kill();
-                    break;
-                default:
-                    null
-            }
-        });
-        ch.send({
-            job: 'pixels',
-            polygon: pol,
-            pixels: pixels
-        });
-    }
 
 
     deleteRegionsCheck(regions) {

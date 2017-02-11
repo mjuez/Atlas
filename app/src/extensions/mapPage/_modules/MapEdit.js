@@ -80,7 +80,6 @@ class MapEdit {
         let newlayers = Util.clone(conf.layers);
         let modal = new Modal({
             title: `Edit ${conf.name} layers`,
-            width: '800px',
             height: 'auto'
         });
         let body = document.createElement('DIV');
@@ -210,7 +209,6 @@ class MapEdit {
         let newconf = Util.clone(conf);
         let modal = new Modal({
             title: `${conf.name}`,
-            width: '400px',
             height: 'auto'
         });
         let body = document.createElement('DIV');
@@ -272,10 +270,12 @@ class MapEdit {
                 let layer = conf.layers[Object.keys(conf.layers)[inp.selectedIndex]];
                 MapEdit.layerPreviewImage(layer, right);
                 MapEdit.layerPreviewInfo(layer, right);
+                MapEdit.layerRemoveButton(newconf, layer, right);
             }
         });
         MapEdit.layerPreviewImage(conf.layers[Object.keys(conf.layers)[0]], right);
         MapEdit.layerPreviewInfo(conf.layers[Object.keys(conf.layers)[0]], right);
+        MapEdit.layerRemoveButton(newconf, conf.layers[Object.keys(conf.layers)[0]], right);
         let text;
         switch (conf.new) {
             case true:
@@ -285,6 +285,14 @@ class MapEdit {
                 text = 'Save'
         }
         let Bc = new ButtonsContainer(document.createElement('DIV'));
+        Bc.addButton({
+            id: 'CancelMap00',
+            text: 'Cancel',
+            action: () => {
+                modal.destroy();
+            },
+            className: 'btn-default'
+        });
         Bc.addButton({
             id: 'AddMap00',
             text: text,
@@ -296,19 +304,32 @@ class MapEdit {
             },
             className: 'btn-default'
         });
-        Bc.addButton({
-            id: 'CancelMap00',
-            text: 'Cancel',
-            action: () => {
-                modal.destroy();
-            },
-            className: 'btn-default'
-        });
         let footer = document.createElement('DIV');
         footer.appendChild(Bc.element);
         modal.addBody(body);
         modal.addFooter(footer);
         modal.show();
+    }
+
+    static layerRemoveButton(conf, layer, parent) {
+        let a = new ButtonsContainer(document.createElement('DIV'));
+        a.addButton({
+            id: 'removelayerbutton',
+            text: 'Remove layer',
+            className : 'btn-positive',
+            toggle: true,
+            groupId: 'xxxx',
+            action: {
+              active:(btn) => {
+                delete conf.layers[layer.name]; //delete the layer
+                btn.innerHTML = 'Layer removed';
+            },
+            deactive: (btn)=>{
+              conf.layers[layer.name] = layer; //re-add the layer the only problem is that it changes the order of the layers...it's ok
+              btn.innerHTML = 'Remove layer'
+            } }
+        });
+        parent.appendChild(a.element);
     }
 
 
@@ -375,7 +396,7 @@ class MapEdit {
                     label: 'Original Size',
                     className: 'simple form-control',
                     parent: parent,
-                    type: 'numeric',
+                    type: 'number',
                     value: layer.original_size || 256,
                     placeholder: 'original size',
                     oninput: (inp) => {
@@ -534,7 +555,7 @@ class MapEdit {
                     label: 'Original Size',
                     className: 'simple form-control',
                     parent: parent,
-                    type: 'numeric',
+                    type: 'number',
                     value: layer.original_size || 256,
                     placeholder: 'original size',
                     oninput: (inp) => {

@@ -29,6 +29,14 @@ setBatchMode(true);
 run("Input/Output...", "file=.csv");
 list = getFileList(imagesDir);
 
+factor=3/sqrt(2);
+rmin=factor*rmin-0.5;
+rmax=factor*rmax-0.5;
+by=floor(factor*by-0.5);
+if (by<=0) by=1;
+if (rmin<1) rmin = 1;
+if (rmax<rmin+1) rmax = rmin+1;
+
 for (i = 0; i < list.length; i++){
   if ( !endsWith(list[i],"/") ){
   IJ.log(list[i]);
@@ -42,13 +50,7 @@ for (i = 0; i < list.length; i++){
   }
   titleOriginal=getTitle();
 
-  factor=3/sqrt(2);
-  rmin=factor*rmin-0.5;
-  rmax=factor*rmin-0.5;
-  by=floor(factor*by-0.5);
-  if (by<=0) by=1;
-  if (rmin<1) rmin = 1;
-  if (rmax<rmin+1) rmax = rmin+1;
+
 
   run("Duplicate...", "duplicate range="+1+"-"+nslice+" title=temp1");
   run("Duplicate...", "duplicate range="+1+"-"+nslice+" title=temp0");
@@ -74,7 +76,7 @@ for (i = 0; i < list.length; i++){
   rename(titleOriginal);
   run("ObjCounter",  "threshold=1 slice="+floor(depth)+" min. ="+min+" max.="+max +" fraction="+fraction+" tollerance="+toll+" objects export_points");
   save(outFolderO+"/objects_"+titleOriginal);
-  close();
+  //close();
   saveAs("Results", outFolderP + "/points_"+titleOriginal+".csv");
   close("*");
   }

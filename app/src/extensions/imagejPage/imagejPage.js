@@ -88,7 +88,7 @@ class imagej extends GuiExtension {
             label: 'Launch ImageJ',
             type: 'normal',
             click: () => {
-                this.run();
+                this.launchImageJ();
             }
         }));
         this.menu = new MenuItem({

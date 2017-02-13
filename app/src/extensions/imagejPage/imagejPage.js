@@ -184,16 +184,20 @@ class imagej extends GuiExtension {
     }
 
     launchImageJ() {
-        exec(`java -Xmx${this.memory}m -Xss${this.stackMemory}m -jar ij.jar`, {
-            cwd: this.imagejpath
-        }, (error, stdout, stderr) => {
-            if (error) {
-                Util.notifyOS(`ImageJ exec error: ${error}`);
-                return;
-            }
-            this.gui.notify('ImageJ closed');
+        let childProcess = spawn('java', [`-Xmx${this.memory}m`, `-Xss${this.stackMemory}m`, `-jar`, `ij.jar`], {
+            cwd: this.imagejpath,
+            stdio: 'ignore'
         });
-        Util.notifyOS('ImageJ launched;');
+
+        Util.notifyOS('ImageJ launched.');
+
+        childProcess.on('error', (error) => {
+            Util.notifyOS(`ImageJ exec error: ${error}`);
+        });
+
+        childProcess.on('close', (code) => {
+            this.gui.notify('ImageJ closed');
+        });        
     }
 
 

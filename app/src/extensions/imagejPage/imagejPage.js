@@ -114,6 +114,11 @@ class imagej extends GuiExtension {
             }
         }));
 
+        let mapCreationSubMenu = new Menu();
+        mapCreationSubMenu.append(new MenuItem({
+            label: ""
+        }));
+
         menu.append(new MenuItem({
             label: "Create map",
             type: "normal",
@@ -194,7 +199,8 @@ class imagej extends GuiExtension {
 
     run(macro, args) {
         return spawn('java', [`-Xmx${this.memory}m`, `-Xss${this.stackMemory}m`, `-jar`, `ij.jar`, `-batchpath`, `Atlas${path.sep}${macro}.ijm`, `${args}`], {
-            cwd: this.imagejpath
+            cwd: this.imagejpath,
+            stdio: 'ignore'
         });
     }
 

@@ -114,17 +114,42 @@ class imagej extends GuiExtension {
             }
         }));
 
-        let mapCreationSubMenu = new Menu();
-        mapCreationSubMenu.append(new MenuItem({
-            label: ""
+        let mapToolsSubMenu = new Menu();
+        mapToolsSubMenu.append(new MenuItem({
+            label: "Create map from image",
+            type: "normal",
+            click: () => {
+                this.createMap(true, false);
+            }
+        }));
+
+        mapToolsSubMenu.append(new MenuItem({
+            label: "Create map from folder",
+            type: "normal",
+            click: () => {
+                this.createMap(true, true);
+            }
+        }));
+
+        mapToolsSubMenu.append(new MenuItem({
+            label: "Create layer from image",
+            type: "normal",
+            click: () => {
+                this.createMap(false, false);
+            }
+        }));
+
+        mapToolsSubMenu.append(new MenuItem({
+            label: "Create layer from folder",
+            type: "normal",
+            click: () => {
+                this.createMap(false, true);
+            }
         }));
 
         menu.append(new MenuItem({
-            label: "Create map",
-            type: "normal",
-            click: () => {
-                this.createMap(true);
-            }
+            label: "Map Tools",
+            submenu: mapToolsSubMenu
         }));
 
         let objDetectionSubmenu = new Menu();
@@ -226,9 +251,9 @@ class imagej extends GuiExtension {
         this.gui.notify(`ImageJ macro from ${cmnd} launched`);
     }*/
 
-    createMap(isMap) {
+    createMap(isMap, isFolder) {
         dialog.showOpenDialog({
-            title: 'Create map from image',
+            title: 'Create map',
             type: 'normal'
         }, (filepaths) => {
             if (filepaths) {
@@ -238,7 +263,7 @@ class imagej extends GuiExtension {
                 } else {
                     details = `Layer: ${path.basename(filepaths[0])}`;
                 }
-                let mapCreatorTask = new MapCreatorTask(details, isMap, this.gui);
+                let mapCreatorTask = new MapCreatorTask(details, isMap, isFolder, this.gui);
                 mapCreatorTask.run(filepaths[0]);
             }
         });

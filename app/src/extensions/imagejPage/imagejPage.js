@@ -252,8 +252,13 @@ class imagej extends GuiExtension {
     }*/
 
     createMap(isMap, isFolder) {
+        let title = 'Choose image';
+        if(isFolder){
+            title += ' in the left-upper corner';
+        }
+
         dialog.showOpenDialog({
-            title: 'Create map',
+            title: title,
             type: 'normal'
         }, (filepaths) => {
             if (filepaths) {

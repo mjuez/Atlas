@@ -114,12 +114,42 @@ class imagej extends GuiExtension {
             }
         }));
 
-        menu.append(new MenuItem({
-            label: "Create map",
+        let mapToolsSubMenu = new Menu();
+        mapToolsSubMenu.append(new MenuItem({
+            label: "Create map from image",
             type: "normal",
             click: () => {
-                this.createMap(true);
+                this.createMap(true, false);
             }
+        }));
+
+        mapToolsSubMenu.append(new MenuItem({
+            label: "Create map from folder",
+            type: "normal",
+            click: () => {
+                this.createMap(true, true);
+            }
+        }));
+
+        mapToolsSubMenu.append(new MenuItem({
+            label: "Create layer from image",
+            type: "normal",
+            click: () => {
+                this.createMap(false, false);
+            }
+        }));
+
+        mapToolsSubMenu.append(new MenuItem({
+            label: "Create layer from folder",
+            type: "normal",
+            click: () => {
+                this.createMap(false, true);
+            }
+        }));
+
+        menu.append(new MenuItem({
+            label: "Map Tools",
+            submenu: mapToolsSubMenu
         }));
 
         let objDetectionSubmenu = new Menu();
@@ -179,22 +209,27 @@ class imagej extends GuiExtension {
     }
 
     launchImageJ() {
-        exec(`java -Xmx${this.memory}m -Xss${this.stackMemory}m -jar ij.jar`, {
-            cwd: this.imagejpath
-        }, (error, stdout, stderr) => {
-            if (error) {
-                Util.notifyOS(`ImageJ exec error: ${error}`);
-                return;
-            }
-            this.gui.notify('ImageJ closed');
+        let childProcess = spawn('java', [`-Xmx${this.memory}m`, `-Xss${this.stackMemory}m`, `-jar`, `ij.jar`], {
+            cwd: this.imagejpath,
+            stdio: 'ignore'
         });
-        Util.notifyOS('ImageJ launched;');
+
+        Util.notifyOS('ImageJ launched.');
+
+        childProcess.on('error', (error) => {
+            Util.notifyOS(`ImageJ exec error: ${error}`);
+        });
+
+        childProcess.on('close', (code) => {
+            this.gui.notify('ImageJ closed');
+        });        
     }
 
 
     run(macro, args) {
         return spawn('java', [`-Xmx${this.memory}m`, `-Xss${this.stackMemory}m`, `-jar`, `ij.jar`, `-batchpath`, `Atlas${path.sep}${macro}.ijm`, `${args}`], {
-            cwd: this.imagejpath
+            cwd: this.imagejpath,
+            stdio: 'ignore'
         });
     }
 
@@ -216,9 +251,9 @@ class imagej extends GuiExtension {
         this.gui.notify(`ImageJ macro from ${cmnd} launched`);
     }*/
 
-    createMap(isMap) {
+    createMap(isMap, isFolder) {
         dialog.showOpenDialog({
-            title: 'Create map from image',
+            title: 'Create map',
             type: 'normal'
         }, (filepaths) => {
             if (filepaths) {
@@ -228,7 +263,7 @@ class imagej extends GuiExtension {
                 } else {
                     details = `Layer: ${path.basename(filepaths[0])}`;
                 }
-                let mapCreatorTask = new MapCreatorTask(details, isMap, this.gui);
+                let mapCreatorTask = new MapCreatorTask(details, isMap, isFolder, this.gui);
                 mapCreatorTask.run(filepaths[0]);
             }
         });

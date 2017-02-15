@@ -25,6 +25,7 @@ const ToggleElement = require('ToggleElement');
 const Table = require('Table');
 const taskManager = require('TaskManager');
 
+
 const icon = "fa fa-tasks";
 const toggleButtonId = 'tasksPageToggleButton';
 
@@ -41,9 +42,9 @@ class tasksPage extends GuiExtension {
         this.addToggleButton({
             id: toggleButtonId,
             buttonsContainer: this.gui.header.actionsContainer,
-            icon: icon,
-            groupId: "tasksPage"
-        });
+            className: 'btn btn-default pull-right',
+            icon: icon
+          });
         this.addPane();
         this.element.appendChild(this.pane.element);
         taskManager.on("change", this.taskManagerChangeListener());

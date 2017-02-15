@@ -7,9 +7,9 @@ radius = argument[2];
 thrHoles = argument[3];
 outputPath = argument[4];
 
-outFolderH = outputPath + "/holes_img";
+outFolderH = outputPath + File.separator + "holes_img";
 File.makeDirectory(outFolderH);
-outFolderHcsv = outputPath + "/holes_pixels";
+outFolderHcsv = outputPath + File.separator + "holes_pixels";
 File.makeDirectory(outFolderHcsv);
 
 //setBatchMode(true);
@@ -20,8 +20,8 @@ if(isFolder == "true"){
     list = getFileList(path);
 
     for (i = 0; i < list.length; i++){
-        if ( !endsWith(list[i],"/") ){
-            detectHoles(path + "/"+ list[i]);
+        if ( !endsWith(list[i],File.separator) ){
+            detectHoles(path + File.separator + list[i]);
         }
     }
 }else{
@@ -50,7 +50,7 @@ function detectHoles(imagePath){
     }
     run("8-bit");
     rename("holes_"+titleC);
-    save(outFolderH + "/holes_"+titleC);
-    saveAs("Text Image", outFolderHcsv+"/holes_"+titleC+".txt");
+    save(outFolderH + File.separator + "holes_"+titleC);
+    saveAs("Text Image", outFolderHcsv + File.separator + "holes_"+titleC+".txt");
     close("*");
 }

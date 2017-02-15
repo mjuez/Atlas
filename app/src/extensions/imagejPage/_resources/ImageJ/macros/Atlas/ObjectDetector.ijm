@@ -22,10 +22,9 @@ if (by<=0) by=1;
 if (rmin<1) rmin = 1;
 if (rmax<rmin+1) rmax = rmin+1;
 
-
-outFolderP = outputPath + "/points";
+outFolderP = outputPath + File.separator +"points";
 File.makeDirectory(outFolderP);
-outFolderO = outputPath + "/objects";
+outFolderO = outputPath + File.separator +"objects";
 File.makeDirectory(outFolderO);
 
 setBatchMode(true);
@@ -35,8 +34,8 @@ if(isFolder == "true"){
     list = getFileList(path);
 
     for (i = 0; i < list.length; i++){
-        if ( !endsWith(list[i],"/") ){
-            detectObjects(path + "/"+ list[i]);
+        if ( !endsWith(list[i], File.separator) ){
+            detectObjects(path + File.separator + list[i]);
         }
     }
 }else{
@@ -74,9 +73,10 @@ function detectObjects(imagePath){
     //setVoxelSize(sX,sY,sZ,"micron");
     //segmentation and object counting
     rename(titleOriginal);
-    run("ObjCounter",  "threshold=1 slice="+floor(depth)+" min. ="+min+" max.="+max +" fraction="+fraction+" tollerance="+toll+" objects export_points");
-    save(outFolderO+"/objects_"+titleOriginal);
-    saveAs("Results", outFolderP + "/points_"+titleOriginal+".csv");
+    outputObjects = outFolderO + File.separator+"objects_"+titleOriginal;
+    outputPoints = outFolderP + File.separator+"points_"+titleOriginal+".csv";
+    run("ObjCounter",  "silent=true threshold=1 slice="+floor(depth)+" min="+min+" max="+max +" fraction="+fraction+" tolerance="+toll+" export_objects=true export_points=true output_objects="+outputObjects+" output_points="+outputPoints);
     close("*");
-    run("Close"); 
+    selectWindow("Results");
+    run("Close");
 }

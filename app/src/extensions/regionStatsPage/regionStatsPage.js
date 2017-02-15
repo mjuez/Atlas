@@ -111,6 +111,7 @@ class regionStatsPage extends GuiExtension {
     }
 
     showRegionsStats(map) {
+        if (!map.layer) return;
         if (map.layers.drawnPolygons) {
             var polygons = map.layers.drawnPolygons.polygons;
             var table = new Table();

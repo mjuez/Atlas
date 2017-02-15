@@ -222,7 +222,7 @@ class imagej extends GuiExtension {
 
         childProcess.on('close', (code) => {
             this.gui.notify('ImageJ closed');
-        });        
+        });
     }
 
 

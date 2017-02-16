@@ -194,12 +194,6 @@ class mapPage extends GuiExtension {
             }
         }));
         layer.append(new MenuItem({
-            label: 'Add tilesLayer',
-            click: () => {
-
-            }
-        }));
-        layer.append(new MenuItem({
             label: 'Edit layers',
             click: () => {
                 MapEdit.editLayersModal(this.mapManager._configuration, (c) => {

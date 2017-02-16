@@ -91,7 +91,7 @@ class MapIO {
             name: 'new map',
             authors: os.userInfo().username,
             date: (new Date()).toDateString(),
-            layers: [],
+            layers: {},
             basePath: '',
             new: options.new
         };

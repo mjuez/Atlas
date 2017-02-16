@@ -291,9 +291,9 @@ class MapIO {
             config.opacity = Math.min(1, Math.max(0, Number(config.opacity || 1)));
             config.tileSize = config.tileSize || 256;
             config.size = Math.max(1, Number(config.size || config.tileSize || 256));
-            config.size_cal = config.size_cal || config.size || 256;
-            config.deth_cal = config.depth_cal || 1;
-            config.unit_cal = config.unit_cal || 'u';
+            config.sizeCal = config.sizeCal || config.size || 256;
+            config.depthCal = config.depthCal || 1;
+            config.unitCal = config.unitCal || 'u';
 
             if (Array.isArray(config.tileSize)) {
                 config.bounds = config.bounds || [

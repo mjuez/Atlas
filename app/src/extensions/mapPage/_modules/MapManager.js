@@ -212,10 +212,48 @@ if (L != undefined) {
             }
         },
 
+        getUnitCal: function() {
+            let unit  = "u";
+            if (this._activeBaseLayer) {
+                depth = this._activeBaseLayer._configuration.unitCal || depth;
+            } else {
+                let temp = this.getLayers('tilesLayer')[0];
+                if (!temp) {
+                    temp = this.getLayers('imageLayer')[0];
+                }
+                if (temp) {
+                    size = temp._configuration.unitCal || depth;
+                }
+            }
+            return depth;
+        },
+
+        getDepthCal: function() {
+            let depth = 1;
+            if (this._activeBaseLayer) {
+                depth = this._activeBaseLayer._configuration.depthCal || depth;
+            } else {
+                let temp = this.getLayers('tilesLayer')[0];
+                if (!temp) {
+                    temp = this.getLayers('imageLayer')[0];
+                }
+                if (temp) {
+                    size = temp._configuration.depthCal || depth;
+                }
+            }
+            return depth;
+        },
+
         getSize: function() { //this is the maximum of the 2 dimension
             let temp = this.getSizes();
             return Math.max(temp[0], temp[1]);
         },
+
+        getSizeCal: function() {
+            let temp = this.getSizesCal();
+            return Math.max(temp[0], temp[1]);
+        },
+
 
         getSizes: function() {
             let size = [256, 256];
@@ -240,6 +278,31 @@ if (L != undefined) {
                 return (size);
             }
         },
+
+        getSizesCal: function() {
+            let size = [256, 256];
+            if (this._activeBaseLayer) {
+                size = this._activeBaseLayer._configuration.sizeCal || this._activeBaseLayer._configuration.tileSize || 256;
+            } else {
+                let temp = this.getLayers('tilesLayer')[0];
+                if (!temp) {
+                    temp = this.getLayers('imageLayer')[0];
+                }
+                if (temp) {
+                    size = temp._configuration.sizeCal || temp._configuration.tileSize || [256, 256];
+                }
+            }
+            if (typeof size === 'number') {
+                return [size, size];
+            }
+            if (size.x && size.y) {
+                return [size.x, size.y];
+            }
+            if (Array.isArray(size)) {
+                return (size);
+            }
+        },
+
 
 
         getLayers: function(types) {

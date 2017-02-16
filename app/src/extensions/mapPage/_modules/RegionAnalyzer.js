@@ -46,7 +46,7 @@ class RegionAnalyzer {
     }
 
     areaCal(polygon) {
-        return this.areaPx(polygon) * (this.mapManager._configuration.size_cal * this.mapManager._configuration.size_cal) / (this.mapManager.getSize() * this.mapManager.getSize());
+        return this.areaPx(polygon) * (this.mapManager.getSizeCal() * this.mapManager.getSizeCal()) / (this.mapManager.getSize() * this.mapManager.getSize());
     }
 
     volumeCal(polygon) {
@@ -56,8 +56,8 @@ class RegionAnalyzer {
     computeRegionStats(polygon) {
         polygon._configuration.stats = polygon._configuration.stats || {};
         polygon._configuration.stats.area_px = this.areaPx(polygon)
-        polygon._configuration.stats.area_cal = this.areaCal(polygon);
-        polygon._configuration.stats.volume_cal = polygon._configuration.stats.area_cal * this.mapManager._configuration.depth_cal;
+        polygon._configuration.stats[`area_cal_${this.mapManager.getUnitCal()}`] = this.areaCal(polygon);
+        polygon._configuration.stats[`volume_cal_${this.mapManager.getUnitCal()}`] = this.areaCal(polygon) * this.mapManager.getDepthCal();
         this.size = this.mapManager.getSize();
 
         this.mapManager.getLayers('pointsLayer').map((point) => {
@@ -78,8 +78,6 @@ class RegionAnalyzer {
                 this.gui.notify(`${polygon._configuration.name} computed with ${pixel.name}, ${m.sum} total summed in ${m.time[0]}.${m.time[1].toString()} seconds`);
                 Util.notifyOS(`${polygon._configuration.name}: ${m.sum} internal pixels from  ${pixel.name}`);
             });
-
-
         });
     }
 

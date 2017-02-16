@@ -23,4 +23,5 @@ if(mergeSlices == "true"){
         run("Z Project...", "projection=[Max Intensity]");
     }
 }
+run("Enhance Contrast...", "saturated=0 normalize process_all");
 run("Map creator", mapCreatorParams);

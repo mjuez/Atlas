@@ -31,7 +31,7 @@ if(isFolder == "true"){
 function detectHoles(imagePath){
     open(imagePath);
     width=getWidth();
-    height=getHeight();   
+    height=getHeight();
     nslice=nSlices();
     title=getTitle();
     titleC = replace(title," ","_");
@@ -53,4 +53,5 @@ function detectHoles(imagePath){
     save(outFolderH + File.separator + "holes_"+titleC);
     saveAs("Text Image", outFolderHcsv + File.separator + "holes_"+titleC+".txt");
     close("*");
+    print("_DONE_");
 }

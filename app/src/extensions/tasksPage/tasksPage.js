@@ -24,6 +24,7 @@ const GuiExtension = require('GuiExtension');
 const ToggleElement = require('ToggleElement');
 const Table = require('Table');
 const taskManager = require('TaskManager');
+const Task = require('Task');
 
 
 const icon = "fa fa-tasks";
@@ -44,89 +45,79 @@ class tasksPage extends GuiExtension {
             buttonsContainer: this.gui.header.actionsContainer,
             className: 'btn btn-default pull-right',
             icon: icon
-          });
+        });
         this.addPane();
         this.element.appendChild(this.pane.element);
-        taskManager.on("change", this.taskManagerChangeListener());
+        
+        this.taskManagerChangeListener = (...args) => {
+            if (args.length === 1) {
+                let taskId = args[0];
+                let task = taskManager.tasks[taskId].task;
+                let domElement = taskManager.tasks[taskId].domElement.element;
+
+                if(task.status === Task.Status.RUNNING || task.status === Task.Status.CREATED){
+                    if(!this.runningTasksContainer.contains(domElement)){
+                        this.runningTasksContainer.insertBefore(domElement, this.runningTasksContainer.firstChild);
+                    }
+                }else{
+                    if(this.runningTasksContainer.contains(domElement)){
+                        this.runningTasksContainer.removeChild(domElement);
+                    }
+                    if(!this.finishedTasksContainer.contains(domElement)){
+                        this.finishedTasksContainer.insertBefore(domElement, this.finishedTasksContainer.firstChild);
+                    }
+                }
+            }
+        };
+
+        this.taskRemovedListener = (...args) => {
+            if (args.length === 1) {
+                let domElement = args[0].element;
+                if(this.finishedTasksContainer.contains(domElement)){
+                    this.finishedTasksContainer.removeChild(domElement);
+                }
+            }
+        };
+        taskManager.on("change", this.taskManagerChangeListener);
+        taskManager.on("task.removed", this.taskRemovedListener);
     }
 
     deactivate() {
         this.element.removeChild(this.pane.element);
         this.removeToggleButton(toggleButtonId);
-        taskManager.removeListener("change", this.taskManagerChangeListener());
+        taskManager.removeListener("change", this.taskManagerChangeListener);
+        taskManager.removeListener("task.removed", this.taskRemovedListener);
         super.deactivate();
-    }
-
-    taskManagerChangeListener() {
-        return () => {
-            this.fillSections();
-        };
-    }
-
-    show() {
-        super.show();
-        this.fillSections();
     }
 
     addPane() {
         this.pane = new ToggleElement(document.createElement('DIV'));
-        this.pane.element.className = 'pane';
+        this.pane.element.className = 'pane tasks-pane';
         this.addSections();
         this.pane.show();
     }
 
     addSections() {
-        let sections = document.createElement('DIV');
-        sections.className = "padded";
-        let runningTasksHeader = document.createElement('H5');
-        runningTasksHeader.innerHTML = "RUNNING TASKS";
-        this.runningTasksContainer = document.createElement('DIV');
-
-        let completedTasksHeader = document.createElement('H5');
-        completedTasksHeader.innerHTML = "COMPLETED TASKS";
-        this.completedTasksContainer = document.createElement('DIV');
-
-        sections.appendChild(runningTasksHeader);
-        sections.appendChild(this.runningTasksContainer);
-
-        sections.appendChild(completedTasksHeader);
-        sections.appendChild(this.completedTasksContainer);
-        this.pane.element.appendChild(sections);
-    }
-
-    fillSections() {
-        this.cleanSections();
-        Object.keys(taskManager.tasks).map((key) => {
-            let task = taskManager.tasks[key];
-            if (task.completed) {
-                this.completedTasksContainer.appendChild(task.DOMElement);
-            } else {
-                this.runningTasksContainer.appendChild(task.DOMElement);
-            }
-        });
-
-        if (!this.runningTasksContainer.firstChild) {
-            let message = document.createElement('SPAN');
-            message.innerHTML = 'Currently there are no running tasks.';
-            this.runningTasksContainer.appendChild(message);
-        }
-
-        if (!this.completedTasksContainer.firstChild) {
-            let message = document.createElement('SPAN');
-            message.innerHTML = 'Currently there are no completed tasks.';
-            this.completedTasksContainer.appendChild(message);
-        }
-    }
-
-    cleanSections() {
-        this.clean(this.runningTasksContainer);
-        this.clean(this.completedTasksContainer);
-    }
-
-    clean(element) {
-        while (element.firstChild) {
-            element.removeChild(element.firstChild);
-        }
+        let leftContainer = document.createElement("DIV");
+        leftContainer.className = "left-container";
+        let rightContainer = document.createElement("DIV");
+        rightContainer.className = "right-container";
+        let runningTasksHeader = document.createElement("DIV");
+        runningTasksHeader.className = "tasks-header";
+        runningTasksHeader.innerHTML = "Running tasks";
+        let finishedTasksHeader = document.createElement("DIV");
+        finishedTasksHeader.className = "tasks-header";
+        finishedTasksHeader.innerHTML = "Finished tasks";
+        this.runningTasksContainer = document.createElement("DIV");
+        this.runningTasksContainer.className = "running-tasks-container";
+        this.finishedTasksContainer = document.createElement("DIV");
+        this.finishedTasksContainer.className = "finished-tasks-container";
+        leftContainer.appendChild(runningTasksHeader);
+        leftContainer.appendChild(this.runningTasksContainer);
+        rightContainer.appendChild(finishedTasksHeader);
+        rightContainer.appendChild(this.finishedTasksContainer);
+        this.pane.element.appendChild(leftContainer);
+        this.pane.element.appendChild(rightContainer);
     }
 }
 

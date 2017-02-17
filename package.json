@@ -13,10 +13,12 @@
     "appId": "atlas.gherardovarando",
     "extraResources": [
       {
-          "from": "app/src/extensions/imagejPage/_resources/ImageJ",
-          "to": "ImageJ",
-          "filter": ["**/*"]
-        }
+        "from": "app/src/extensions/imagejPage/_resources/ImageJ",
+        "to": "ImageJ",
+        "filter": [
+          "**/*"
+        ]
+      }
     ],
     "mac": {
       "category": "your.app.category.type"
@@ -25,8 +27,11 @@
       "iconUrl": "http://vps136.cesvima.upm.es:3001/images/icon.ico",
       "msi": true
     },
-    "win":{
+    "win": {
       "iconUrl": "http://vps136.cesvima.upm.es:3001/images/icon.ico"
     }
+  },
+  "dependencies": {
+    "dateformat": "^2.0.0"
   }
 }

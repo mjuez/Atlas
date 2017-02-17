@@ -43,6 +43,7 @@ const Grid = require('Grid');
 const FolderSelector = require('FolderSelector');
 const ButtonsContainer = require('ButtonsContainer');
 const fs = require('fs');
+const TaskManager = require('TaskManager');
 const MapCreatorTask = require('MapCreatorTask');
 const ObjectDetectionTask = require('ObjectDetectionTask');
 const HolesDetectionTask = require('HolesDetectionTask');
@@ -269,6 +270,7 @@ class imagej extends GuiExtension {
                     details = `Layer: ${path.basename(filepaths[0])}`;
                 }
                 let mapCreatorTask = new MapCreatorTask(details, isMap, isFolder, this.gui);
+                TaskManager.addTask(mapCreatorTask);
                 mapCreatorTask.run(filepaths[0]);
             }
         });
@@ -292,6 +294,7 @@ class imagej extends GuiExtension {
                     details = `Image: ${path.basename(filepaths[0])}`;
                 }
                 let objectDetectionTask = new ObjectDetectionTask(details, isFolder, this.gui);
+                TaskManager.addTask(objectDetectionTask);
                 objectDetectionTask.run(filepaths[0]);
             }
         });
@@ -315,6 +318,7 @@ class imagej extends GuiExtension {
                     details = `Image: ${path.basename(filepaths[0])}`;
                 }
                 let holesDetectionTask = new HolesDetectionTask(details, isFolder, this.gui);
+                TaskManager.addTask(holesDetectionTask);
                 holesDetectionTask.run(filepaths[0]);
             }
         });

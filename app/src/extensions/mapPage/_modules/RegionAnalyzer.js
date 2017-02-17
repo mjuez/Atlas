@@ -21,6 +21,7 @@
 
 const ProgressBar = require('ProgressBar');
 const Task = require('Task');
+const TaskManager = require('TaskManager');
 const Util = require('Util');
 const {
     fork
@@ -62,6 +63,7 @@ class RegionAnalyzer {
 
         this.mapManager.getLayers('pointsLayer').map((point) => {
             let task = new PointsCounting(polygon, point, this.size, this.gui);
+            TaskManager.addTask(task);
             task.run((m) => {
                 polygon._configuration.stats[point.name] = m.N;
                 polygon._configuration.stats[`area_cal density ${point.name}`] = m.N / polygon._configuration.stats.area_cal;
@@ -73,6 +75,7 @@ class RegionAnalyzer {
 
         this.mapManager.getLayers('pixelsLayer').map((pixel) => {
             let task = new PixelsCounting(polygon, pixel, this.size, this.gui);
+            TaskManager.addTask(task);
             task.run((m) => {
                 polygon._configuration.stats[`${pixel.name}_raw_sum`] = m.sum;
                 this.gui.notify(`${polygon._configuration.name} computed with ${pixel.name}, ${m.sum} total summed in ${m.time[0]}.${m.time[1].toString()} seconds`);
@@ -90,8 +93,7 @@ class PointsCounting extends Task {
 
     constructor(polygon, points, size, gui) {
         let name = `Points counting`;
-        let details = `counting in ${polygon._configuration.name}  using ${points.name}`;
-        `Points counting`;
+        let details = `Counting in ${polygon._configuration.name} using ${points.name}`;
         let scale = points.size / size;
         super(name, details, gui);
         this.polygon = extractPolygonArray(polygon.getLatLngs(), scale);;
@@ -107,16 +109,17 @@ class PointsCounting extends Task {
                 case 'complete':
                     if (typeof callback === 'function') callback(m);
                     ch.kill();
-                    this.taskManager.completeTask(this.id);
+                    this.success();
                     break;
                 case 'step':
-                    this.progressBar.setBar((m.prog / m.tot) * 100);
+                    this.updateProgress((m.prog / m.tot) * 100);
                     ipcRenderer.send('setProgress', {
                         value: (m.prog / m.tot)
                     });
-                    this.gui.notify(`${(m.prog / m.tot)*100}%`);
+                    this.gui.notify(`${(m.prog / m.tot) * 100}%`);
                     break;
                 case 'error':
+                    this.fail(m.error + "error");
                     this.gui.notify(m.error + "error");
                     ch.kill();
                     break;
@@ -133,34 +136,14 @@ class PointsCounting extends Task {
     }
 
     cancel() {
-        super.cancel();
-        if (this.ch instanceof ChildProcess) {
-            this.ch.kill();
+        if (super.cancel()) {
+            if (this.childProcess instanceof ChildProcess) {
+                this.childProcess.kill();
+            }
+            return true;
         }
+        return false;
     }
-
-    _createDOMElement() {
-        super._createDOMElement();
-        this.progressBar = new ProgressBar(this.customActions);
-    }
-
-    DOMActions() {
-        let actions = super.DOMActions();
-        // let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
-        // buttonsContainer.addButton({
-        //     id: "LoadMap00",
-        //     text: "Load map to workspace",
-        //     action: () => {
-        //         MapIO.loadMap([this.jsonMap], (conf) => {
-        //             this.gui.extensionsManager.extensions.mapPage.addNewMap(conf);
-        //         });
-        //     },
-        //     className: "btn btn-large btn-positive"
-        // });
-        // actions.appendChild(buttonsContainer.element);
-        return actions;
-    }
-
 }
 
 
@@ -185,16 +168,17 @@ class PixelsCounting extends Task {
                 case 'complete':
                     if (typeof callback === 'function') callback(m);
                     ch.kill();
-                    this.taskManager.completeTask(this.id);
+                    this.success();
                     break;
                 case 'step':
-                    this.progressBar.setBar((m.prog / m.tot) * 100);
+                    this.updateProgress((m.prog / m.tot) * 100);
                     ipcRenderer.send('setProgress', {
                         value: (m.prog / m.tot)
                     });
-                    this.gui.notify(`${(m.prog / m.tot)*100}%`);
+                    this.gui.notify(`${(m.prog / m.tot) * 100}%`);
                     break;
                 case 'error':
+                    this.fail(m.error + "error");
                     this.gui.notify(m.error + "error");
                     ch.kill();
                     break;
@@ -211,15 +195,13 @@ class PixelsCounting extends Task {
     }
 
     cancel() {
-        super.cancel();
-        if (this.ch instanceof ChildProcess) {
-            this.ch.kill();
+        if (super.cancel()) {
+            if (this.childProcess instanceof ChildProcess) {
+                this.childProcess.kill();
+            }
+            return true;
         }
-    }
-
-    _createDOMElement() {
-        super._createDOMElement();
-        this.progressBar = new ProgressBar(this.customActions);
+        return false;
     }
 
 }
@@ -229,7 +211,7 @@ function extractPolygonArray(polygon, scale) {
         scale = 1;
     }
     //convert latlngs to a vector of coordinates
-    var vs = polygon[0].map(function(ltlng) {
+    var vs = polygon[0].map(function (ltlng) {
         return ([ltlng.lng * scale, -ltlng.lat * scale])
     });
 

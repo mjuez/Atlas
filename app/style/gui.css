@@ -340,35 +340,6 @@ img.imageicon {
     display: none;
 }
 
-#ButtonGrouptasksPage {
-    float: right;
-}
-
-.task {
-    display: table;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 10px 15px;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #888;
-}
-
-.task .info {
-    display: table-cell;
-}
-
-.task .actions {
-    display: table-cell;
-    vertical-align: middle;
-    width: 1%;
-}
-
-.task .actions .inner-container {
-    display: table;
-    box-sizing: border-box;
-    width: 1%;
-}
-
 .task .actions .inner-container .custom-actions,
 .task .actions .inner-container .cancel {
     display: table-cell;
@@ -381,13 +352,19 @@ img.imageicon {
 .tasks-pane .right-container {
     display: inline-block;
     width: 50%;
-    height: 100%;
+    height: auto;
+    min-height: 100%;
     box-sizing: border-box;
     vertical-align: top;
 }
 
 .tasks-pane .left-container {
     border-right: 1px solid #C2C0C2;
+}
+
+.tasks-pane .right-container {
+    border-left: 1px solid #C2C0C2;
+    margin-left: -1px;
 }
 
 .tasks-header {

@@ -544,11 +544,22 @@ class MapEdit {
                 Input.selectInput({
                     parent: parent,
                     className: 'simple form-control',
-                    choices: ['holes', 'area', 'volume', 'density'],
+                    choices: ['holes', 'area', 'density', 'probability'],
                     label: 'Role',
                     value: layer.role,
                     oninput: (inp) => {
                         layer.role = inp.value;
+                    }
+                });
+                Input.input({
+                    label: 'Norm',
+                    className: 'simple form-control',
+                    parent: parent,
+                    type: 'number',
+                    value: layer.norm,
+                    placeholder: 'normalization',
+                    oninput: (inp) => {
+                        layer.norm = Number(inp.value);
                     }
                 });
                 Input.input({

@@ -352,6 +352,8 @@ class MapIO {
             if (config.pixelsUrlTemplate.startsWith(config.basePath)) {
                 config.basePath = '';
             }
+            config.norm = config.norm || 1;
+            config.role = config.role || 'area';
             config.pixelsUrlTemplate = path.join(config.basePath, config.pixelsUrlTemplate);
         }
         if (config.type.includes('guideLayer')) {

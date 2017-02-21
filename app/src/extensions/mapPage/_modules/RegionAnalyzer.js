@@ -92,7 +92,7 @@ class RegionAnalyzer {
             let task = new PixelsCounting(polygon, pixel, size, this.gui);
             TaskManager.addTask(task);
             task.run((m) => {
-                polygon._configuration.stats[`${pixel.name}_raw_sum`] = m.sum;
+                polygon._configuration.stats[`${pixel.name}_${m.role}_sum_raw`] = m.sum;
                 this.gui.notify(`${polygon._configuration.name} computed with ${pixel.name}, ${m.sum} total summed in ${m.time[0]}.${m.time[1].toString()} seconds`);
                 Util.notifyOS(`${polygon._configuration.name}: ${m.sum} internal pixels from  ${pixel.name}`);
                 nTasks--;
@@ -166,7 +166,7 @@ class PointsCounting extends Task {
             polygon: pol,
             points: this.points
         });
-        this.ch = ch;
+        this.childProcess = ch;
     }
 
     cancel() {
@@ -222,7 +222,7 @@ class PixelsCounting extends Task {
             polygon: pol,
             pixels: this.pixels
         });
-        this.ch = ch;
+        this.childProcess = ch;
     }
 
     cancel() {

@@ -1,7 +1,11 @@
+SINGLE_IMAGE = "0";
+FOLDER = "1";
+IMAGE_LIST = "2";
+
 arguments = getArgument();
 argument = split(arguments,'#');
 
-isFolder = argument[0];
+mode = argument[0];
 path = argument[1];
 rmin = argument[2];
 rmax = argument[3];
@@ -29,7 +33,7 @@ File.makeDirectory(outFolderO);
 setBatchMode(true);
 run("Input/Output...", "file=.csv");
 
-if(isFolder == "true"){
+if(mode == FOLDER){
     list = getFileList(path);
     files = newArray();    
 
@@ -44,7 +48,14 @@ if(isFolder == "true"){
        IJ.log(i+1+"/"+files.length);
     }
     
-}else{
+}else if(mode == IMAGE_LIST){
+    fileContents = File.openAsString(path);
+    paths = split(fileContents, "\n");
+    for(i = 0; i < paths.length; i++){
+        detectObjects(paths[i]);
+        IJ.log(i+1+"/"+paths.length);
+    } 
+}else if(mode == SINGLE_IMAGE){
     detectObjects(path);
 }
 

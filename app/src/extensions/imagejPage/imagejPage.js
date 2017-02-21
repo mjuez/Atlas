@@ -158,7 +158,7 @@ class imagej extends GuiExtension {
             label: "Single image",
             type: "normal",
             click: () => {
-                this.objectDetection(false);
+                this.objectDetection(Util.Layers.Mode.SINGLE_IMAGE);
             }
         }));
 
@@ -166,7 +166,15 @@ class imagej extends GuiExtension {
             label: "Folder",
             type: "normal",
             click: () => {
-                this.objectDetection(true);
+                this.objectDetection(Util.Layers.Mode.FOLDER);
+            }
+        }));
+
+        objDetectionSubmenu.append(new MenuItem({
+            label: "Image list",
+            type: "normal",
+            click: () => {
+                this.objectDetection(Util.Layers.Mode.IMAGE_LIST);
             }
         }));
 
@@ -180,7 +188,7 @@ class imagej extends GuiExtension {
             label: "Single image",
             type: "normal",
             click: () => {
-                this.holesDetection(false);
+                this.holesDetection(Util.Layers.Mode.SINGLE_IMAGE);
             }
         }));
 
@@ -188,7 +196,15 @@ class imagej extends GuiExtension {
             label: "Folder",
             type: "normal",
             click: () => {
-                this.holesDetection(true);
+                this.holesDetection(Util.Layers.Mode.FOLDER);
+            }
+        }));
+
+        holesDetectionSubmenu.append(new MenuItem({
+            label: "Image list",
+            type: "normal",
+            click: () => {
+                this.holesDetection(Util.Layers.Mode.IMAGE_LIST);
             }
         }));
 
@@ -223,7 +239,7 @@ class imagej extends GuiExtension {
 
         childProcess.on('close', (code) => {
             this.gui.notify('ImageJ closed');
-        });        
+        });
     }
 
 
@@ -254,7 +270,7 @@ class imagej extends GuiExtension {
 
     createMap(isMap, isFolder) {
         let title = 'Choose image';
-        if(isFolder){
+        if (isFolder) {
             title += ' in the left-upper corner';
         }
 
@@ -276,9 +292,9 @@ class imagej extends GuiExtension {
         });
     }
 
-    objectDetection(isFolder) {
+    objectDetection(mode) {
         let props = ['openFile'];
-        if (isFolder) {
+        if (mode === Util.Layers.Mode.FOLDER) {
             props = ['openDirectory'];
         }
         dialog.showOpenDialog({
@@ -288,21 +304,25 @@ class imagej extends GuiExtension {
         }, (filepaths) => {
             if (filepaths) {
                 let details;
-                if (isFolder) {
+                if (mode === Util.Layers.Mode.FOLDER) {
                     details = `Folder: ${path.basename(filepaths[0])}`;
                 } else {
-                    details = `Image: ${path.basename(filepaths[0])}`;
+                    if (path.extname(filepaths[0]) === "txt") {
+                        details = `File: ${path.basename(filepaths[0])}`;
+                    } else {
+                        details = `Image: ${path.basename(filepaths[0])}`;
+                    }
                 }
-                let objectDetectionTask = new ObjectDetectionTask(details, isFolder, this.gui);
+                let objectDetectionTask = new ObjectDetectionTask(details, mode, this.gui);
                 TaskManager.addTask(objectDetectionTask);
                 objectDetectionTask.run(filepaths[0]);
             }
         });
     }
 
-    holesDetection(isFolder) {
+    holesDetection(mode) {
         let props = ['openFile'];
-        if (isFolder) {
+        if (mode === Util.Layers.Mode.FOLDER) {
             props = ['openDirectory'];
         }
         dialog.showOpenDialog({
@@ -312,12 +332,16 @@ class imagej extends GuiExtension {
         }, (filepaths) => {
             if (filepaths) {
                 let details;
-                if (isFolder) {
+                if (mode === Util.Layers.Mode.FOLDER) {
                     details = `Folder: ${path.basename(filepaths[0])}`;
                 } else {
-                    details = `Image: ${path.basename(filepaths[0])}`;
+                    if (path.extname(filepaths[0]) === "txt") {
+                        details = `File: ${path.basename(filepaths[0])}`;
+                    } else {
+                        details = `Image: ${path.basename(filepaths[0])}`;
+                    }
                 }
-                let holesDetectionTask = new HolesDetectionTask(details, isFolder, this.gui);
+                let holesDetectionTask = new HolesDetectionTask(details, mode, this.gui);
                 TaskManager.addTask(holesDetectionTask);
                 holesDetectionTask.run(filepaths[0]);
             }

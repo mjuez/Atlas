@@ -1,7 +1,11 @@
+SINGLE_IMAGE = "0";
+FOLDER = "1";
+IMAGE_LIST = "2";
+
 arguments = getArgument();
 argument = split(arguments,'#');
 
-isFolder = argument[0];
+mode = argument[0];
 path = argument[1];
 radius = argument[2];
 thrHoles = argument[3];
@@ -16,7 +20,7 @@ File.makeDirectory(outFolderHcsv);
 run("Input/Output...", "file=.txt");
 run("Conversions...", " "); //avoid scaling when converting
 
-if(isFolder == "true"){
+if(mode == FOLDER){
     list = getFileList(path);
     files = newArray();    
 
@@ -31,7 +35,14 @@ if(isFolder == "true"){
        IJ.log(i+1+"/"+files.length);
     }
     list = getFileList(path);
-}else{
+}else if(mode == IMAGE_LIST){
+    fileContents = File.openAsString(path);
+    paths = split(fileContents, "\n");
+    for(i = 0; i < paths.length; i++){
+        detectHoles(paths[i]);
+        IJ.log(i+1+"/"+paths.length);
+    } 
+}else if(mode == SINGLE_IMAGE){
     detectHoles(path);
 }
 

@@ -779,8 +779,8 @@ if (L != undefined) {
             } else {
                 let scale = 1;
                 let baselayer = this._activeBaseLayer || this._tilesLayers[0];
-                if (layerConfig.size && (baselayer.options || baselayer._configuration)) {
-                    scale = layerConfig.size / (baselayer._configuration.size || baselayer.options.tileSize);
+                if (layerConfig.size ) {
+                    scale = layerConfig.size / this.getSize();
                     let tileSize = layerConfig.tileSize || layerConfig.size;
                     if (tileSize > 0) {
                         for (let i = 0; i <= layerConfig.size; i = i + layerConfig.tileSize) {

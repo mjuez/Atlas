@@ -541,6 +541,16 @@ class MapEdit {
                         layer.pixelsUrlTemplate = inp.value;
                     }
                 });
+                Input.selectInput({
+                    parent: parent,
+                    className: 'simple form-control',
+                    choices: ['holes', 'area', 'volume', 'density'],
+                    label: 'Role',
+                    value: layer.role,
+                    oninput: (inp) => {
+                        layer.role = inp.value;
+                    }
+                });
                 Input.input({
                     label: 'Size',
                     className: 'simple form-control',

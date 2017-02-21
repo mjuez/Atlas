@@ -19,7 +19,6 @@
 'use strict';
 
 
-const ProgressBar = require('ProgressBar');
 const Task = require('Task');
 const TaskManager = require('TaskManager');
 const Util = require('Util');
@@ -32,6 +31,7 @@ const {
 const {
     ChildProcess
 } = require('child_process');
+const async = require('async');
 
 
 
@@ -51,36 +51,75 @@ class RegionAnalyzer {
     }
 
     volumeCal(polygon) {
-        return this.areaCal(polygon) * this.mapManager._configuration.depth_cal;
+        return this.areaCal(polygon) * this.mapManager.getDepthCal();
     }
 
+
+
+
+
     computeRegionStats(polygon) {
+        let area_px = this.areaPx(polygon);
+        let areaCal = this.areaCal(polygon);
+        let volumeCal = this.volumeCal(polygon);
+        let size = this.mapManager.getSize();
+
         polygon._configuration.stats = polygon._configuration.stats || {};
-        polygon._configuration.stats.area_px = this.areaPx(polygon)
-        polygon._configuration.stats[`area_cal_${this.mapManager.getUnitCal()}`] = this.areaCal(polygon);
-        polygon._configuration.stats[`volume_cal_${this.mapManager.getUnitCal()}`] = this.areaCal(polygon) * this.mapManager.getDepthCal();
-        this.size = this.mapManager.getSize();
+        polygon._configuration.stats.area_px = area_px;
+        polygon._configuration.stats[`area_cal_${this.mapManager.getUnitCal()}`] = areaCal;
+        polygon._configuration.stats[`volume_cal_${this.mapManager.getUnitCal()}`] = volumeCal;
+        let nTasks = 0;
 
         this.mapManager.getLayers('pointsLayer').map((point) => {
-            let task = new PointsCounting(polygon, point, this.size, this.gui);
+            nTasks++;
+            let task = new PointsCounting(polygon, point, size, this.gui);
             TaskManager.addTask(task);
             task.run((m) => {
                 polygon._configuration.stats[point.name] = m.N;
-                polygon._configuration.stats[`area_cal density ${point.name}`] = m.N / polygon._configuration.stats.area_cal;
-                polygon._configuration.stats[`volume_cal density ${point.name}`] = m.N / polygon._configuration.stats.volume_cal;
+                polygon._configuration.stats[`area_cal_density_${point.name}`] = m.N / areaCal;
+                polygon._configuration.stats[`volume_cal_density_${point.name}`] = m.N / volumeCal;
                 this.gui.notify(`${polygon._configuration.name} computed with ${point.name}, ${m.N} internal points counted in ${m.time[0]}.${m.time[1].toString()} seconds`);
                 Util.notifyOS(`${polygon._configuration.name}: ${m.N} internal points from  ${point.name}`);
+                nTasks--;
+                if (nTasks === 0) {
+                    this.completeStats(polygon);
+                }
             });
         });
 
         this.mapManager.getLayers('pixelsLayer').map((pixel) => {
-            let task = new PixelsCounting(polygon, pixel, this.size, this.gui);
+            nTasks++;
+            let task = new PixelsCounting(polygon, pixel, size, this.gui);
             TaskManager.addTask(task);
             task.run((m) => {
                 polygon._configuration.stats[`${pixel.name}_raw_sum`] = m.sum;
                 this.gui.notify(`${polygon._configuration.name} computed with ${pixel.name}, ${m.sum} total summed in ${m.time[0]}.${m.time[1].toString()} seconds`);
                 Util.notifyOS(`${polygon._configuration.name}: ${m.sum} internal pixels from  ${pixel.name}`);
+                nTasks--;
             });
+        });
+    }
+
+
+    completeStats(polygon) {
+        this.mapManager.getlayers('pixelsLayer').map((pixel) => {
+            let stats = polygon._configuration.stats;
+            switch (pixel.role) {
+                case 'holes':
+
+                    break;
+                case 'area':
+
+                    break;
+                case 'volume':
+
+                    break;
+                case 'density':
+                    break;
+                default:
+
+            }
+            polygon._configuration.stats['']
         });
     }
 
@@ -94,7 +133,7 @@ class PointsCounting extends Task {
         let details = `Counting in ${polygon._configuration.name} using ${points.name}`;
         let scale = points.size / size;
         super(name, details, gui);
-        this.polygon = extractPolygonArray(polygon.getLatLngs(), scale);;
+        this.polygon = extractPolygonArray(polygon.getLatLngs(), scale);
         this.points = points;
     }
 
@@ -111,9 +150,6 @@ class PointsCounting extends Task {
                     break;
                 case 'step':
                     this.updateProgress((m.prog / m.tot) * 100);
-                    ipcRenderer.send('setProgress', {
-                        value: (m.prog / m.tot)
-                    });
                     this.gui.notify(`${(m.prog / m.tot) * 100}%`);
                     break;
                 case 'error':
@@ -170,9 +206,6 @@ class PixelsCounting extends Task {
                     break;
                 case 'step':
                     this.updateProgress((m.prog / m.tot) * 100);
-                    ipcRenderer.send('setProgress', {
-                        value: (m.prog / m.tot)
-                    });
                     this.gui.notify(`${(m.prog / m.tot) * 100}%`);
                     break;
                 case 'error':
@@ -209,7 +242,7 @@ function extractPolygonArray(polygon, scale) {
         scale = 1;
     }
     //convert latlngs to a vector of coordinates
-    var vs = polygon[0].map(function (ltlng) {
+    var vs = polygon[0].map(function(ltlng) {
         return ([ltlng.lng * scale, -ltlng.lat * scale])
     });
 

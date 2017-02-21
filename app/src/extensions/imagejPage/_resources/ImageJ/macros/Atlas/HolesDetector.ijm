@@ -18,12 +18,19 @@ run("Conversions...", " "); //avoid scaling when converting
 
 if(isFolder == "true"){
     list = getFileList(path);
+    files = newArray();    
 
     for (i = 0; i < list.length; i++){
-        if ( !endsWith(list[i],File.separator) ){
-            detectHoles(path + File.separator + list[i]);
+        if ( !endsWith(list[i], File.separator) ){
+            files = Array.concat(files, list[i]);
         }
     }
+
+    for (i = 0; i < files.length; i++){
+       detectHoles(path + File.separator + files[i]);
+       IJ.log(i+1+"/"+files.length);
+    }
+    list = getFileList(path);
 }else{
     detectHoles(path);
 }

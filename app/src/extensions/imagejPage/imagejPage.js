@@ -230,7 +230,7 @@ class imagej extends GuiExtension {
     run(macro, args) {
         return spawn('java', [`-Xmx${this.memory}m`, `-Xss${this.stackMemory}m`, `-jar`, `ij.jar`, `-batchpath`, `Atlas${path.sep}${macro}.ijm`, `${args}`], {
             cwd: this.imagejpath,
-            stdio: 'ignore'
+            //stdio: 'ignore'
         });
     }
 

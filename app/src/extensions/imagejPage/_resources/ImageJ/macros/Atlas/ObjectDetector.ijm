@@ -31,12 +31,19 @@ run("Input/Output...", "file=.csv");
 
 if(isFolder == "true"){
     list = getFileList(path);
+    files = newArray();    
 
     for (i = 0; i < list.length; i++){
         if ( !endsWith(list[i], File.separator) ){
-            detectObjects(path + File.separator + list[i]);
+            files = Array.concat(files, list[i]);
         }
     }
+
+   for (i = 0; i < files.length; i++){
+       detectObjects(path + File.separator + files[i]);
+       IJ.log(i+1+"/"+files.length);
+    }
+    
 }else{
     detectObjects(path);
 }
@@ -76,6 +83,4 @@ function detectObjects(imagePath){
     outputPoints = outFolderP + File.separator+"points_"+titleOriginal+".csv";
     run("ObjCounter",  "silent=true threshold=1 slice="+floor(depth)+" min="+min+" max="+max +" fraction="+fraction+" tolerance="+toll+" export_objects=true export_points=true output_objects="+outputObjects+" output_points="+outputPoints);
     close("*");
-    selectWindow("Results");
-    run("Close"); 
 }

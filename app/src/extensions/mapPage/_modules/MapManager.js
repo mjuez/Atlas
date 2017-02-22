@@ -783,8 +783,8 @@ if (L != undefined) {
                     scale = layerConfig.size / this.getSize();
                     let tileSize = layerConfig.tileSize || layerConfig.size;
                     if (tileSize > 0) {
-                        for (let i = 0; i <= layerConfig.size; i = i + layerConfig.tileSize) {
-                            for (let j = 0; j <= layerConfig.size; j = j + layerConfig.tileSize) {
+                        for (let i = 0; i <= layerConfig.size; i = i + tileSize) {
+                            for (let j = 0; j <= layerConfig.size; j = j + tileSize) {
                                 guideLayer.addLayer(L.circleMarker([-i / scale, j / scale], {
                                     radius: layerConfig.radius || 4,
                                     color: layerConfig.color || this.getDrawingColor()

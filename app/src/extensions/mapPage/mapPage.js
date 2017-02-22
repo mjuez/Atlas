@@ -194,6 +194,18 @@ class mapPage extends GuiExtension {
             }
         }));
         layer.append(new MenuItem({
+            label: 'Add guide layer',
+            click: () => {
+                this.addLayer({
+                  name: 'guide layer',
+                  type: 'guideLayer',
+                  size: 100,
+                  tileSize: 10
+                });
+                this.switchMap(this.mapManager._configuration);
+            }
+        }));
+        layer.append(new MenuItem({
             label: 'Edit layers',
             click: () => {
                 MapEdit.editLayersModal(this.mapManager._configuration, (c) => {
@@ -995,12 +1007,15 @@ class mapPage extends GuiExtension {
         this.switchMap(this.mapManager._configuration);
     }
 
+
     addLayer(conf) {
         conf = MapIO.parseLayerConfig(conf);
         let key = conf.name || conf.alias || conf.id || conf.type;
         this.mapManager._configuration.layers[key] = conf;
         this.mapManager.addLayer(conf);
     }
+
+
 
 
 

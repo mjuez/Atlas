@@ -391,10 +391,6 @@ class MapIO {
 
 
 
-
-
-
-
     static createMap(cl) {
         MapEdit.previewModal(MapIO.baseConfiguration({
             new: true

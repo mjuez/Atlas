@@ -35,7 +35,7 @@ run("Input/Output...", "file=.csv");
 
 if(mode == FOLDER){
     list = getFileList(path);
-    files = newArray();    
+    files = newArray();
 
     for (i = 0; i < list.length; i++){
         if ( !endsWith(list[i], File.separator) ){
@@ -47,7 +47,7 @@ if(mode == FOLDER){
        detectObjects(path + File.separator + files[i]);
        IJ.log(i+1+"/"+files.length);
     }
-    
+
 }else if(mode == IMAGE_LIST){
     fileContents = File.openAsString(path);
     paths = split(fileContents, "\n");
@@ -67,7 +67,9 @@ function detectObjects(imagePath){
     if (max <=0){
     max=width*height*nslice;
     }
-    titleOriginal=getTitle();
+    title=getTitle();
+    titleC = replace(title," ","_");
+
     run("Duplicate...", "duplicate range="+1+"-"+nslice+" title=temp1");
     run("Duplicate...", "duplicate range="+1+"-"+nslice+" title=temp0");
     run("Median...", "radius=1 stack");
@@ -89,9 +91,9 @@ function detectObjects(imagePath){
     depth=(nslice+1)/2;
     //setVoxelSize(sX,sY,sZ,"micron");
     //segmentation and object counting
-    rename(titleOriginal);
-    outputObjects = outFolderO + File.separator+"objects_"+titleOriginal;
-    outputPoints = outFolderP + File.separator+"points_"+titleOriginal+".csv";
+    rename(title);
+    outputObjects = outFolderO + File.separator+"objects_"+titleC;
+    outputPoints = outFolderP + File.separator+"points_"+titleC+".csv";
     run("ObjCounter",  "silent=true threshold=1 slice="+floor(depth)+" min="+min+" max="+max +" fraction="+fraction+" tolerance="+toll+" export_objects=true export_points=true output_objects="+outputObjects+" output_points="+outputPoints);
     close("*");
 }

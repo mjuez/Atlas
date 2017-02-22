@@ -99,9 +99,12 @@ class MapEdit {
                 Util.empty(right, right.firstChild);
                 let layer = newlayers[Object.keys(newlayers)[inp.selectedIndex]];
                 MapEdit.layerEditors(layer, right);
+                MapEdit.layerRemoveButton(newlayers, layer, right);
             }
         });
         MapEdit.layerEditors(newlayers[Object.keys(newlayers)[0]], right);
+        MapEdit.layerRemoveButton(newlayers, newlayers[Object.keys(newlayers)[0]], right);
+
 
         let Bc = new ButtonsContainer(document.createElement('DIV'));
         Bc.addButton({
@@ -270,12 +273,12 @@ class MapEdit {
                 let layer = conf.layers[Object.keys(conf.layers)[inp.selectedIndex]];
                 MapEdit.layerPreviewImage(layer, right);
                 MapEdit.layerPreviewInfo(layer, right);
-                MapEdit.layerRemoveButton(newconf, layer, right);
+                MapEdit.layerRemoveButton(newconf.layers,layer, right);
             }
         });
         MapEdit.layerPreviewImage(conf.layers[Object.keys(conf.layers)[0]], right);
         MapEdit.layerPreviewInfo(conf.layers[Object.keys(conf.layers)[0]], right);
-        MapEdit.layerRemoveButton(newconf, conf.layers[Object.keys(conf.layers)[0]], right);
+        MapEdit.layerRemoveButton(newconf.layers, conf.layers[Object.keys(conf.layers)[0]], right);
         let text;
         switch (conf.new) {
             case true:
@@ -311,23 +314,24 @@ class MapEdit {
         modal.show();
     }
 
-    static layerRemoveButton(conf, layer, parent) {
+    static layerRemoveButton(layers, layer, parent) {
         let a = new ButtonsContainer(document.createElement('DIV'));
         a.addButton({
             id: 'removelayerbutton',
             text: 'Remove layer',
-            className : 'btn-positive',
+            className: 'btn-positive',
             toggle: true,
             groupId: 'xxxx',
             action: {
-              active:(btn) => {
-                delete conf.layers[layer.name]; //delete the layer
-                btn.innerHTML = 'Layer removed';
-            },
-            deactive: (btn)=>{
-              conf.layers[layer.name] = layer; //re-add the layer the only problem is that it changes the order of the layers...it's ok
-              btn.innerHTML = 'Remove layer'
-            } }
+                active: (btn) => {
+                    delete layers[layer.name]; //delete the layer
+                    btn.innerHTML = 'Layer removed';
+                },
+                deactive: (btn) => {
+                    layers[layer.name] = layer; //re-add the layer the only problem is that it changes the order of the layers...it's ok
+                    btn.innerHTML = 'Remove layer'
+                }
+            }
         });
         parent.appendChild(a.element);
     }
@@ -370,37 +374,58 @@ class MapEdit {
                         layer.minZoom = Number(inp.value);
                     }
                 });
+                // Input.input({
+                //     label: 'MaxNativeZoom',
+                //     className: 'simple form-control',
+                //     parent: parent,
+                //     type: 'number',
+                //     value: layer.maxNativeZoom,
+                //     placeholder: 'MaxNativeZoom',
+                //     oninput: (inp) => {
+                //         layer.maxNativeZoom = Number(inp.value);
+                //     }
+                // });
+                // Input.input({
+                //     label: 'MinNativeZoom',
+                //     className: 'simple form-control',
+                //     parent: parent,
+                //     type: 'number',
+                //     value: layer.minNativeZoom,
+                //     placeholder: 'minNativeZoom',
+                //     oninput: (inp) => {
+                //         layer.minNativeZoom = Number(inp.value);
+                //     }
+                // });
                 Input.input({
-                    label: 'MaxNativeZoom',
+                    label: 'Calibrated Size',
                     className: 'simple form-control',
                     parent: parent,
                     type: 'number',
-                    value: layer.maxNativeZoom,
-                    placeholder: 'MaxNativeZoom',
+                    value: layer.sizeCal || 256,
+                    placeholder: 'cal size',
                     oninput: (inp) => {
-                        layer.maxNativeZoom = Number(inp.value);
+                        layer.sizeCal = Number(inp.value);
                     }
                 });
                 Input.input({
-                    label: 'MinNativeZoom',
+                    label: 'Calibrated depth',
                     className: 'simple form-control',
                     parent: parent,
                     type: 'number',
-                    value: layer.minNativeZoom,
-                    placeholder: 'minNativeZoom',
+                    value: layer.depthCal || 1,
+                    placeholder: 'cal size',
                     oninput: (inp) => {
-                        layer.minNativeZoom = Number(inp.value);
+                        layer.depthCal = Number(inp.value);
                     }
                 });
                 Input.input({
-                    label: 'Original Size',
+                    label: 'Calibration unit',
                     className: 'simple form-control',
                     parent: parent,
-                    type: 'number',
-                    value: layer.original_size || 256,
-                    placeholder: 'original size',
+                    value: layer.unitCal || 'u',
+                    placeholder: 'cal unit',
                     oninput: (inp) => {
-                        inp.value = layer.original_size;
+                        layer.unitCal = inp.value;
                     }
                 });
                 Input.input({
@@ -514,6 +539,27 @@ class MapEdit {
                     placeholder: 'pixels url template',
                     oninput: (inp) => {
                         layer.pixelsUrlTemplate = inp.value;
+                    }
+                });
+                Input.selectInput({
+                    parent: parent,
+                    className: 'simple form-control',
+                    choices: ['holes', 'area', 'density', 'probability'],
+                    label: 'Role',
+                    value: layer.role,
+                    oninput: (inp) => {
+                        layer.role = inp.value;
+                    }
+                });
+                Input.input({
+                    label: 'Norm',
+                    className: 'simple form-control',
+                    parent: parent,
+                    type: 'number',
+                    value: layer.norm,
+                    placeholder: 'normalization',
+                    oninput: (inp) => {
+                        layer.norm = Number(inp.value);
                     }
                 });
                 Input.input({

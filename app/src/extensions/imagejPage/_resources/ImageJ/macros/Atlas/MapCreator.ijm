@@ -12,7 +12,7 @@ mapCreatorParams = argument[5];
 mergeSlices = argument[6];
 
 if(isFolder == "true"){
-    run("Join Stack", "image="+ image +" prior=none options=[] initial="+initialSlice+" last="+lastSlice+" scale="+scale);
+    run("Join Stack", "image=["+ image +"] prior=none options=[] initial="+initialSlice+" last="+lastSlice+" scale="+scale);
 }else{
     open(image);
 }
@@ -23,4 +23,5 @@ if(mergeSlices == "true"){
         run("Z Project...", "projection=[Max Intensity]");
     }
 }
+run("Enhance Contrast...", "saturated=0 normalize process_all");
 run("Map creator", mapCreatorParams);

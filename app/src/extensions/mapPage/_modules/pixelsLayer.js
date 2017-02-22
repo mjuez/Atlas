@@ -159,8 +159,12 @@ class pixelsLayer {
                 let t1 = process.hrtime(t0);
                 if (typeof complete === 'function') {
                     complete({
+                        role: this.configuration.role,
                         sum: res,
+                        sumNorm: res / (this.configuration.norm),
                         mean: res / N,
+                        meanNorm: res / (N * this.configuration.norm),
+                        norm: this.configuration.norm,
                         N: N,
                         tot: tot,
                         time: t1
@@ -182,7 +186,13 @@ class pixelsLayer {
                 let t1 = process.hrtime(t0);
                 if (typeof complete === 'function') {
                     complete({
+                        role: this.configuration.role,
                         sum: res,
+                        sumNorm: res / (this.configuration.norm),
+                        mean: res / N,
+                        meanNorm: res / (N * this.configuration.norm),
+                        norm: this.configuration.norm,
+                        N: N,
                         tot: tot,
                         time: t1
                     });

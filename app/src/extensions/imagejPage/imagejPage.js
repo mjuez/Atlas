@@ -48,11 +48,13 @@ const MapCreatorTask = require('MapCreatorTask');
 const ObjectDetectionTask = require('ObjectDetectionTask');
 const HolesDetectionTask = require('HolesDetectionTask');
 const Input = require('Input');
+let gui = require('Gui');
+
 
 class imagej extends GuiExtension {
 
-    constructor(gui) {
-        super(gui);
+    constructor() {
+        super();
         this.maxMemory = parseInt((os.totalmem() * 0.7) / 1000000);
         this.maxStackMemory = 515;
         this.memory = this.maxMemory;
@@ -74,7 +76,7 @@ class imagej extends GuiExtension {
     activate() {
         // this.addToggleButton({
         //     id: 'imageJToggleButton',
-        //     buttonsContainer: this.gui.header.actionsContainer,
+        //     buttonsContainer: gui.header.actionsContainer,
         //     text: "ImageJ",
         //     groupId: "imageJ",
         //     action: () => {
@@ -93,7 +95,7 @@ class imagej extends GuiExtension {
 
     deactivate() {
         //  this.removeToggleButton('imageJToggleButton');
-        this.gui.removeSubmenu(this.menu);
+        gui.removeSubmenu(this.menu);
         this.element.removeChild(this.pane.element);
     }
 
@@ -218,7 +220,7 @@ class imagej extends GuiExtension {
             type: "submenu",
             submenu: menu
         });
-        this.gui.addSubMenu(this.menu);
+        gui.addSubMenu(this.menu);
     }
 
     show() {
@@ -238,7 +240,7 @@ class imagej extends GuiExtension {
         });
 
         childProcess.on('close', (code) => {
-            this.gui.notify('ImageJ closed');
+            gui.notify('ImageJ closed');
         });
     }
 
@@ -263,9 +265,9 @@ class imagej extends GuiExtension {
             if (typeof cl === 'function') {
                 cl(stdout);
             }
-            this.gui.notify(`ImageJ macro finish and closed`);
+            gui.notify(`ImageJ macro finish and closed`);
         });
-        this.gui.notify(`ImageJ macro from ${cmnd} launched`);
+        gui.notify(`ImageJ macro from ${cmnd} launched`);
     }*/
 
     createMap(isMap, isFolder) {
@@ -285,7 +287,7 @@ class imagej extends GuiExtension {
                 } else {
                     details = `Layer: ${path.basename(filepaths[0])}`;
                 }
-                let mapCreatorTask = new MapCreatorTask(details, isMap, isFolder, this.gui);
+                let mapCreatorTask = new MapCreatorTask(details, isMap, isFolder);
                 TaskManager.addTask(mapCreatorTask);
                 mapCreatorTask.run(filepaths[0]);
             }
@@ -313,7 +315,7 @@ class imagej extends GuiExtension {
                         details = `Image: ${path.basename(filepaths[0])}`;
                     }
                 }
-                let objectDetectionTask = new ObjectDetectionTask(details, mode, this.gui);
+                let objectDetectionTask = new ObjectDetectionTask(details, mode);
                 TaskManager.addTask(objectDetectionTask);
                 objectDetectionTask.run(filepaths[0]);
             }
@@ -341,7 +343,7 @@ class imagej extends GuiExtension {
                         details = `Image: ${path.basename(filepaths[0])}`;
                     }
                 }
-                let holesDetectionTask = new HolesDetectionTask(details, mode, this.gui);
+                let holesDetectionTask = new HolesDetectionTask(details, mode);
                 TaskManager.addTask(holesDetectionTask);
                 holesDetectionTask.run(filepaths[0]);
             }

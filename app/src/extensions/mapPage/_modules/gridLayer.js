@@ -19,10 +19,9 @@
 'use strict';
 //use non-map convention x-y if v=coords x=v[0] y=v[1]
 //
-const Baby = require("babyparse");
 const fss = require("fs");
 
-class pointsLayer {
+class gridLayer {
 
     constructor(configuration) {
         this.configuration = configuration;
@@ -151,129 +150,15 @@ class pointsLayer {
     }
 
 
-    count(options) {
-        let t0 = process.hrtime();
+    
 
-        let polygon = options.polygon;
-        let complete = options.complete;
-        let error = options.errorcl;
-        let cl = options.cl;
-        let bunch = options.bunch;
-        let maxTiles = options.maxTiles;
-
-
-        var references = this.getReferences(this.getBounds(polygon));
-        var l = references.length;
-        const tot = l;
-        var pointsUrlTemplate = this.configuration.pointsUrlTemplate;
-        let points = [];
-        let N = 0;
-
-        var step = (point) => {
-            if (this.pointinpolygon([point[0], point[1]], polygon)) {
-                N = N + 1;
-                if (typeof cl === 'function') {
-                    cl(point);
-                }
-            }
-        };
-
-        var end = (num) => {
-            l = l - 1;
-            if (bunch) {
-                bunch(tot - l, tot);
-            }
-            if (l <= 0) {
-                let t1 = process.hrtime(t0);
-                if (complete) {
-                    complete({
-                        N: N,
-                        tot: tot,
-                        time: t1
-                    });
-                }
-            }
-        };
-
-
-        var err = (e) => {
-            if (error) {
-                error(e);
-            }
-            l = l - 1;
-            if (bunch) {
-                bunch(tot - l, tot);
-            }
-            if (l <= 0) {
-                let t1 = process.hrtime(t0);
-                if (complete) {
-                    complete({
-                        N: N,
-                        tot: tot,
-                        time: t1
-                    });
-                }
-            }
-        };
-
-        if (maxTiles) {
-            maxTiles = Math.min(maxTiles, references.length);
-        } else {
-            maxTiles = references.length;
-        }
-
-        for (var tt = 0; tt < maxTiles; tt++) {
-
-            this.read(polygon, references[tt], step, err, end);
-        }
-    }
-
-    read(polygon, reference, step, error, end) {
-        let num = 0;
-        let url = this.configuration.pointsUrlTemplate;
-        url = url.replace("{x}", reference.col);
-        url = url.replace("{y}", reference.row);
-        try {
-            let contents = '';
-            if (this.isRemote()) {
-                contents = url;
-            } else {
-                contents = fss.readFileSync(url).toString();
-            }
-            Baby.parse(contents, {
-                dynamicTyping: true,
-                fastMode: true,
-                step: (results, parser) => {
-                    if (!this.configuration.excludeCF || results.data[0][3] == 0) {
-                        step([results.data[0][0] + reference.x, results.data[0][1] + reference.y]);
-                    }
-                },
-                complete: (results, file) => {
-                    if (end) {
-                        end(num);
-                    }
-                },
-                error: (e, file) => {
-                    if (error) {
-                        error(e);
-                    }
-                }
-            });
-        } catch (e) {
-            if (error) {
-                if (typeof error === 'function') {
-                    error(e);
-                }
-            }
-        }
-    }
 }
 
 //export as node module
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = pointsLayer;
+    module.exports = gridLayer;
 }
 // ...or as browser global
 else {
-    global.pointsLayer = pointsLayer;
+    global.pointsLayer = gridLayer;
 }

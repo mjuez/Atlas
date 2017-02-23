@@ -30,10 +30,13 @@ const Task = require('Task');
 const icon = "fa fa-tasks";
 const toggleButtonId = 'tasksPageToggleButton';
 
+let gui = require('Gui');
+
+
 class tasksPage extends GuiExtension {
 
-    constructor(gui) {
-        super(gui);
+    constructor() {
+        super();
         this.icon = icon + " fa-2x";
     }
 
@@ -42,7 +45,7 @@ class tasksPage extends GuiExtension {
 
         this.addToggleButton({
             id: toggleButtonId,
-            buttonsContainer: this.gui.header.actionsContainer,
+            buttonsContainer: gui.header.actionsContainer,
             className: 'btn btn-default pull-right',
             icon: icon
         });

@@ -33,13 +33,14 @@ const {
 } = require('child_process');
 const async = require('async');
 
+let gui = require('Gui');
+
 
 
 
 class RegionAnalyzer {
-    constructor(mapManager, gui) {
+    constructor(mapManager) {
         this.mapManager = mapManager;
-        this.gui = gui;
     }
 
     areaPx(polygon) {
@@ -62,73 +63,92 @@ class RegionAnalyzer {
         let area_px = this.areaPx(polygon);
         let areaCal = this.areaCal(polygon);
         let volumeCal = this.volumeCal(polygon);
+        let aPxtoVcal = volumeCal / area_px;
         let size = this.mapManager.getSize();
+        let sizeCal = this.mapManager.getSizeCal();
+        let depthCal = this.mapManager.getDepthCal();
+        let allPromises = [];
+        let nt = 0;
+        let points = this.mapManager.getLayers('pointsLayer');
+        let pixels = this.mapManager.getLayers('pixelsLayer');
+        let arNvol = [];
+        let unit = this.mapManager.getUnitCal();
 
         polygon._configuration.stats = polygon._configuration.stats || {};
         polygon._configuration.stats.area_px = area_px;
-        polygon._configuration.stats[`area_cal_${this.mapManager.getUnitCal()}`] = areaCal;
-        polygon._configuration.stats[`volume_cal_${this.mapManager.getUnitCal()}`] = volumeCal;
-        let nTasks = 0;
+        polygon._configuration.stats[`area_cal_${unit}^2`] = areaCal;
+        polygon._configuration.stats[`volume_cal_${unit}^3`] = volumeCal;
+        arNvol.push(`area_cal_${unit}^2`);
+        arNvol.push(`volume_cal_${unit}^3`);
 
-        this.mapManager.getLayers('pointsLayer').map((point) => {
-            nTasks++;
-            let task = new PointsCounting(polygon, point, size, this.gui);
+        points.map((point) => {
+            let task = new PointsCounting(polygon, point, size);
             TaskManager.addTask(task);
-            task.run((m) => {
-                polygon._configuration.stats[point.name] = m.N;
-                polygon._configuration.stats[`area_cal_density_${point.name}`] = m.N / areaCal;
-                polygon._configuration.stats[`volume_cal_density_${point.name}`] = m.N / volumeCal;
-                this.gui.notify(`${polygon._configuration.name} computed with ${point.name}, ${m.N} internal points counted in ${m.time[0]}.${m.time[1].toString()} seconds`);
-                Util.notifyOS(`${polygon._configuration.name}: ${m.N} internal points from  ${point.name}`);
-                nTasks--;
-                if (nTasks === 0) {
-                    this.completeStats(polygon);
-                }
+            let promise = new Promise((resolve) => {
+                task.run((m) => {
+                    polygon._configuration.stats[point.name] = m.N;
+                    resolve();
+                });
             });
+            allPromises.push(promise);
         });
 
-        this.mapManager.getLayers('pixelsLayer').map((pixel) => {
-            nTasks++;
-            let task = new PixelsCounting(polygon, pixel, size, this.gui);
+        pixels.map((pixel) => {
+            let task = new PixelsCounting(polygon, pixel, size);
             TaskManager.addTask(task);
-            task.run((m) => {
-                polygon._configuration.stats[`${pixel.name}_${m.role}_sum_raw`] = m.sum;
-                this.gui.notify(`${polygon._configuration.name} computed with ${pixel.name}, ${m.sum} total summed in ${m.time[0]}.${m.time[1].toString()} seconds`);
-                Util.notifyOS(`${polygon._configuration.name}: ${m.sum} internal pixels from  ${pixel.name}`);
-                nTasks--;
+            let promise = new Promise((resolve) => {
+                task.run((m) => {
+                    let sc = (sizeCal * sizeCal) / (pixel.size * pixel.size);
+                    let label;
+                    let value;
+                    switch (pixel.role) {
+                        case 'holes':
+                            polygon._configuration.stats[`${pixel.name}_holes_area_${unit}^2`] = m.sumNorm * sc;
+                            polygon._configuration.stats[`${pixel.name}_holes_volume_${unit}^3`] = m.sumNorm * sc * depthCal;
+                            polygon._configuration.stats[`area_cal_minus_holes_${pixel.name}_${unit}^2`] = (m.N - m.sumNorm) * sc;
+                            polygon._configuration.stats[`volume_cal_minus_holes_${pixel.name}_${unit}^3`] = (m.N - m.sumNorm) * sc * depthCal;
+                            arNvol.push(`area_cal_minus_holes_${pixel.name}_${unit}^2`);
+                            arNvol.push(`volume_cal_minus_holes_${pixel.name}_${unit}^3`);
+                            break;
+                        case 'area':
+                            polygon._configuration.stats[`${pixel.name}_area_${unit}^2`] = m.sumNorm * sc;
+                            polygon._configuration.stats[`${pixel.name}_volume_${unit}^3`] = m.sumNorm * sc * depthCal;
+                            arNvol.push(`${pixel.name}_area_${unit}^2`);
+                            arNvol.push(`${pixel.name}_area_${unit}^2`);
+                            break;
+                        case 'density':
+                            polygon._configuration.stats[`${pixel.name}_density`] = m.sumNorm;
+                            break;
+                        case 'probability':
+                            polygon._configuration.stats[`${pixel.name}_probability`] = m.meanNorm;
+                            break;
+                        default:
+                        polygon._configuration.stats[`${pixel.name}_${pixel.role}`] = m[pixel.role] || m.sumNorm;
+                    }
+                    resolve();
+                });
             });
+            allPromises.push(promise);
+        });
+
+        Promise.all(allPromises).then(() => {
+            points.map((point) => {
+                arNvol.map((label) => {
+                    polygon._configuration.stats[`density_${point.name}_over_${label}`] = polygon._configuration.stats[point.name] / polygon._configuration.stats[label];
+                });
+            });
+
         });
     }
 
 
-    completeStats(polygon) {
-        this.mapManager.getlayers('pixelsLayer').map((pixel) => {
-            let stats = polygon._configuration.stats;
-            switch (pixel.role) {
-                case 'holes':
-
-                    break;
-                case 'area':
-
-                    break;
-                case 'volume':
-
-                    break;
-                case 'density':
-                    break;
-                default:
-
-            }
-            polygon._configuration.stats['']
-        });
-    }
 
 }
 
 
 class PointsCounting extends Task {
 
-    constructor(polygon, points, size, gui) {
+    constructor(polygon, points, size) {
         let name = `Points counting`;
         let details = `Counting in ${polygon._configuration.name} using ${points.name}`;
         let scale = points.size / size;
@@ -150,11 +170,9 @@ class PointsCounting extends Task {
                     break;
                 case 'step':
                     this.updateProgress((m.prog / m.tot) * 100);
-                    this.gui.notify(`${(m.prog / m.tot) * 100}%`);
                     break;
                 case 'error':
                     this.fail(m.error + "error");
-                    this.gui.notify(m.error + "error");
                     ch.kill();
                     break;
                 default:
@@ -183,7 +201,7 @@ class PointsCounting extends Task {
 
 class PixelsCounting extends Task {
 
-    constructor(polygon, pixels, size, gui) {
+    constructor(polygon, pixels, size) {
         let name = `Pixels counting`;
         let details = `counting ${polygon._configuration.name} using ${pixels.name}`;
         let scale = pixels.size / size;
@@ -206,11 +224,11 @@ class PixelsCounting extends Task {
                     break;
                 case 'step':
                     this.updateProgress((m.prog / m.tot) * 100);
-                    this.gui.notify(`${(m.prog / m.tot) * 100}%`);
+                    //this.gui.notify(`${(m.prog / m.tot) * 100}%`);
                     break;
                 case 'error':
                     this.fail(m.error + "error");
-                    this.gui.notify(m.error + "error");
+                    //this.gui.notify(m.error + "error");
                     ch.kill();
                     break;
                 default:

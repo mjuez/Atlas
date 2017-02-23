@@ -18,6 +18,7 @@
 
 'use strict';
 
+const Grid = require('Grid');
 const Sidebar = require('Sidebar');
 const {
     dialog
@@ -28,200 +29,426 @@ const ButtonsContainer = require('ButtonsContainer');
 const Util = require('Util');
 const Input = require('Input');
 
+function layerRemoveButton(layers, layer, parent) {
+    let a = new ButtonsContainer(document.createElement('DIV'));
+    let text = 'Remove layer';
+    if (Object.keys(layers).indexOf(layer.name)<0){
+      text = 'Layer removed';
+    }
+    a.addButton({
+        id: 'removelayerbutton',
+        text: text,
+        className: 'btn-positive',
+        toggle: true,
+        groupId: 'xxxx',
+        action: {
+            active: (btn) => {
+                delete layers[layer.name]; //delete the layer
+                btn.innerHTML = 'Layer removed';
+            },
+            deactive: (btn) => {
+                layers[layer.name] = layer; //re-add the layer the only problem is that it changes the order of the layers...it's ok
+                btn.innerHTML = 'Remove layer'
+            }
+        }
+    });
+    parent.appendChild(a.element);
+}
+
+function layerPreviewImage(layer, parent) {
+    if (layer) {
+        if (typeof layer.previewImageUrl === 'string') {
+            let img = document.createElement('IMG');
+            img.width = 150;
+            img.height = 150;
+            img.src = layer.previewImageUrl;
+            if (parent) {
+                if (parent.appendChild) {
+                    parent.appendChild(img);
+                }
+            } else {
+                return img;
+            }
+        }
+    }
+}
+
+function layerPreviewInfo(layer, parent) {
+    if (layer) {
+        if (typeof layer.previewImageUrl === 'string') {
+            let info = document.createElement('DIV');
+            let ty = document.createElement('STRONG');
+            ty.innerHTML = `Layer type: ${layer.type}`;
+            info.appendChild(ty);
+            if (parent) {
+                if (parent.appendChild) {
+                    parent.appendChild(info);
+                }
+            } else {
+                return info;
+            }
+        }
+    }
+}
+
+function getLayersName(conf) {
+    return Object.keys(conf.layers).map((k) => {
+        return conf.layers[k].name || k;
+    });
+}
+
+function layerSpecificEditors(layer, parent) {
+     if (!layer) return;
+    switch (layer.type) {
+        case 'tilesLayer':
+            Input.input({
+                label: 'Tiles url template',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'url',
+                value: layer.tilesUrlTemplate,
+                placeholder: 'tiles url template',
+                oninput: (inp) => {
+                    layer.tilesUrlTemplate = inp.value;
+                }
+            });
+            Input.input({
+                label: 'MaxZoom',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.maxZoom,
+                placeholder: 'MaxZoom',
+                oninput: (inp) => {
+                    layer.maxZoom = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'MinZoom',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.minZoom,
+                placeholder: 'minZoom',
+                oninput: (inp) => {
+                    layer.minZoom = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'MaxNativeZoom',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.maxNativeZoom,
+                placeholder: 'MaxNativeZoom',
+                oninput: (inp) => {
+                    layer.maxNativeZoom = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'MinNativeZoom',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.minNativeZoom,
+                placeholder: 'minNativeZoom',
+                oninput: (inp) => {
+                    layer.minNativeZoom = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'Calibrated Size',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.sizeCal || 256,
+                placeholder: 'cal size',
+                oninput: (inp) => {
+                    layer.sizeCal = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'Calibrated depth',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.depthCal || 1,
+                placeholder: 'cal size',
+                oninput: (inp) => {
+                    layer.depthCal = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'Calibration unit',
+                className: 'simple form-control',
+                parent: parent,
+                value: layer.unitCal || 'u',
+                placeholder: 'cal unit',
+                oninput: (inp) => {
+                    layer.unitCal = inp.value;
+                }
+            });
+            Input.input({
+                label: 'Opacity',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'range',
+                max: 1,
+                min: 0,
+                step: 0.1,
+                value: layer.opacity,
+                placeholder: 'opacity',
+                oninput: (inp) => {
+                    layer.opacity = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'Base layer',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'checkbox',
+                checked: layer.baseLayer,
+                onchange: (inp) => {
+                    layer.baseLayer = Boolean(inp.checked);
+                }
+            });
+            break;
+        case 'pointsLayer':
+            Input.input({
+                label: 'Points url template',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'text',
+                value: layer.pointsUrlTemplate,
+                placeholder: 'points url template',
+                oninput: (inp) => {
+                    layer.pointsUrlTemplate = inp.value;
+                }
+            });
+            Input.input({
+                label: 'Size',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.size,
+                placeholder: 'size',
+                oninput: (inp) => {
+                    layer.size = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'Tile size',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.tileSize,
+                placeholder: 'size',
+                oninput: (inp) => {
+                    layer.tileSize = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'Easy to draw',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'checkbox',
+                checked: layer.easyToDraw,
+                onchange: (inp) => {
+                    layer.easyToDraw = Boolean(inp.checked);
+                }
+            });
+            Input.input({
+                label: 'Exclude points touching CF',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'checkbox',
+                checked: layer.excludeCF,
+                onchange: (inp) => {
+                    layer.excludeCF = Boolean(inp.checked);
+                }
+            });
+            Input.input({
+                label: 'Color',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'color',
+                value: layer.color,
+                oninput: (inp) => {
+                    layer.color = inp.value;
+                }
+            });
+            Input.input({
+                label: 'Radius',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.radius || 4,
+                oninput: (inp) => {
+                    layer.radius = inp.value;
+                }
+            });
+
+            break;
+        case 'pixelsLayer':
+            Input.input({
+                label: 'Pixels url template',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'text',
+                value: layer.pixelsUrlTemplate,
+                placeholder: 'pixels url template',
+                oninput: (inp) => {
+                    layer.pixelsUrlTemplate = inp.value;
+                }
+            });
+            Input.selectInput({
+                parent: parent,
+                className: 'simple form-control',
+                choices: ['holes', 'area', 'density', 'probability'],
+                label: 'Role',
+                value: layer.role,
+                oninput: (inp) => {
+                    layer.role = inp.value;
+                }
+            });
+            Input.input({
+                label: 'Norm',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.norm,
+                placeholder: 'normalization',
+                oninput: (inp) => {
+                    layer.norm = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'Size',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.size,
+                placeholder: 'size',
+                oninput: (inp) => {
+                    layer.size = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'Tile size',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.tileSize,
+                placeholder: 'size',
+                oninput: (inp) => {
+                    layer.tileSize = Number(inp.value);
+                }
+            });
+            break;
+        case 'imageLayer':
+            Input.input({
+                label: 'Image url',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'text',
+                value: layer.imageUrl,
+                placeholder: 'image url',
+                oninput: (inp) => {
+                    layer.imageUrl = inp.value;
+                }
+            });
+            Input.input({
+                label: 'Original Size',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.original_size || 256,
+                placeholder: 'original size',
+                oninput: (inp) => {
+                    inp.value = layer.original_size;
+                }
+            });
+            Input.input({
+                label: 'Opacity',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'range',
+                max: 1,
+                min: 0,
+                step: 0.1,
+                value: layer.opacity,
+                placeholder: 'opacity',
+                oninput: (inp) => {
+                    layer.opacity = Number(inp.value);
+                }
+            });
+
+            break;
+        case 'guideLayer':
+            Input.input({
+                label: 'Size',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.size,
+                placeholder: 'size',
+                oninput: (inp) => {
+                    layer.size = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'Tile size',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'number',
+                value: layer.tileSize,
+                placeholder: 'tile size',
+                oninput: (inp) => {
+                    layer.tileSize = Number(inp.value);
+                }
+            });
+            Input.input({
+                label: 'Color',
+                className: 'simple form-control',
+                parent: parent,
+                type: 'color',
+                value: layer.color,
+                oninput: (inp) => {
+                    layer.color = inp.value;
+                }
+            });
+            break;
+
+        case 'drawnPolygons':
+
+            break;
+        default:
+
+    }
+}
+
 class MapEdit {
     constructor() {
         return null;
     }
 
-    static layerPreviewInfo(layer, parent) {
-        if (layer) {
-            if (typeof layer.previewImageUrl === 'string') {
-                let info = document.createElement('DIV');
-                let ty = document.createElement('STRONG');
-                ty.innerHTML = `Layer type: ${layer.type}`;
-                info.appendChild(ty);
-                if (parent) {
-                    if (parent.appendChild) {
-                        parent.appendChild(info);
-                    }
-                } else {
-                    return info;
-                }
-            }
-        }
-    }
 
-    static layerPreviewImage(layer, parent) {
-        if (layer) {
-            if (typeof layer.previewImageUrl === 'string') {
-                let img = document.createElement('IMG');
-                img.width = 150;
-                img.height = 150;
-                img.src = layer.previewImageUrl;
-                if (parent) {
-                    if (parent.appendChild) {
-                        parent.appendChild(img);
-                    }
-                } else {
-                    return img;
-                }
-            }
-        }
-    }
-
-
-    static getLayersName(conf) {
-        return Object.keys(conf.layers).map((k) => {
-            return conf.layers[k].name || k;
-        });
-    }
-
-    static editLayersModal(conf, cl) {
-        let newlayers = Util.clone(conf.layers);
-        let modal = new Modal({
-            title: `Edit ${conf.name} layers`,
-            height: 'auto'
-        });
-        let body = document.createElement('DIV');
-        body.className = 'flex-container';
-        let left = document.createElement('DIV');
-        left.width = '40%';
-        let right = document.createElement('DIV');
-        right.width = '60%';
-        body.appendChild(left);
-        body.appendChild(right);
-        Input.selectInput({
-            label: 'Layers',
-            parent: left,
-            choices: MapEdit.getLayersName(conf),
-            className: 'simple form-control',
-            oninput: (inp) => {
-                Util.empty(right, right.firstChild);
-                let layer = newlayers[Object.keys(newlayers)[inp.selectedIndex]];
-                MapEdit.layerEditors(layer, right);
-                MapEdit.layerRemoveButton(newlayers, layer, right);
-            }
-        });
-        MapEdit.layerEditors(newlayers[Object.keys(newlayers)[0]], right);
-        MapEdit.layerRemoveButton(newlayers, newlayers[Object.keys(newlayers)[0]], right);
-
-
-        let Bc = new ButtonsContainer(document.createElement('DIV'));
-        Bc.addButton({
-            id: 'closeedilayers000',
-            text: 'Cancel',
-            action: () => {
-                modal.destroy();
-            },
-            className: 'btn-default'
-        });
-        Bc.addButton({
-            id: 'saveeedilayers000',
-            text: 'Save',
-            action: () => {
-                if (typeof cl === 'function') {
-                    conf.layers = newlayers;
-                    cl(conf);
-                }
-                modal.destroy();
-            },
-            className: 'btn-default'
-        });
-
-
-        let footer = document.createElement('DIV');
-        footer.appendChild(Bc.element);
-        modal.addBody(body);
-        modal.addFooter(footer);
-        modal.show();
-
-    }
-
-    static layerEditors(layer, parent) {
-        if (layer) {
-            let ed = document.createElement('DIV');
-            ed.className = 'flex-container';
-            let left = document.createElement('DIV');
-            left.width = '40%';
-            let right = document.createElement('DIV');
-            right.width = '60%';
-            ed.appendChild(right); //left and right are inverted :-)
-            ed.appendChild(left);
-            Input.input({
-                parent: right,
-                className: 'simple form-control',
-                type: 'text',
-                label: 'Name',
-                value: layer.name,
-                placeholder: 'layer name',
-                onblur: (inp) => {
-                    layer.name = inp.value;
-                }
-            });
-            Input.input({
-                parent: right,
-                className: 'simple form-control',
-                type: 'text',
-                label: 'Authors',
-                value: layer.authors,
-                placeholder: 'layer authors',
-                onblur: (inp) => {
-                    layer.authors = inp.value;
-                }
-            });
-            Input.selectInput({
-                parent: right,
-                label: 'Type',
-                className: 'simple form-control',
-                choices: ['tilesLayer', 'pointsLayer', 'pixelsLayer', 'imageLayer', 'guideLayer'],
-                value: layer.type,
-                oninput: (inp) => {
-                    dialog.showMessageBox({
-                        title: 'Change layer type?',
-                        type: 'warning',
-                        buttons: ['No', "Yes"],
-                        message: `Changing the layer type could make the layer unavailable`,
-                        noLink: true
-                    }, (id) => {
-                        if (id > 0) {
-                            layer.type = inp.value;
-                        } else {
-                            inp.value = layer.type;
-                        }
-                    });
-                }
-            });
-
-            MapEdit.layerSpecificEditors(layer, right);
-
-            MapEdit.layerPreviewImage(layer, left);
-
-
-            if (parent) {
-                if (parent.appendChild) {
-                    parent.appendChild(ed);
-                }
-            } else {
-                return ed;
-            }
-
-        }
-    }
-
-    static previewModal(conf, cl) {
+    static modal(conf, cl) {
         let newconf = Util.clone(conf);
         let modal = new Modal({
             title: `${conf.name}`,
             height: 'auto'
         });
-        let body = document.createElement('DIV');
-        body.className = 'flex-container';
+
+        let grid = new Grid(2,3);
+
         let left = document.createElement('DIV');
-        left.width = '40%';
+        let center = document.createElement('DIV');
         let right = document.createElement('DIV');
-        right.width = '60%';
-        body.appendChild(left);
-        body.appendChild(right);
+
+        grid.addElement(left,0,0);
+        grid.addElement(center,0,1);
+        grid.addElement(right,0,2);
         Input.input({
             parent: left,
             label: 'Name',
@@ -256,7 +483,7 @@ class MapEdit {
         Input.selectInput({
             parent: left,
             className: 'simple form-control',
-            choices: ['remote', 'local'],
+            choices: ['local', 'remote'],
             label: 'Source',
             value: newconf.source,
             oninput: (inp) => {
@@ -265,20 +492,21 @@ class MapEdit {
         });
         Input.selectInput({
             label: 'Layers',
-            parent: left,
-            choices: MapEdit.getLayersName(conf),
+            parent: center,
+            choices: getLayersName(conf),
             className: 'simple form-control',
             oninput: (inp) => {
                 Util.empty(right, right.firstChild);
                 let layer = conf.layers[Object.keys(conf.layers)[inp.selectedIndex]];
-                MapEdit.layerPreviewImage(layer, right);
-                MapEdit.layerPreviewInfo(layer, right);
-                MapEdit.layerRemoveButton(newconf.layers,layer, right);
+                layerPreviewImage(layer, right);
+                layerPreviewInfo(layer, right);
+                layerRemoveButton(newconf.layers,layer, right);
             }
         });
-        MapEdit.layerPreviewImage(conf.layers[Object.keys(conf.layers)[0]], right);
-        MapEdit.layerPreviewInfo(conf.layers[Object.keys(conf.layers)[0]], right);
-        MapEdit.layerRemoveButton(newconf.layers, conf.layers[Object.keys(conf.layers)[0]], right);
+        layerPreviewImage(newconf.layers[Object.keys(newconf.layers)[0]], right);
+        // MapEdit.layerPreviewInfo(newconf.layers[Object.keys(newconf.layers)[0]], right);
+        layerSpecificEditors(newconf.layers[Object.keys(newconf.layers)[0]], center);
+        layerRemoveButton(newconf.layers, conf.layers[Object.keys(conf.layers)[0]], right);
         let text;
         switch (conf.new) {
             case true:
@@ -309,363 +537,11 @@ class MapEdit {
         });
         let footer = document.createElement('DIV');
         footer.appendChild(Bc.element);
-        modal.addBody(body);
+        modal.addBody(grid.element);
         modal.addFooter(footer);
         modal.show();
     }
 
-    static layerRemoveButton(layers, layer, parent) {
-        let a = new ButtonsContainer(document.createElement('DIV'));
-        a.addButton({
-            id: 'removelayerbutton',
-            text: 'Remove layer',
-            className: 'btn-positive',
-            toggle: true,
-            groupId: 'xxxx',
-            action: {
-                active: (btn) => {
-                    delete layers[layer.name]; //delete the layer
-                    btn.innerHTML = 'Layer removed';
-                },
-                deactive: (btn) => {
-                    layers[layer.name] = layer; //re-add the layer the only problem is that it changes the order of the layers...it's ok
-                    btn.innerHTML = 'Remove layer'
-                }
-            }
-        });
-        parent.appendChild(a.element);
-    }
-
-
-
-    static layerSpecificEditors(layer, parent) {
-        switch (layer.type) {
-            case 'tilesLayer':
-                Input.input({
-                    label: 'Tiles url template',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'url',
-                    value: layer.tilesUrlTemplate,
-                    placeholder: 'tiles url template',
-                    oninput: (inp) => {
-                        layer.tilesUrlTemplate = inp.value;
-                    }
-                });
-                Input.input({
-                    label: 'MaxZoom',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.maxZoom,
-                    placeholder: 'MaxZoom',
-                    oninput: (inp) => {
-                        layer.maxZoom = Number(inp.value);
-                    }
-                });
-                Input.input({
-                    label: 'MinZoom',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.minZoom,
-                    placeholder: 'minZoom',
-                    oninput: (inp) => {
-                        layer.minZoom = Number(inp.value);
-                    }
-                });
-                // Input.input({
-                //     label: 'MaxNativeZoom',
-                //     className: 'simple form-control',
-                //     parent: parent,
-                //     type: 'number',
-                //     value: layer.maxNativeZoom,
-                //     placeholder: 'MaxNativeZoom',
-                //     oninput: (inp) => {
-                //         layer.maxNativeZoom = Number(inp.value);
-                //     }
-                // });
-                // Input.input({
-                //     label: 'MinNativeZoom',
-                //     className: 'simple form-control',
-                //     parent: parent,
-                //     type: 'number',
-                //     value: layer.minNativeZoom,
-                //     placeholder: 'minNativeZoom',
-                //     oninput: (inp) => {
-                //         layer.minNativeZoom = Number(inp.value);
-                //     }
-                // });
-                Input.input({
-                    label: 'Calibrated Size',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.sizeCal || 256,
-                    placeholder: 'cal size',
-                    oninput: (inp) => {
-                        layer.sizeCal = Number(inp.value);
-                    }
-                });
-                Input.input({
-                    label: 'Calibrated depth',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.depthCal || 1,
-                    placeholder: 'cal size',
-                    oninput: (inp) => {
-                        layer.depthCal = Number(inp.value);
-                    }
-                });
-                Input.input({
-                    label: 'Calibration unit',
-                    className: 'simple form-control',
-                    parent: parent,
-                    value: layer.unitCal || 'u',
-                    placeholder: 'cal unit',
-                    oninput: (inp) => {
-                        layer.unitCal = inp.value;
-                    }
-                });
-                Input.input({
-                    label: 'Opacity',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'range',
-                    max: 1,
-                    min: 0,
-                    step: 0.1,
-                    value: layer.opacity,
-                    placeholder: 'opacity',
-                    oninput: (inp) => {
-                        layer.opacity = Number(inp.value);
-                    }
-                });
-                Input.input({
-                    label: 'Base layer',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'checkbox',
-                    checked: layer.baseLayer,
-                    onchange: (inp) => {
-                        layer.baseLayer = Boolean(inp.checked);
-                    }
-                });
-                break;
-            case 'pointsLayer':
-                Input.input({
-                    label: 'Points url template',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'text',
-                    value: layer.pointsUrlTemplate,
-                    placeholder: 'points url template',
-                    oninput: (inp) => {
-                        layer.pointsUrlTemplate = inp.value;
-                    }
-                });
-                Input.input({
-                    label: 'Size',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.size,
-                    placeholder: 'size',
-                    oninput: (inp) => {
-                        layer.size = Number(inp.value);
-                    }
-                });
-                Input.input({
-                    label: 'Tile size',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.tileSize,
-                    placeholder: 'size',
-                    oninput: (inp) => {
-                        layer.tileSize = Number(inp.value);
-                    }
-                });
-                Input.input({
-                    label: 'Easy to draw',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'checkbox',
-                    checked: layer.easyToDraw,
-                    onchange: (inp) => {
-                        layer.easyToDraw = Boolean(inp.checked);
-                    }
-                });
-                Input.input({
-                    label: 'Exclude points touching CF',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'checkbox',
-                    checked: layer.excludeCF,
-                    onchange: (inp) => {
-                        layer.excludeCF = Boolean(inp.checked);
-                    }
-                });
-                Input.input({
-                    label: 'Color',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'color',
-                    value: layer.color,
-                    oninput: (inp) => {
-                        layer.color = inp.value;
-                    }
-                });
-                Input.input({
-                    label: 'Radius',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.radius || 4,
-                    oninput: (inp) => {
-                        layer.radius = inp.value;
-                    }
-                });
-
-                break;
-            case 'pixelsLayer':
-                Input.input({
-                    label: 'Pixels url template',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'text',
-                    value: layer.pixelsUrlTemplate,
-                    placeholder: 'pixels url template',
-                    oninput: (inp) => {
-                        layer.pixelsUrlTemplate = inp.value;
-                    }
-                });
-                Input.selectInput({
-                    parent: parent,
-                    className: 'simple form-control',
-                    choices: ['holes', 'area', 'density', 'probability'],
-                    label: 'Role',
-                    value: layer.role,
-                    oninput: (inp) => {
-                        layer.role = inp.value;
-                    }
-                });
-                Input.input({
-                    label: 'Norm',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.norm,
-                    placeholder: 'normalization',
-                    oninput: (inp) => {
-                        layer.norm = Number(inp.value);
-                    }
-                });
-                Input.input({
-                    label: 'Size',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.size,
-                    placeholder: 'size',
-                    oninput: (inp) => {
-                        layer.size = Number(inp.value);
-                    }
-                });
-                Input.input({
-                    label: 'Tile size',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.tileSize,
-                    placeholder: 'size',
-                    oninput: (inp) => {
-                        layer.tileSize = Number(inp.value);
-                    }
-                });
-                break;
-            case 'imageLayer':
-                Input.input({
-                    label: 'Image url',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'text',
-                    value: layer.imageUrl,
-                    placeholder: 'image url',
-                    oninput: (inp) => {
-                        layer.imageUrl = inp.value;
-                    }
-                });
-                Input.input({
-                    label: 'Original Size',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.original_size || 256,
-                    placeholder: 'original size',
-                    oninput: (inp) => {
-                        inp.value = layer.original_size;
-                    }
-                });
-                Input.input({
-                    label: 'Opacity',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'range',
-                    max: 1,
-                    min: 0,
-                    step: 0.1,
-                    value: layer.opacity,
-                    placeholder: 'opacity',
-                    oninput: (inp) => {
-                        layer.opacity = Number(inp.value);
-                    }
-                });
-
-                break;
-            case 'guideLayer':
-                Input.input({
-                    label: 'Size',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.size,
-                    placeholder: 'size',
-                    oninput: (inp) => {
-                        layer.size = Number(inp.value);
-                    }
-                });
-                Input.input({
-                    label: 'Tile size',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'number',
-                    value: layer.tileSize,
-                    placeholder: 'tile size',
-                    oninput: (inp) => {
-                        layer.tileSize = Number(inp.value);
-                    }
-                });
-                Input.input({
-                    label: 'Color',
-                    className: 'simple form-control',
-                    parent: parent,
-                    type: 'color',
-                    value: layer.color,
-                    oninput: (inp) => {
-                        layer.color = inp.value;
-                    }
-                });
-                break;
-
-            case 'drawnPolygons':
-
-                break;
-            default:
-
-        }
-    }
 
 }
 

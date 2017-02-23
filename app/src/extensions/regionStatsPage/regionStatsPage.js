@@ -27,10 +27,13 @@ const Table = require('Table');
 const icon = "fa fa-area-chart";
 const toggleButtonId = 'regionStatsPageToggleButton';
 
+let gui = require('Gui');
+
+
 class regionStatsPage extends GuiExtension {
 
-    constructor(gui) {
-        super(gui);
+    constructor() {
+        super();
         this.icon = icon + " fa-2x";
     }
 
@@ -39,7 +42,7 @@ class regionStatsPage extends GuiExtension {
 
         this.addToggleButton({
             id: toggleButtonId,
-            buttonsContainer: this.gui.header.actionsContainer,
+            buttonsContainer: gui.header.actionsContainer,
             icon: icon,
             groupId: "mapPage"
         });
@@ -62,8 +65,8 @@ class regionStatsPage extends GuiExtension {
         this.sidebar.list.clean();
         this.loadWorkspaceData();
         this.cleanPane();
-        this.showRegionsStats(this.gui.extensionsManager.extensions.mapPage.mapManager._configuration);
-        this.sidebar.list.activeJustOne(this.gui.extensionsManager.extensions.mapPage.mapManager._configuration.id);
+        this.showRegionsStats(gui.extensionsManager.extensions.mapPage.mapManager._configuration);
+        this.sidebar.list.activeJustOne(gui.extensionsManager.extensions.mapPage.mapManager._configuration.id);
     }
 
     addSidebar() {
@@ -82,8 +85,8 @@ class regionStatsPage extends GuiExtension {
     }
 
     loadWorkspaceData() {
-        if (this.gui.workspace.spaces.mapPage) {
-            var maps = this.gui.workspace.spaces.mapPage;
+        if (gui.workspace.spaces.mapPage) {
+            var maps = gui.workspace.spaces.mapPage;
             Object.keys(maps).map((key) => {
                 let map = maps[key];
                 this.addMapToSidebar(map);

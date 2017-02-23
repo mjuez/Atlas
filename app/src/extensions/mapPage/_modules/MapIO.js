@@ -66,7 +66,7 @@ class MapIO {
                 configuration = MapIO.buildConfiguration(configuration);
                 configuration.new = true;
                 Util.merge(configuration, MapIO.baseConfiguration());
-                MapEdit.previewModal(configuration, next);
+                MapEdit.modal(configuration, next);
             }
         });
     }
@@ -269,9 +269,9 @@ class MapIO {
 
         if (config.type.includes('tilesLayer')) {
             config.tilesUrlTemplate = config.tilesUrlTemplate || '';
-            if (config.tilesUrlTemplate.startsWith("http://") ||
-                config.tilesUrlTemplate.startsWith("file://") ||
-                config.tilesUrlTemplate.startsWith("https://") ||
+            if (config.tilesUrlTemplate.startsWith("http:") ||
+                config.tilesUrlTemplate.startsWith("file:") ||
+                config.tilesUrlTemplate.startsWith("https:") ||
                 path.isAbsolute(config.tilesUrlTemplate)) {
                 config.basePath = '';
             }
@@ -312,7 +312,7 @@ class MapIO {
                 ]
             }
 
-            config.previewImageUrl = (config.tilesUrlTemplate).replace('{x}', '0').replace('{y}', '0').replace('{z}', '0');
+            config.previewImageUrl = (config.tilesUrlTemplate).replace('{x}', '0').replace('{y}', '0').replace('{z}', '0').replace('{s}','a');
 
             if (config.customKeys) {
                 for (let k in config.customKeys) {
@@ -392,7 +392,7 @@ class MapIO {
 
 
     static createMap(cl) {
-        MapEdit.previewModal(MapIO.baseConfiguration({
+        MapEdit.modal(MapIO.baseConfiguration({
             new: true
         }), cl);
     }

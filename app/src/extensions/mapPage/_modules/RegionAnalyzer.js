@@ -33,13 +33,14 @@ const {
 } = require('child_process');
 const async = require('async');
 
+let gui = require('Gui');
+
 
 
 
 class RegionAnalyzer {
-    constructor(mapManager, gui) {
+    constructor(mapManager) {
         this.mapManager = mapManager;
-        this.gui = gui;
     }
 
     areaPx(polygon) {
@@ -81,7 +82,7 @@ class RegionAnalyzer {
         arNvol.push(`volume_cal_${unit}^3`);
 
         points.map((point) => {
-            let task = new PointsCounting(polygon, point, size, this.gui);
+            let task = new PointsCounting(polygon, point, size);
             TaskManager.addTask(task);
             let promise = new Promise((resolve) => {
                 task.run((m) => {
@@ -93,7 +94,7 @@ class RegionAnalyzer {
         });
 
         pixels.map((pixel) => {
-            let task = new PixelsCounting(polygon, pixel, size, this.gui);
+            let task = new PixelsCounting(polygon, pixel, size);
             TaskManager.addTask(task);
             let promise = new Promise((resolve) => {
                 task.run((m) => {
@@ -147,7 +148,7 @@ class RegionAnalyzer {
 
 class PointsCounting extends Task {
 
-    constructor(polygon, points, size, gui) {
+    constructor(polygon, points, size) {
         let name = `Points counting`;
         let details = `Counting in ${polygon._configuration.name} using ${points.name}`;
         let scale = points.size / size;
@@ -200,7 +201,7 @@ class PointsCounting extends Task {
 
 class PixelsCounting extends Task {
 
-    constructor(polygon, pixels, size, gui) {
+    constructor(polygon, pixels, size) {
         let name = `Pixels counting`;
         let details = `counting ${polygon._configuration.name} using ${pixels.name}`;
         let scale = pixels.size / size;

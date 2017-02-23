@@ -926,6 +926,8 @@ if (L != undefined) {
         },
 
         tUP: function() {
+          if (!this._activeBaseLayer) return;
+          if (!this._activeBaseLayer.options.customKeys) return;
             if (this._activeBaseLayer.options.t >= 0 && this._activeBaseLayer.options.customKeys.t) {
                 let val = this._activeBaseLayer.options.customKeys.t;
                 let cur = this._activeBaseLayer.options.t;
@@ -941,7 +943,9 @@ if (L != undefined) {
         },
 
         tDOWN: function() {
-            if (this._activeBaseLayer.options.customKeys.t) {
+            if (!this._activeBaseLayer) return;
+            if (!this._activeBaseLayer.options.customKeys) return;
+            if (this._activeBaseLayer.options.t >= 0 && this._activeBaseLayer.options.customKeys.t) {
                 let val = this._activeBaseLayer.options.customKeys.t;
                 let cur = this._activeBaseLayer.options.t;
                 let pos = val.findIndex((e) => {

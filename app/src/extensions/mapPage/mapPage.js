@@ -20,7 +20,6 @@
 
 "use strict";
 
-
 const RegionAnalyzer = require('./_modules/RegionAnalyzer.js');
 const Modal = require('Modal');
 const Workspace = require('Workspace');
@@ -62,10 +61,13 @@ const {
     app
 } = require('electron').remote;
 
+let gui = require('Gui');
+
+
 class mapPage extends GuiExtension {
 
-    constructor(gui) {
-        super(gui); //always
+    constructor() {
+        super(); //always
         this.icon = 'fa fa-map fa-2x';
         this.selectedRegions = [];
         this.maps = {};
@@ -77,109 +79,109 @@ class mapPage extends GuiExtension {
     }
 
     activate() {
-            super.activate();
-            this.addToggleButton({
-                id: 'mapPageToggleButton',
-                buttonsContainer: this.gui.header.actionsContainer,
-                icon: "fa fa-map",
-                groupId: "mapPage",
-                action: () => {
-                    this.mapPane.show();
-                    this.devPane.hide();
-                }
-            });
-            //add the sidebars
-            this.sidebar = new Sidebar(this.element);
-            this.sidebar.addList();
-            this.sidebar.list.addSearch({
-                placeholder: 'Search maps'
-            });
-            this.sidebar.addList('layerList');
-            this.sidebar.layerList.hide();
-
-            this.sidebar.show();
-
-            this.mapPane = new ToggleElement(document.createElement('DIV'));
-            this.mapPane.element.className = 'pane';
-            this.mapPane.on('show', () => {
-                ipcRenderer.send("mapViewTrick");
-            });
-            this.mapPane.hide();
-            this.element.appendChild(this.mapPane.element);
-
-            let mapContainer = document.createElement('DIV');
-            mapContainer.style['z-index'] = 0;
-            mapContainer.style.width = '100%';
-            mapContainer.style.height = '100%';
-            mapContainer.style.position = 'absolute';
-            mapContainer.id = 'map';
-            this.mapPane.element.appendChild(mapContainer);
-
-            globalShortcut.unregisterAll();
-            globalShortcut.register('CommandOrControl+Up', () => {
-                this.mapManager.tUP();
-            });
-
-            globalShortcut.register('CommandOrControl+Down', () => {
-                this.mapManager.tDOWN();
-            });
-
-            this.devPane = new ToggleElement(document.createElement('DIV'));
-            this.devPane.element.className = 'pane padded';
-            this.devPane.hide();
-            this.element.appendChild(this.devPane.element);
-
-            this.sidebarRegions = new Sidebar(this.element);
-            this.sidebarRegions.addList();
-            this.sidebarRegions.list.addSearch({
-                placeholder: 'Search regions'
-            });
-
-            let arg = {
-                minZoom: 0,
-                zoomSnap: 1,
-                zoomDelta: 1,
-                crs: L.CRS.Simple,
-                zoomControl: false
+        super.activate();
+        this.addToggleButton({
+            id: 'mapPageToggleButton',
+            buttonsContainer: gui.header.actionsContainer,
+            icon: "fa fa-map",
+            groupId: "mapPage",
+            action: () => {
+                this.mapPane.show();
+                this.devPane.hide();
             }
-            let map = L.map('map', arg);
-            map.setView([-100, 100], 0);
-            this.mapManager = L.mapManager(map);
-            this.regionAnalyzer = new RegionAnalyzer(this.mapManager, this.gui);
-            this.listenMapManager();
-            this.makeMenu();
+        });
+        //add the sidebars
+        this.sidebar = new Sidebar(this.element);
+        this.sidebar.addList();
+        this.sidebar.list.addSearch({
+            placeholder: 'Search maps'
+        });
+        this.sidebar.addList('layerList');
+        this.sidebar.layerList.hide();
+
+        this.sidebar.show();
+
+        this.mapPane = new ToggleElement(document.createElement('DIV'));
+        this.mapPane.element.className = 'pane';
+        this.mapPane.on('show', () => {
+            ipcRenderer.send("mapViewTrick");
+        });
+        this.mapPane.hide();
+        this.element.appendChild(this.mapPane.element);
+
+        let mapContainer = document.createElement('DIV');
+        mapContainer.style['z-index'] = 0;
+        mapContainer.style.width = '100%';
+        mapContainer.style.height = '100%';
+        mapContainer.style.position = 'absolute';
+        mapContainer.id = 'map';
+        this.mapPane.element.appendChild(mapContainer);
+
+        globalShortcut.unregisterAll();
+        globalShortcut.register('CommandOrControl+Up', () => {
+            this.mapManager.tUP();
+        });
+
+        globalShortcut.register('CommandOrControl+Down', () => {
+            this.mapManager.tDOWN();
+        });
+
+        this.devPane = new ToggleElement(document.createElement('DIV'));
+        this.devPane.element.className = 'pane padded';
+        this.devPane.hide();
+        this.element.appendChild(this.devPane.element);
+
+        this.sidebarRegions = new Sidebar(this.element);
+        this.sidebarRegions.addList();
+        this.sidebarRegions.list.addSearch({
+            placeholder: 'Search regions'
+        });
+
+        let arg = {
+            minZoom: 0,
+            zoomSnap: 1,
+            zoomDelta: 1,
+            crs: L.CRS.Simple,
+            zoomControl: false
+        }
+        let map = L.map('map', arg);
+        map.setView([-100, 100], 0);
+        this.mapManager = L.mapManager(map);
+        this.regionAnalyzer = new RegionAnalyzer(this.mapManager, gui);
+        this.listenMapManager();
+        this.makeMenu();
 
 
-            this.gui.workspace.addSpace(this, this.maps, false); //without overwriting
+        gui.workspace.addSpace(this, this.maps, false); //without overwriting
 
-            //saving to workspace and retriving loaded worspace
-            if (this.gui.workspace instanceof Workspace) {
-                this.gui.workspace.addSpace(this, this.maps);
-                this.gui.workspace.on('load', () => {
-                    this.gui.notify('loading maps from workspace...');
-                    this.cleanMaps();
-                    let maps = this.gui.workspace.spaces.mapPage || {};
-                    let tot = Object.keys(maps).length;
-                    Object.keys(maps).map((id, i) => {
-                        this.gui.footer.progressBar.setBar(100 * (i + 1) / tot);
-                        this.addNewMap(MapIO.buildConfiguration(maps[id]));
-                    });
-                    this.gui.workspace.addSpace(this, this.maps, true); //overwriting
-                    this.gui.notify(`${tot} maps from workspace loaded`);
-                });
-            }
-
-            //check if there is a mapPage space in the curretn workspace and retrive it
-            if (this.gui.workspace.spaces.mapPage) {
+        //saving to workspace and retriving loaded worspace
+        if (gui.workspace instanceof Workspace) {
+            gui.workspace.addSpace(this, this.maps);
+            gui.workspace.on('load', () => {
+                gui.notify('loading maps from workspace...');
                 this.cleanMaps();
-                let maps = this.gui.workspace.spaces.mapPage;
-                Object.keys(maps).map((id) => {
+                let maps = gui.workspace.spaces.mapPage || {};
+                let tot = Object.keys(maps).length;
+                Object.keys(maps).map((id, i) => {
+                    gui.footer.progressBar.setBar(100 * (i + 1) / tot);
                     this.addNewMap(MapIO.buildConfiguration(maps[id]));
                 });
-                this.gui.workspace.addSpace(this, this.maps, true); //overwriting
-            }
+                gui.workspace.addSpace(this, this.maps, true); //overwriting
+                gui.notify(`${tot} maps from workspace loaded`);
+            });
+        }
 
-        } //end activate
+        //check if there is a mapPage space in the curretn workspace and retrive it
+        if (gui.workspace.spaces.mapPage) {
+            this.cleanMaps();
+            let maps = gui.workspace.spaces.mapPage;
+            Object.keys(maps).map((id) => {
+                this.addNewMap(MapIO.buildConfiguration(maps[id]));
+            });
+            gui.workspace.addSpace(this, this.maps, true); //overwriting
+        }
+
+    } //end activate
 
 
 
@@ -197,25 +199,37 @@ class mapPage extends GuiExtension {
             label: 'Add guide layer',
             click: () => {
                 this.addLayer({
-                  name: 'guide layer',
-                  type: 'guideLayer',
-                  size: 100,
-                  tileSize: 10
+                    name: 'guide layer',
+                    type: 'guideLayer',
+                    size: 100,
+                    tileSize: 10
                 });
                 this.switchMap(this.mapManager._configuration);
             }
         }));
         layer.append(new MenuItem({
-            label: 'Edit layers',
+            label: 'Add tiles layer',
             click: () => {
-                MapEdit.editLayersModal(this.mapManager._configuration, (c) => {
-                    this.updateMap(c);
+                this.addLayer({
+                    name: 'tiles layer',
+                    type: 'tilesLayer',
+                    tileSize: 256,
+                    tilesUrlTemplate: ''
                 });
+                this.switchMap(this.mapManager._configuration);
             }
         }));
+        // layer.append(new MenuItem({
+        //     label: 'Edit layers',
+        //     accelerator: 'CmdOrCtrl + L',
+        //     click: () => {
+        //         MapEdit.editLayersModal(this.mapManager._configuration, (c) => {
+        //             this.updateMap(c);
+        //         });
+        //     }
+        // }));
         region.append(new MenuItem({
             label: 'Delete selected',
-            accelerator: 'CmdOrCtrl + D',
             type: 'normal',
             click: () => {
                 this.deleteRegionsCheck(this.selectedRegions);
@@ -280,8 +294,9 @@ class mapPage extends GuiExtension {
         }));
         mapMenu.append(new MenuItem({
             label: 'Edit map',
+            accelerator: 'CmdOrCtrl + L',
             click: () => {
-                MapEdit.previewModal(this.mapManager._configuration, (c) => {
+                MapEdit.modal(this.mapManager._configuration, (c) => {
                     this.updateMap(c);
                 });
             }
@@ -294,9 +309,9 @@ class mapPage extends GuiExtension {
             label: 'Export current map',
             click: () => {
                 MapIO.saveAs(this.mapManager._configuration, (c, p, e) => {
-                    this.gui.notify(`${c.name} map saved in ${p}`);
+                    gui.notify(`${c.name} map saved in ${p}`);
                 }, (err) => {
-                    this.gui.notify(err);
+                    gui.notify(err);
                 });
             }
         }));
@@ -333,7 +348,7 @@ class mapPage extends GuiExtension {
             type: "submenu",
             submenu: mapMenu
         });
-        this.gui.addSubMenu(this.menu);
+        gui.addSubMenu(this.menu);
     }
 
     deactivate() { /// the extension has to take care of removing all the buttons and element appended
@@ -341,7 +356,7 @@ class mapPage extends GuiExtension {
         this.sidebarRegions.remove();
         this.element.removeChild(this.mapPane.element);
         this.element.removeChild(this.devPane.element);
-        this.gui.removeSubmenu(this.menu);
+        gui.removeSubmenu(this.menu);
         this.removeToggleButton('mapPageToggleButton'); //this is compulsory to leave the interface clean
         super.deactivate(); //we will also call the super class deactivate method
     }
@@ -513,9 +528,9 @@ class mapPage extends GuiExtension {
             type: 'normal',
             click: () => {
                 MapIO.saveAs(this.maps[configuration.id], (c, p, e) => {
-                    this.gui.notify(`${c.name} map saved in ${p}`);
+                    gui.notify(`${c.name} map saved in ${p}`);
                 }, (err) => {
-                    this.gui.notify(err);
+                    gui.notify(err);
                 });
             }
         }));
@@ -523,22 +538,20 @@ class mapPage extends GuiExtension {
             label: 'Edit map',
             type: 'normal',
             click: () => {
-                MapEdit.previewModal(this.maps[configuration.id], (c) => {
+                MapEdit.modal(this.maps[configuration.id], (c) => {
                     this.updateMap(c);
                 });
             }
         }));
-
-
-        edit.append(new MenuItem({
-            label: 'Edit layers',
-            type: 'normal',
-            click: () => {
-                MapEdit.editLayersModal(this.maps[configuration.id], (c) => {
-                    this.updateMap(c);
-                });
-            }
-        }));
+        // edit.append(new MenuItem({
+        //     label: 'Edit layers',
+        //     type: 'normal',
+        //     click: () => {
+        //         MapEdit.editLayersModal(this.maps[configuration.id], (c) => {
+        //             this.updateMap(c);
+        //         });
+        //     }
+        // }));
         edit.append(new MenuItem({
             label: 'Delete',
             type: 'normal',
@@ -748,12 +761,12 @@ class mapPage extends GuiExtension {
                         layer.setStyle({
                             fillOpacity: 0.8
                         });
-                        this.gui.notify(`${layerConfig.name} selected, (${this.selectedRegions.length} tot)`);
-                        //this.gui.notify(`${layerConfig.name} => ${Util.stringify(layerConfig.stats) || ' '} _`); //region stats in footbar
+                        gui.notify(`${layerConfig.name} selected, (${this.selectedRegions.length} tot)`);
+                        //gui.notify(`${layerConfig.name} => ${Util.stringify(layerConfig.stats) || ' '} _`); //region stats in footbar
                     },
                     deactive: () => {
                         this.selectedRegions.splice(this.selectedRegions.indexOf(layer), 1);
-                        this.gui.notify(`${layerConfig.name} deselected, (${this.selectedRegions.length} tot)`);
+                        gui.notify(`${layerConfig.name} deselected, (${this.selectedRegions.length} tot)`);
                         layer.setStyle({
                             fillOpacity: 0.3
                         });
@@ -997,10 +1010,10 @@ class mapPage extends GuiExtension {
                     maxNativeZoom: 0,
                     maxZoom: 8
                 });
-                this.gui.notify(`"${conf.name} added`);
+                gui.notify(`"${conf.name} added`);
                 Util.notifyOS(`"${conf.name} added"`);
             }
-            this.gui.notify(`${path} started conversion`);
+            gui.notify(`${path} started conversion`);
             converter.convertArray([path], MapIO.basePath(null, path));
         }
         this.showConfiguration(this.mapManager._configuration);

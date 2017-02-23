@@ -27,6 +27,7 @@ const fs = require('fs');
 const marked = require('marked');
 const renderer = new marked.Renderer();
 const ToggleElement = require('ToggleElement');
+let gui = require('Gui');
 
 renderer.link = function(href, title, text) {
     if (!text) text = href;
@@ -97,7 +98,7 @@ class helpPage extends GuiExtension {
         });
 
         this.addToggleButton({
-            buttonsContainer: this.gui.header.actionsContainer,
+            buttonsContainer: gui.header.actionsContainer,
             icon: "fa fa-question",
             groupId: "basetools"
         });

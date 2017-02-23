@@ -132,7 +132,7 @@ class regionStatsPage extends GuiExtension {
                 exportButton.innerHTML = "Export statistics to CSV";
                 exportButton.className = "btn btn-default";
                 exportButton.onclick = function() {
-                    return table.exportToCSV();
+                    return table.exportToCSV("Export regions statistics");
                 };
                 exportContainer.appendChild(exportButton);
                 this.pane.element.appendChild(exportContainer);

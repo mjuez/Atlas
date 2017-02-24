@@ -22,7 +22,7 @@ run("Conversions...", " "); //avoid scaling when converting
 
 if(mode == FOLDER){
     list = getFileList(path);
-    files = newArray();    
+    files = newArray();
 
     for (i = 0; i < list.length; i++){
         if ( !endsWith(list[i], File.separator) ){
@@ -40,11 +40,14 @@ if(mode == FOLDER){
     paths = split(fileContents, "\n");
     for(i = 0; i < paths.length; i++){
         detectHoles(paths[i]);
-        IJ.log(i+1+"/"+paths.length);
-    } 
+        j = i+1;
+        IJ.log(j+"/"+paths.length);
+    }
 }else if(mode == SINGLE_IMAGE){
     detectHoles(path);
 }
+print("_DONE_");
+
 
 function detectHoles(imagePath){
     open(imagePath);
@@ -71,5 +74,4 @@ function detectHoles(imagePath){
     save(outFolderH + File.separator + "holes_"+titleC);
     saveAs("Text Image", outFolderHcsv + File.separator + "holes_"+titleC+".txt");
     close("*");
-    print("_DONE_");
 }

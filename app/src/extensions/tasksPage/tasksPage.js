@@ -25,6 +25,7 @@ const ToggleElement = require('ToggleElement');
 const Table = require('Table');
 const taskManager = require('TaskManager');
 const Task = require('Task');
+const Util = require('Util');
 
 
 const icon = "fa fa-tasks";
@@ -90,6 +91,10 @@ class tasksPage extends GuiExtension {
         };
         taskManager.on("change", this.taskManagerChangeListener);
         taskManager.on("task.removed", this.taskRemovedListener);
+
+        taskManager.on("progress", (p)=>{
+          Util.setProgress(p);
+        });
     }
 
     deactivate() {

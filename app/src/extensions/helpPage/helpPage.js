@@ -31,8 +31,10 @@ let gui = require('Gui');
 
 renderer.link = function(href, title, text) {
     if (!text) text = href;
+    if (!title) title = href;
     if (href.includes("@")) {
-        return (`<a href="mailto:${href}" title="${title}" target="_top"> ${text} </a>`);
+      return (href);
+        return (`<a href="mailto:${href}" title="${title}" target="_parent"> ${text} </a>`);
     }
     if (href.includes('http') | href.includes('www')) {
         return (`<a href="#" title="${title}" onclick="gui.extensionsManager.extensions.helpPage.loadurl('${href}');"> ${text} </a>`);
@@ -175,7 +177,7 @@ class helpPage extends GuiExtension {
     }
 
     displayPage(pg) {
-      let indx;
+        let indx;
         if (typeof pg === 'string') {
             indx = this.pagesId.indexOf(pg);
             if (indx >= 0) {

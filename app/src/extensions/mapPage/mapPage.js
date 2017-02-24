@@ -632,7 +632,7 @@ class mapPage extends GuiExtension {
 
         this.maps[configuration.id] = configuration;
         configuration.new = false;
-        this.switchMap(configuration);
+        this.switchMap(configuration, true);
         this.sidebar.list.activeJustOne(configuration.id);
         this.mapPane.show();
         this.devPane.hide();
@@ -1017,7 +1017,7 @@ class mapPage extends GuiExtension {
             converter.convertArray([path], MapIO.basePath(null, path));
         }
         this.showConfiguration(this.mapManager._configuration);
-        this.switchMap(this.mapManager._configuration);
+        //this.switchMap(this.mapManager._configuration);
     }
 
 

@@ -14,7 +14,7 @@ mergeSlices = argument[6];
 if(isFolder == "true"){
     run("Join Stack", "image=["+ image +"] prior=none options=[] initial="+initialSlice+" last="+lastSlice+" scale="+scale);
 }else{
-    run("Bio-Formats", "open=["+image+"] color_mode=Default stack_order=Default");
+    open(image); //not using bio formats because rbg images are open with separate channels
 }
 
 if(mergeSlices == "true"){

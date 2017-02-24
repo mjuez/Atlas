@@ -80,29 +80,6 @@ class bioFormats extends GuiExtension {
 
     createMenu() {
         let menu = new Menu();
-        menu.append(new MenuItem({
-            label: 'Launch ImageJ',
-            type: 'normal',
-            click: () => {
-                this.launchImageJ();
-            }
-        }));
-        menu.append(new MenuItem({
-            label: 'Config ImageJ',
-            type: 'normal',
-            click: () => {
-                this.configImageJ();
-            }
-        }));
-        menu.append(new MenuItem({
-            label: "Map Tools",
-            submenu: mapToolsSubMenu
-        }));
-        this.menu = new MenuItem({
-            label: "BioFormats",
-            type: "submenu",
-            submenu: menu
-        });
         gui.addSubMenu(this.menu);
     }
 

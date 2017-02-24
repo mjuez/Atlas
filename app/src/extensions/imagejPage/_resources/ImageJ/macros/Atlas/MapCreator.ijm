@@ -14,7 +14,7 @@ mergeSlices = argument[6];
 if(isFolder == "true"){
     run("Join Stack", "image=["+ image +"] prior=none options=[] initial="+initialSlice+" last="+lastSlice+" scale="+scale);
 }else{
-    open(image);
+    run("Bio-Formats", "open=["+image+"] color_mode=Default stack_order=Default");
 }
 
 if(mergeSlices == "true"){

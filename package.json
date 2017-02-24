@@ -18,13 +18,6 @@
         "filter": [
           "**/*"
         ]
-      },
-      {
-        "from": "app/src/extensions/bioFormats/_resources/bioFormats",
-        "to": "bioFormats",
-        "filter": [
-          "**/*"
-        ]
       }
     ],
     "mac": {

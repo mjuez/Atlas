@@ -32,8 +32,10 @@ const Input = require('Input');
 function layerRemoveButton(layers, layer, parent) {
     let a = new ButtonsContainer(document.createElement('DIV'));
     let text = 'Remove layer';
-    if (Object.keys(layers).indexOf(layer.name)<0){
-      text = 'Layer removed';
+    if (layer) {
+        if (Object.keys(layers).indexOf(layer.name) < 0) {
+            text = 'Layer removed';
+        }
     }
     a.addButton({
         id: 'removelayerbutton',
@@ -52,6 +54,11 @@ function layerRemoveButton(layers, layer, parent) {
             }
         }
     });
+    if (layer) {
+        if (Object.keys(layers).indexOf(layer.name) < 0) {
+            a.buttons['removelayerbutton'].className = 'btn-positive active';
+        }
+    }
     parent.appendChild(a.element);
 }
 
@@ -98,7 +105,7 @@ function getLayersName(conf) {
 }
 
 function layerSpecificEditors(layer, parent) {
-     if (!layer) return;
+    if (!layer) return;
     switch (layer.type) {
         case 'tilesLayer':
             Input.input({
@@ -435,20 +442,22 @@ class MapEdit {
 
     static modal(conf, cl) {
         let newconf = Util.clone(conf);
+        let newlayers = Util.clone(conf.layers);
         let modal = new Modal({
             title: `${conf.name}`,
-            height: 'auto'
+            height: 'auto',
+            width: '80%'
         });
 
-        let grid = new Grid(2,3);
+        let grid = new Grid(2, 3);
 
         let left = document.createElement('DIV');
         let center = document.createElement('DIV');
         let right = document.createElement('DIV');
 
-        grid.addElement(left,0,0);
-        grid.addElement(center,0,1);
-        grid.addElement(right,0,2);
+        grid.addElement(left, 0, 0);
+        grid.addElement(center, 0, 1);
+        grid.addElement(right, 0, 2);
         Input.input({
             parent: left,
             label: 'Name',
@@ -492,15 +501,17 @@ class MapEdit {
         });
         Input.selectInput({
             label: 'Layers',
-            parent: center,
+            parent: left,
             choices: getLayersName(conf),
             className: 'simple form-control',
             oninput: (inp) => {
                 Util.empty(right, right.firstChild);
+                Util.empty(center, center.firstChild);
                 let layer = conf.layers[Object.keys(conf.layers)[inp.selectedIndex]];
+                let newlayer = newconf.layers[Object.keys(conf.layers)[inp.selectedIndex]];
                 layerPreviewImage(layer, right);
-                layerPreviewInfo(layer, right);
-                layerRemoveButton(newconf.layers,layer, right);
+                layerSpecificEditors(newlayer, center);
+                layerRemoveButton(newconf.layers, layer, right);
             }
         });
         layerPreviewImage(newconf.layers[Object.keys(newconf.layers)[0]], right);

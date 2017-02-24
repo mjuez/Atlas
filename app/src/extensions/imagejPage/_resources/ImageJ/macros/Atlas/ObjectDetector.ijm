@@ -54,10 +54,12 @@ if(mode == FOLDER){
     for(i = 0; i < paths.length; i++){
         detectObjects(paths[i]);
         IJ.log(i+1+"/"+paths.length);
-    } 
+    }
 }else if(mode == SINGLE_IMAGE){
     detectObjects(path);
 }
+print("_DONE_");
+
 
 function detectObjects(imagePath){
     open(imagePath);

@@ -371,12 +371,12 @@ class imagej extends GuiExtension {
         dialog.showOpenDialog({
                 title: 'Crop Big Image',
                 type: 'normal',
-                properties: 'openFile'
+                properties: ['openFile']
             },
             (filepaths) => {
                 if (filepaths) {
-                    let details = `Image: ${path.basename(filep[0])}`;
-                    let cropTask = new CropTask(detail);
+                    let details = `Image: ${path.basename(filepaths[0])}`;
+                    let cropTask = new CropTask(details);
                     TaskManager.addTask(cropTask);
                     cropTask.run(filepaths[0]);
                 }

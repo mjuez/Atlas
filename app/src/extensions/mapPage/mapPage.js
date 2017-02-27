@@ -103,6 +103,30 @@ class mapPage extends GuiExtension {
 
         this.mapPane = new ToggleElement(document.createElement('DIV'));
         this.mapPane.element.className = 'pane';
+        this.sidebar.element.ondragover = (ev) => {
+          ev.dataTransfer.dropEffect = "none";
+            for (let f of ev.dataTransfer.files) {
+                let regx = /(\.((json)|(mapconfig)))$/i;
+                if (regx.test(f.name)) {
+                  ev.dataTransfer.dropEffect = "link";
+                  ev.preventDefault();
+                }
+            }
+        };
+        this.sidebar.element.ondrop = (ev) => {
+            ev.preventDefault();
+            for (let f of ev.dataTransfer.files) {
+                let regx = /(\.((json)|(mapconfig)))$/i;
+                if (regx.test(f.name)) {
+                  console.log(f);
+                  MapIO.loadMap(f.path,(conf)=>{
+                    this.addNewMap(conf);
+                  });
+                }
+            }
+
+            //ev.target.appendChild(document.getElementById(data));
+        };
         this.mapPane.on('show', () => {
             ipcRenderer.send("mapViewTrick");
         });

@@ -40,7 +40,8 @@ class MapIO {
 
     static loadMap(filename, next) {
         if (filename === undefined) return;
-        fs.readFile(filename[0], 'utf-8', (err, data) => {
+        if (filename.lenght) filename = filename[0];
+        fs.readFile(filename, 'utf-8', (err, data) => {
             if (err) {
                 dialog.showErrorBox("Error", err.message);
                 return;

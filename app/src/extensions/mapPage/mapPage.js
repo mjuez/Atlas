@@ -98,18 +98,13 @@ class mapPage extends GuiExtension {
         });
         this.sidebar.addList('layerList');
         this.sidebar.layerList.hide();
-
-        this.sidebar.show();
-
-        this.mapPane = new ToggleElement(document.createElement('DIV'));
-        this.mapPane.element.className = 'pane';
         this.sidebar.element.ondragover = (ev) => {
-          ev.dataTransfer.dropEffect = "none";
+            ev.dataTransfer.dropEffect = "none";
             for (let f of ev.dataTransfer.files) {
                 let regx = /(\.((json)|(mapconfig)))$/i;
                 if (regx.test(f.name)) {
-                  ev.dataTransfer.dropEffect = "link";
-                  ev.preventDefault();
+                    ev.dataTransfer.dropEffect = "link";
+                    ev.preventDefault();
                 }
             }
         };
@@ -118,15 +113,37 @@ class mapPage extends GuiExtension {
             for (let f of ev.dataTransfer.files) {
                 let regx = /(\.((json)|(mapconfig)))$/i;
                 if (regx.test(f.name)) {
-                  console.log(f);
-                  MapIO.loadMap(f.path,(conf)=>{
-                    this.addNewMap(conf);
-                  });
+                    MapIO.loadMap(f.path, (conf) => {
+                        this.addNewMap(conf);
+                    });
                 }
             }
-
-            //ev.target.appendChild(document.getElementById(data));
         };
+
+        this.sidebar.show();
+
+        this.mapPane = new ToggleElement(document.createElement('DIV'));
+        this.mapPane.element.className = 'pane';
+        this.mapPane.element.ondragover = (ev) => {
+            ev.dataTransfer.dropEffect = "none";
+            for (let f of ev.dataTransfer.files) {
+              let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)))$/i;
+                if (regx.test(f.name)) {
+                    ev.dataTransfer.dropEffect = "link";
+                    ev.preventDefault();
+                }
+            }
+        };
+        this.mapPane.element.ondrop = (ev) => {
+            ev.preventDefault();
+            for (let f of ev.dataTransfer.files) {
+              let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)))$/i;
+                if (regx.test(f.name)) {
+                    this.addLayerFile(f.path);
+                }
+            }
+        };
+
         this.mapPane.on('show', () => {
             ipcRenderer.send("mapViewTrick");
         });

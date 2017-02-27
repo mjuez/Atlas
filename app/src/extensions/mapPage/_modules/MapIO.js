@@ -40,7 +40,6 @@ class MapIO {
 
     static loadMap(filename, next) {
         if (filename === undefined) return;
-        if (filename.lenght) filename = filename[0];
         fs.readFile(filename, 'utf-8', (err, data) => {
             if (err) {
                 dialog.showErrorBox("Error", err.message);
@@ -63,7 +62,7 @@ class MapIO {
                 configuration.type = 'map';
             }
             if (id >= 1) {
-                configuration.basePath = MapIO.basePath(configuration, filename[0]);
+                configuration.basePath = MapIO.basePath(configuration, filename);
                 configuration = MapIO.buildConfiguration(configuration);
                 configuration.new = true;
                 Util.merge(configuration, MapIO.baseConfiguration());
@@ -81,7 +80,7 @@ class MapIO {
                 extensions: ['mapconfig', 'json']
             }]
         }, (filename) => {
-            MapIO.loadMap(filename, cl);
+            MapIO.loadMap(filename[0], cl);
         });
     }
 

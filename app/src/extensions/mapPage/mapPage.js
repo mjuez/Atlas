@@ -127,7 +127,7 @@ class mapPage extends GuiExtension {
         this.mapPane.element.ondragover = (ev) => {
             ev.dataTransfer.dropEffect = "none";
             for (let f of ev.dataTransfer.files) {
-              let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)))$/i;
+              let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)|(png)))$/i;
                 if (regx.test(f.name)) {
                     ev.dataTransfer.dropEffect = "link";
                     ev.preventDefault();
@@ -137,7 +137,7 @@ class mapPage extends GuiExtension {
         this.mapPane.element.ondrop = (ev) => {
             ev.preventDefault();
             for (let f of ev.dataTransfer.files) {
-              let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)))$/i;
+              let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)|(png)))$/i;
                 if (regx.test(f.name)) {
                     this.addLayerFile(f.path);
                 }
@@ -1000,6 +1000,7 @@ class mapPage extends GuiExtension {
                 basePath: '',
                 source: 'local',
                 original_size: siz,
+                maxZoom: 8,
                 baseLayer: !this.mapManager._state.baseLayerOn,
                 author: 'unknown',
                 type: 'tilesLayer',

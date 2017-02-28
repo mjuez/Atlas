@@ -986,6 +986,7 @@ class mapPage extends GuiExtension {
         options = options || {};
         if (path.endsWith('.json') || path.endsWith('.mapconfig')) {
             let conf = Util.readJSONsync(path);
+            if (!conf) return;
             let key = conf.name || conf.alias || path;
             conf.basePath = MapIO.basePath(conf, path);
             this.mapManager._configuration.layers[key] = MapIO.parseLayerConfig(conf);

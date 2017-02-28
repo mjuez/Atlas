@@ -27,11 +27,14 @@ const fs = require('fs');
 const marked = require('marked');
 const renderer = new marked.Renderer();
 const ToggleElement = require('ToggleElement');
+let gui = require('Gui');
 
 renderer.link = function(href, title, text) {
     if (!text) text = href;
+    if (!title) title = href;
     if (href.includes("@")) {
-        return (`<a href="mailto:${href}" title="${title}" target="_top"> ${text} </a>`);
+      return (href);
+        return (`<a href="mailto:${href}" title="${title}" target="_parent"> ${text} </a>`);
     }
     if (href.includes('http') | href.includes('www')) {
         return (`<a href="#" title="${title}" onclick="gui.extensionsManager.extensions.helpPage.loadurl('${href}');"> ${text} </a>`);
@@ -61,7 +64,7 @@ class helpPage extends GuiExtension {
         //add the sidebar
         this.sidebar = new Sidebar(this.element);
         this.sidebar.addNav();
-        this.sidebar.nav.addTitle('help pages');
+        this.sidebar.nav.addTitle('Help pages');
         this.sidebar.show();
 
 
@@ -97,7 +100,7 @@ class helpPage extends GuiExtension {
         });
 
         this.addToggleButton({
-            buttonsContainer: this.gui.header.actionsContainer,
+            buttonsContainer: gui.header.actionsContainer,
             icon: "fa fa-question",
             groupId: "basetools"
         });
@@ -109,7 +112,7 @@ class helpPage extends GuiExtension {
             title: 'Source code',
             icon: 'icon icon-github-circled',
             onclick: () => {
-                this.loadurl('https://github.com/gherardovarando/Atlas/');
+                this.loadurl('https://github.com/ComputationalIntelligenceGroup/Atlas');
             }
         });
 
@@ -118,7 +121,7 @@ class helpPage extends GuiExtension {
             title: 'Submit issue',
             icon: 'icon icon-github',
             onclick: () => {
-                this.loadurl('https://github.com/gherardovarando/Atlas/issues/new');
+                this.loadurl('https://github.com/ComputationalIntelligenceGroup/Atlas/issues/new');
             }
         });
 
@@ -174,23 +177,25 @@ class helpPage extends GuiExtension {
     }
 
     displayPage(pg) {
+        let indx;
         if (typeof pg === 'string') {
-            let indx = this.pagesId.indexOf(pg);
+            indx = this.pagesId.indexOf(pg);
             if (indx >= 0) {
                 pg = this.pages[indx];
             }
         }
-
+        let id = pg.id;
+        this.sidebar.nav.applyAll((it) => {
+            it.className = 'nav-group-item';
+        });
+        this.sidebar.nav.items[id].className = 'nav-group-item active'
         this.webview.hide();
         this.readMarkdown(`${this.getPagesDir()}${pg.file}`, (md) => {
             this.page.element.innerHTML = md;
         }, null, (data) => {
             return (data.replace(/\[\[/g, '![](').replace(/\]\]/g, ')')); // here we translate from github markdown expression for image [[ ]] to the usual md image syntax !()[ ]
         });
-
-
         this.page.show();
-
     }
 
     loadurl(href) {

@@ -1,20 +1,44 @@
-// @Integer rmin
-// @Integer rmax
-// @Integer by
-// @String thrMethod
-// @Integer min
-// @Integer max
-// @BigDecimal(stepSize=0.0001) fraction
-// @Integer toll
-// @File(label="Select the input directory", style="directory") imagesDir
-// @File(label="Select an output directory for the points", style="directory") outFolderP
-// @File(label="Select an output directory for the objects", style="directory") outFolderO
+
+Dialog.create("obj detection  folder");
+Dialog.addNumber("rmin",1);
+Dialog.addNumber("rmax",5);
+Dialog.addNumber("by",1);
+Dialog.addString("thrMethod","Moments");
+Dialog.addNumber("min",0);
+Dialog.addNumber("max",-1);
+Dialog.addNumber("fraction",0.5);
+Dialog.addNumber("toll",0);
+Dialog.addMessage("Next you will be asked with the directory where the images to process are");
+Dialog.show();
+rmin = Dialog.getNumber();
+rmax = Dialog.getNumber();
+by = Dialog.getNumber();
+thrMethod = Dialog.getString();
+min = Dialog.getNumber();
+max = Dialog.getNumber();
+fraction = Dialog.getNumber();
+toll = Dialog.getNumber();
+
+imagesDir = getDirectory("Choose a Directory");
+outFolderP = imagesDir + "/points";
+File.makeDirectory(outFolderP);
+outFolderO = imagesDir + "/objects";
+File.makeDirectory(outFolderO);
 
 setBatchMode(true);
 run("Input/Output...", "file=.csv");
 list = getFileList(imagesDir);
 
+factor=3/sqrt(2);
+rmin=factor*rmin-0.5;
+rmax=factor*rmax-0.5;
+by=floor(factor*by-0.5);
+if (by<=0) by=1;
+if (rmin<1) rmin = 1;
+if (rmax<rmin+1) rmax = rmin+1;
+
 for (i = 0; i < list.length; i++){
+  if ( !endsWith(list[i],"/") ){
   IJ.log(list[i]);
   showProgress((i+1)/(list.length));
   open(imagesDir + "/"+ list[i]);
@@ -26,13 +50,7 @@ for (i = 0; i < list.length; i++){
   }
   titleOriginal=getTitle();
 
-  factor=3/sqrt(2);
-  rmin=factor*rmin-0.5;
-  rmax=factor*rmin-0.5;
-  by=floor(factor*by-0.5);
-  if (by<=0) by=1;
-  if (rmin<1) rmin = 1;
-  if (rmax<rmin+1) rmax = rmin+1;
+
 
   run("Duplicate...", "duplicate range="+1+"-"+nslice+" title=temp1");
   run("Duplicate...", "duplicate range="+1+"-"+nslice+" title=temp0");
@@ -58,7 +76,8 @@ for (i = 0; i < list.length; i++){
   rename(titleOriginal);
   run("ObjCounter",  "threshold=1 slice="+floor(depth)+" min. ="+min+" max.="+max +" fraction="+fraction+" tollerance="+toll+" objects export_points");
   save(outFolderO+"/objects_"+titleOriginal);
-  close();
+  //close();
   saveAs("Results", outFolderP + "/points_"+titleOriginal+".csv");
   close("*");
+  }
 }

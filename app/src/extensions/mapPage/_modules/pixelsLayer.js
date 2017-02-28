@@ -1,4 +1,22 @@
-"use strict";
+/**
+ * @author : gherardo varando (gherardo.varando@gmail.com)
+ *
+ * @license: GPL v3
+ *     This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
 //use non-map convention x-y if v=coords x=v[0] y=v[1]
 //
 const Baby = require("babyparse");
@@ -134,10 +152,14 @@ class pixelsLayer {
         const tot = l;
         var pixelsUrlTemplate = this.configuration.pixelsUrlTemplate;
         let res = 0;
-        let N=0;
+        let N = 0;
+        var done = false;
 
-        var step = (v, x, y)=> {
-            if (this.pointinpolygon([x, y], polygon) ) {
+        var step = (v, x, y) => {
+            if (this.pointinpolygon([x, y], polygon)) {
+                if (typeof v != 'number') {
+                    return;
+                }
                 res = res + v;
                 N++;
                 if (typeof cl === 'function') {
@@ -155,9 +177,13 @@ class pixelsLayer {
                 let t1 = process.hrtime(t0);
                 if (typeof complete === 'function') {
                     complete({
+                        role: this.configuration.role,
                         sum: res,
-                        mean: res/N,
-                        N:N,
+                        sumNorm: res / (this.configuration.norm),
+                        mean: res / N,
+                        meanNorm: res / (N * this.configuration.norm),
+                        norm: this.configuration.norm,
+                        N: N,
                         tot: tot,
                         time: t1
                     });
@@ -178,7 +204,13 @@ class pixelsLayer {
                 let t1 = process.hrtime(t0);
                 if (typeof complete === 'function') {
                     complete({
+                        role: this.configuration.role,
                         sum: res,
+                        sumNorm: res / (this.configuration.norm),
+                        mean: res / N,
+                        meanNorm: res / (N * this.configuration.norm),
+                        norm: this.configuration.norm,
+                        N: N,
                         tot: tot,
                         time: t1
                     });

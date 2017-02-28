@@ -1,7 +1,8 @@
 # Atlas
 
-### Author
+### Authors
  - Gherardo Varando <gherardo.varando@gmail.com>
+ - Mario Juez <mario@mjuez.com>
 
 ### How to
 

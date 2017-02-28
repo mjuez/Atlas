@@ -1,6 +1,3 @@
 [submodule "app/src/extensions/helpPage/Atlas.wiki"]
 	path = app/src/extensions/helpPage/_help/Atlas.wiki
-	url = https://github.com/gherardovarando/Atlas.wiki.git
-[submodule "app/src/extensions/helpPage/_help/Atlas.wiki"]
-	path = app/src/extensions/helpPage/_help/Atlas.wiki
-	url = https://github.com/gherardovarando/Atlas.wiki.git
+	url = https://github.com/ComputationalIntelligenceGroup/Atlas.wiki.git

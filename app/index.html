@@ -44,16 +44,12 @@
 <body>
 
     <div class="window">
-        <header class="toolbar toolbar-header" style="-webkit-app-region: drag" id="header">
+        <header class="toolbar toolbar-header" id="header">
             <div class="toolbar-actions">
-
-
             </div>
         </header>
 
         <div class="window-content">
-
-
             <div class="pane-group main" id="main">
                 <div class='pane padded'>
                     <h1> Atlas v0.1.2 <img src='images/icon.png' height="30" width="30"></img></h1>
@@ -78,19 +74,32 @@
 
 
 <script>
-    const Gui = require(`./src/node_modules/Gui`);
-    let gui = new Gui();
+    //prevent app closing 
+    document.addEventListener('dragover', function(event) {
+        event.preventDefault();
+        return false;
+    }, false);
+
+    document.addEventListener('drop', function(event) {
+        event.preventDefault();
+        return false;
+    }, false);
+    let gui = require(`./src/node_modules/Gui`);
+    gui.bindExtensionManager();
+    gui.bindWorkspace();
+    gui.menu();
     gui.extensionsManager.loadExtension('./../extensions/helpPage/helpPage');
     gui.extensionsManager.loadExtension('./../extensions/mapPage/mapPage');
     gui.extensionsManager.loadExtension("./../extensions/imagejPage/imagejPage");
     gui.extensionsManager.loadExtension("./../extensions/regionStatsPage/regionStatsPage");
-    //gui.loadAllExtensions();
+    gui.extensionsManager.loadExtension("./../extensions/tasksPage/tasksPage");
+    // //gui.loadAllExtensions();
     gui.extensionsManager.extensions.helpPage.activate();
     gui.extensionsManager.extensions.mapPage.activate();
     gui.extensionsManager.extensions.imagej.activate();
     gui.extensionsManager.extensions.regionStatsPage.activate();
+    gui.extensionsManager.extensions.tasksPage.activate();
     gui.extensionsManager.extensions.mapPage.show();
-
 </script>
 
 

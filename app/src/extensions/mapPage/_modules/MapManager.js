@@ -212,10 +212,48 @@ if (L != undefined) {
             }
         },
 
+        getUnitCal: function() {
+            let unit  = "u";
+            if (this._activeBaseLayer) {
+                depth = this._activeBaseLayer._configuration.unitCal || depth;
+            } else {
+                let temp = this.getLayers('tilesLayer')[0];
+                if (!temp) {
+                    temp = this.getLayers('imageLayer')[0];
+                }
+                if (temp) {
+                    size = temp._configuration.unitCal || depth;
+                }
+            }
+            return depth;
+        },
+
+        getDepthCal: function() {
+            let depth = 1;
+            if (this._activeBaseLayer) {
+                depth = this._activeBaseLayer._configuration.depthCal || depth;
+            } else {
+                let temp = this.getLayers('tilesLayer')[0];
+                if (!temp) {
+                    temp = this.getLayers('imageLayer')[0];
+                }
+                if (temp) {
+                    size = temp._configuration.depthCal || depth;
+                }
+            }
+            return depth;
+        },
+
         getSize: function() { //this is the maximum of the 2 dimension
             let temp = this.getSizes();
             return Math.max(temp[0], temp[1]);
         },
+
+        getSizeCal: function() {
+            let temp = this.getSizesCal();
+            return Math.max(temp[0], temp[1]);
+        },
+
 
         getSizes: function() {
             let size = [256, 256];
@@ -240,6 +278,31 @@ if (L != undefined) {
                 return (size);
             }
         },
+
+        getSizesCal: function() {
+            let size = [256, 256];
+            if (this._activeBaseLayer) {
+                size = this._activeBaseLayer._configuration.sizeCal || this._activeBaseLayer._configuration.tileSize || 256;
+            } else {
+                let temp = this.getLayers('tilesLayer')[0];
+                if (!temp) {
+                    temp = this.getLayers('imageLayer')[0];
+                }
+                if (temp) {
+                    size = temp._configuration.sizeCal || temp._configuration.tileSize || [256, 256];
+                }
+            }
+            if (typeof size === 'number') {
+                return [size, size];
+            }
+            if (size.x && size.y) {
+                return [size.x, size.y];
+            }
+            if (Array.isArray(size)) {
+                return (size);
+            }
+        },
+
 
 
         getLayers: function(types) {
@@ -454,7 +517,7 @@ if (L != undefined) {
                     weight: lyjson.options.weight || lyjson.weight || 3,
                     fill: true,
                     fillColor: lyjson.options.fillColor || lyjson.fillColor || this.getDrawingColor(),
-                    fillOpacity: lyjson.options.fillOpacity || lyjson.fillOpacity || 0.2
+                    fillOpacity: lyjson.options.fillOpacity || lyjson.fillOpacity || 0.3
                 });
             } else { //assume the layer is already a L.polygon
                 lyjson = {
@@ -600,10 +663,12 @@ if (L != undefined) {
         addDrawnPolygons: function(layerConfig) {
             if (Array.isArray(layerConfig.polygons)) {
                 layerConfig.polygons.map((pol) => {
+                    pol.options.fillOpacity = 0.3;
                     this.addPolygon(pol);
                 });
             } else { //assume is an object
                 Object.keys(layerConfig.polygons).map((key) => {
+                    layerConfig.polygons[key].options.fillOpacity = 0.3;
                     this.addPolygon(layerConfig.polygons[key]);
                 });
             }
@@ -714,12 +779,12 @@ if (L != undefined) {
             } else {
                 let scale = 1;
                 let baselayer = this._activeBaseLayer || this._tilesLayers[0];
-                if (layerConfig.size && (baselayer.options || baselayer._configuration)) {
-                    scale = layerConfig.size / (baselayer._configuration.size || baselayer.options.tileSize);
+                if (layerConfig.size ) {
+                    scale = layerConfig.size / this.getSize();
                     let tileSize = layerConfig.tileSize || layerConfig.size;
                     if (tileSize > 0) {
-                        for (let i = 0; i <= layerConfig.size; i = i + layerConfig.tileSize) {
-                            for (let j = 0; j <= layerConfig.size; j = j + layerConfig.tileSize) {
+                        for (let i = 0; i <= layerConfig.size; i = i + tileSize) {
+                            for (let j = 0; j <= layerConfig.size; j = j + tileSize) {
                                 guideLayer.addLayer(L.circleMarker([-i / scale, j / scale], {
                                     radius: layerConfig.radius || 4,
                                     color: layerConfig.color || this.getDrawingColor()
@@ -861,6 +926,8 @@ if (L != undefined) {
         },
 
         tUP: function() {
+          if (!this._activeBaseLayer) return;
+          if (!this._activeBaseLayer.options.customKeys) return;
             if (this._activeBaseLayer.options.t >= 0 && this._activeBaseLayer.options.customKeys.t) {
                 let val = this._activeBaseLayer.options.customKeys.t;
                 let cur = this._activeBaseLayer.options.t;
@@ -876,7 +943,9 @@ if (L != undefined) {
         },
 
         tDOWN: function() {
-            if (this._activeBaseLayer.options.customKeys.t) {
+            if (!this._activeBaseLayer) return;
+            if (!this._activeBaseLayer.options.customKeys) return;
+            if (this._activeBaseLayer.options.t >= 0 && this._activeBaseLayer.options.customKeys.t) {
                 let val = this._activeBaseLayer.options.customKeys.t;
                 let cur = this._activeBaseLayer.options.t;
                 let pos = val.findIndex((e) => {

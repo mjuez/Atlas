@@ -40,7 +40,7 @@ class MapIO {
 
     static loadMap(filename, next) {
         if (filename === undefined) return;
-        fs.readFile(filename[0], 'utf-8', (err, data) => {
+        fs.readFile(filename, 'utf-8', (err, data) => {
             if (err) {
                 dialog.showErrorBox("Error", err.message);
                 return;
@@ -62,11 +62,11 @@ class MapIO {
                 configuration.type = 'map';
             }
             if (id >= 1) {
-                configuration.basePath = MapIO.basePath(configuration, filename[0]);
+                configuration.basePath = MapIO.basePath(configuration, filename);
                 configuration = MapIO.buildConfiguration(configuration);
                 configuration.new = true;
                 Util.merge(configuration, MapIO.baseConfiguration());
-                MapEdit.previewModal(configuration, next);
+                MapEdit.modal(configuration, next);
             }
         });
     }
@@ -80,7 +80,7 @@ class MapIO {
                 extensions: ['mapconfig', 'json']
             }]
         }, (filename) => {
-            MapIO.loadMap(filename, cl);
+            MapIO.loadMap(filename[0], cl);
         });
     }
 
@@ -91,7 +91,7 @@ class MapIO {
             name: 'new map',
             authors: os.userInfo().username,
             date: (new Date()).toDateString(),
-            layers: [],
+            layers: {},
             basePath: '',
             new: options.new
         };
@@ -269,9 +269,9 @@ class MapIO {
 
         if (config.type.includes('tilesLayer')) {
             config.tilesUrlTemplate = config.tilesUrlTemplate || '';
-            if (config.tilesUrlTemplate.startsWith("http://") ||
-                config.tilesUrlTemplate.startsWith("file://") ||
-                config.tilesUrlTemplate.startsWith("https://") ||
+            if (config.tilesUrlTemplate.startsWith("http:") ||
+                config.tilesUrlTemplate.startsWith("file:") ||
+                config.tilesUrlTemplate.startsWith("https:") ||
                 path.isAbsolute(config.tilesUrlTemplate)) {
                 config.basePath = '';
             }
@@ -291,9 +291,9 @@ class MapIO {
             config.opacity = Math.min(1, Math.max(0, Number(config.opacity || 1)));
             config.tileSize = config.tileSize || 256;
             config.size = Math.max(1, Number(config.size || config.tileSize || 256));
-            config.size_cal = config.size_cal || config.size || 256;
-            config.deth_cal = config.depth_cal || 1;
-            config.unit_cal = config.unit_cal || 'u';
+            config.sizeCal = config.sizeCal || config.size || 256;
+            config.depthCal = config.depthCal || 1;
+            config.unitCal = config.unitCal || 'u';
 
             if (Array.isArray(config.tileSize)) {
                 config.bounds = config.bounds || [
@@ -312,7 +312,7 @@ class MapIO {
                 ]
             }
 
-            config.previewImageUrl = (config.tilesUrlTemplate).replace('{x}', '0').replace('{y}', '0').replace('{z}', '0');
+            config.previewImageUrl = (config.tilesUrlTemplate).replace('{x}', '0').replace('{y}', '0').replace('{z}', '0').replace('{s}','a');
 
             if (config.customKeys) {
                 for (let k in config.customKeys) {
@@ -352,6 +352,8 @@ class MapIO {
             if (config.pixelsUrlTemplate.startsWith(config.basePath)) {
                 config.basePath = '';
             }
+            config.norm = config.norm || 1;
+            config.role = config.role || 'area';
             config.pixelsUrlTemplate = path.join(config.basePath, config.pixelsUrlTemplate);
         }
         if (config.type.includes('guideLayer')) {
@@ -389,12 +391,8 @@ class MapIO {
 
 
 
-
-
-
-
     static createMap(cl) {
-        MapEdit.previewModal(MapIO.baseConfiguration({
+        MapEdit.modal(MapIO.baseConfiguration({
             new: true
         }), cl);
     }

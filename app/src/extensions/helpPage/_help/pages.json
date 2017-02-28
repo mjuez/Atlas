@@ -11,16 +11,10 @@
         "file": "map.md",
         "icon": "icon icon-map"
     },
-    {
-        "id":"load",
-        "title": "Load a map",
-        "file": "load.md",
-        "icon": "icon icon-upload"
-    },
-    {
-        "id": "create",
-        "title": "Create a map",
-        "file": "create.md",
-        "icon": "icon icon-feather"
+  {
+    "id": "imagej",
+    "title": "ImageJ",
+    "file": "imagej.md",
+    "icon": "icon icon-picture"
     }]
 }

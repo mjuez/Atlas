@@ -176,7 +176,7 @@ input.list-input[readOnly] {
     background-color: rgba(0, 0, 0, 0.4);
     /* Black w/ opacity */
     position: absolute;
-    text-align:center;
+    text-align: center;
 }
 
 .modal-content {
@@ -221,8 +221,7 @@ input.list-input[readOnly] {
     text-align: right;
 }
 
-.modal-footer input[type="button"], 
-.modal-footer button{
+.modal-footer input[type="button"], .modal-footer button {
     margin: 0 4px;
 }
 
@@ -328,7 +327,7 @@ img.imageicon {
 .grid td label {
     font-weight: bold;
     vertical-align: middle;
-    margin:0;
+    margin: 0;
 }
 
 .grid tr:active {
@@ -340,16 +339,14 @@ img.imageicon {
     display: none;
 }
 
-.task .actions .inner-container .custom-actions,
-.task .actions .inner-container .cancel {
+.task .actions .inner-container .custom-actions, .task .actions .inner-container .cancel {
     display: table-cell;
     vertical-align: middle;
     width: 1%;
     padding-left: 5px;
 }
 
-.tasks-pane .left-container,
-.tasks-pane .right-container {
+.tasks-pane .left-container, .tasks-pane .right-container {
     display: inline-block;
     width: 50%;
     height: auto;
@@ -387,21 +384,17 @@ img.imageicon {
     width: 100%;
 }
 
-.task-container .main-info-container .status-icon-container,
-.task-container .main-info-container .middle-container,
-.task-container .main-info-container .cancel-container {
+.task-container .main-info-container .status-icon-container, .task-container .main-info-container .middle-container, .task-container .main-info-container .cancel-container {
     display: table-cell;
 }
 
-.task-container .main-info-container .status-icon-container,
-.task-container .main-info-container .cancel-container {
+.task-container .main-info-container .status-icon-container, .task-container .main-info-container .cancel-container {
     width: 1%;
     padding: 0 10px;
     vertical-align: middle;
 }
 
-.task-container .main-info-container .cancel-container,
-.task-container .main-info-container .status-icon-container .wrong {
+.task-container .main-info-container .cancel-container, .task-container .main-info-container .status-icon-container .wrong {
     color: red;
 }
 
@@ -438,14 +431,14 @@ img.imageicon {
     background-color: #F5F5F4;
 }
 
-.task-container .additional-info-container{
+.task-container .additional-info-container {
     width: 100%;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.15s ease-out;
 }
 
-.task-container .additional-info-container.open{
+.task-container .additional-info-container.open {
     max-height: 100px;
     transition: max-height 0.25s ease-in;
 }
@@ -465,4 +458,23 @@ img.imageicon {
     top: 1px;
     right: 4px;
     color: red;
+}
+
+.h-pane-top {
+    max-height: 100%;
+    min-height: 50%;
+    width: 100%;
+    z-index: 0;
+    transition: height 0.4s;
+    background-color: #F6F6F5;
+
+}
+
+.h-pane-bottom {
+    max-height: 50%;
+    min-height: 0%;
+    width: 100%;
+    z-index: 0;
+    transition: height 0.4s;
+    background-color: #F6F6F5;
 }

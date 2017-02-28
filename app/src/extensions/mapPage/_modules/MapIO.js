@@ -18,7 +18,7 @@
 
 'use strict';
 
-const MapEdit = require('./MapEdit');
+const MapEditor = require('./MapEditor');
 const {
     app
 } = require('electron').remote;
@@ -66,7 +66,7 @@ class MapIO {
                 configuration = MapIO.buildConfiguration(configuration);
                 configuration.new = true;
                 Util.merge(configuration, MapIO.baseConfiguration());
-                MapEdit.modal(configuration, next);
+                MapEditor.modal(configuration, next);
             }
         });
     }
@@ -144,6 +144,10 @@ class MapIO {
         let files = fs.readdirSync(path);
         if (files) {
             for (var f in files) {
+              if (files[f].endsWith(".layerconfig")) {
+                  if (files[f].includes(name)) return Util.readJSONsync(path + files[f]);
+                  options.push(files[f]);
+              }
                 if (files[f].endsWith(".json")) {
                     if (files[f].includes(name)) return Util.readJSONsync(path + files[f]);
                     options.push(files[f]);
@@ -392,7 +396,7 @@ class MapIO {
 
 
     static createMap(cl) {
-        MapEdit.modal(MapIO.baseConfiguration({
+        MapEditor.modal(MapIO.baseConfiguration({
             new: true
         }), cl);
     }

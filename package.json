@@ -18,6 +18,13 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "app/src/extensions/BioFormats/_resources/bftools",
+        "to": "bftools",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "mac": {

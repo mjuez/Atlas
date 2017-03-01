@@ -18,7 +18,6 @@
 
 'use strict';
 
-const MapEditor = require('./MapEditor');
 const {
     app
 } = require('electron').remote;
@@ -66,7 +65,9 @@ class MapIO {
                 configuration = MapIO.buildConfiguration(configuration);
                 configuration.new = true;
                 Util.merge(configuration, MapIO.baseConfiguration());
-                MapEditor.modal(configuration, next);
+                if (typeof next === 'function') {
+                    next(configuration);
+                }
             }
         });
     }
@@ -144,10 +145,10 @@ class MapIO {
         let files = fs.readdirSync(path);
         if (files) {
             for (var f in files) {
-              if (files[f].endsWith(".layerconfig")) {
-                  if (files[f].includes(name)) return Util.readJSONsync(path + files[f]);
-                  options.push(files[f]);
-              }
+                if (files[f].endsWith(".layerconfig")) {
+                    if (files[f].includes(name)) return Util.readJSONsync(path + files[f]);
+                    options.push(files[f]);
+                }
                 if (files[f].endsWith(".json")) {
                     if (files[f].includes(name)) return Util.readJSONsync(path + files[f]);
                     options.push(files[f]);
@@ -214,9 +215,9 @@ class MapIO {
         }
 
         configuration._name = 'map';
-        Util.setOne(configuration,'name','NAME','Name','title','TITLE','Title','_name');
+        Util.setOne(configuration, 'name', 'NAME', 'Name', 'title', 'TITLE', 'Title', '_name');
         configuration._auth = 'Unknown';
-        Util.setOne(configuration,'authors','AUTHORS','auth','AUTH','Authors','AUTHS','auth','author','AUTHOR','Author','_auth');
+        Util.setOne(configuration, 'authors', 'AUTHORS', 'auth', 'AUTH', 'Authors', 'AUTHS', 'auth', 'author', 'AUTHOR', 'Author', '_auth');
 
         configuration.layers = {};
         let id = 0; //use a unique id for every layer
@@ -316,7 +317,7 @@ class MapIO {
                 ]
             }
 
-            config.previewImageUrl = (config.tilesUrlTemplate).replace('{x}', '0').replace('{y}', '0').replace('{z}', '0').replace('{s}','a');
+            config.previewImageUrl = (config.tilesUrlTemplate).replace('{x}', '0').replace('{y}', '0').replace('{z}', '0').replace('{s}', 'a');
 
             if (config.customKeys) {
                 for (let k in config.customKeys) {
@@ -396,9 +397,9 @@ class MapIO {
 
 
     static createMap(cl) {
-        MapEditor.modal(MapIO.baseConfiguration({
+        cl(MapIO.baseConfiguration({
             new: true
-        }), cl);
+        }));
     }
 
 

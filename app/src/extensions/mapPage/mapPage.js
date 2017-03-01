@@ -62,6 +62,8 @@ const {
     app
 } = require('electron').remote;
 
+let taskManager = require('TaskManager');
+
 let gui = require('Gui');
 
 
@@ -155,12 +157,16 @@ class mapPage extends GuiExtension {
         let editContainer = this.mapPane.bottom;
 
         globalShortcut.unregisterAll();
-        globalShortcut.register('CommandOrControl+Up', () => {
+        globalShortcut.register('CmdOrCtrl+Up', () => {
             this.mapManager.tUP();
         });
 
-        globalShortcut.register('CommandOrControl+Down', () => {
+        globalShortcut.register('CmdOrCtrl+Down', () => {
             this.mapManager.tDOWN();
+        });
+
+        globalShortcut.register('CmdOrCtrl + C', () => {
+            this.mapManager.center();
         });
 
         this.devPane = new ToggleElement(document.createElement('DIV'));
@@ -184,10 +190,20 @@ class mapPage extends GuiExtension {
         let map = L.map('map', arg);
         map.setView([-100, 100], 0);
         this.mapManager = L.mapManager(map);
+        this.mapEditor = new MapEditor(this.mapManager);
+        this.mapEditor.on('change', () => {
+            this.updateMap(this.mapManager._configuration,true);
+        });
+        this.mapEditor.on('hard_change', () => {
+            this.updateMap(this.mapManager._configuration,true);
+            this.mapManager.reload(true);
+        });
         this.regionAnalyzer = new RegionAnalyzer(this.mapManager, gui);
         this.listenMapManager();
         this.makeMenu();
-
+        taskManager.on('progress', (prog)=>{
+          gui.setProgress(prog);
+        });
 
         gui.workspace.addSpace(this, this.maps, false); //without overwriting
 
@@ -324,7 +340,7 @@ class mapPage extends GuiExtension {
             label: 'Edit map',
             accelerator: 'CmdOrCtrl + L',
             click: () => {
-                MapEditor.modal(this.mapManager._configuration, (c) => {
+                this.mapEditor.modal(this.mapManager._configuration, (c) => {
                     this.updateMap(c);
                 });
             }
@@ -372,7 +388,7 @@ class mapPage extends GuiExtension {
             }
         }));
         mapMenu.append(new MenuItem({
-            label: 'Show map config',
+            label: 'Toggle config',
             type: 'normal',
             accelerator: 'CmdOrCtrl + M',
             click: () => {
@@ -496,12 +512,10 @@ class mapPage extends GuiExtension {
         this.sidebarRegions.list.clean();
     }
 
-    fillEditor(configuration){
-      if (configuration){
-        let cont = this.mapPane.bottom;
-        Util.empty(cont,cont.firstChild);
-        MapEditor.editor(configuration,cont);
-      }
+    fillEditor() {
+            let cont = this.mapPane.bottom;
+            Util.empty(cont, cont.firstChild);
+            this.mapEditor.editor(cont);
     }
 
     switchMap(configuration, force) {
@@ -515,7 +529,7 @@ class mapPage extends GuiExtension {
             this.initRegionActions(configuration, force);
             this.showConfiguration(configuration);
             this.mapManager.setConfiguration(configuration, force);
-            this.fillEditor(configuration);
+            this.fillEditor();
             this.sidebarRegions.show();
         } else {
             this.switchMap(this.mapManager._configuration);
@@ -569,20 +583,11 @@ class mapPage extends GuiExtension {
             label: 'Edit map',
             type: 'normal',
             click: () => {
-                MapEditor.modal(this.maps[configuration.id], (c) => {
+                this.mapEditor.modal(this.maps[configuration.id], (c) => {
                     this.updateMap(c);
                 });
             }
         }));
-        // edit.append(new MenuItem({
-        //     label: 'Edit layers',
-        //     type: 'normal',
-        //     click: () => {
-        //         MapEditor.editLayersModal(this.maps[configuration.id], (c) => {
-        //             this.updateMap(c);
-        //         });
-        //     }
-        // }));
         edit.append(new MenuItem({
             label: 'Delete',
             type: 'normal',
@@ -663,8 +668,6 @@ class mapPage extends GuiExtension {
         this.mapPane.show();
         this.devPane.hide();
     }
-
-
 
 
     listenMapManager() {
@@ -808,45 +811,13 @@ class mapPage extends GuiExtension {
             });
 
         });
-
-        this.mapManager.on('add:tileslayer', (e) => {
-            let layer = e.layer;
-            let config = e.layerConfig;
-            let body = document.createElement('DIV');
-            let inp = document.createElement('INPUT');
-            inp.type = 'range';
-            inp.min = 0;
-            inp.max = 1;
-            inp.step = 0.05;
-            inp.value = layer.options.opacity;
-            inp.oninput = () => {
-                layer.setOpacity(inp.value);
-            }
-            body.appendChild(inp);
-        });
-
-        this.mapManager.on('add:imagelayer', (e) => {
-            let layer = e.layer;
-            let config = e.layerConfig;
-            let body = document.createElement('DIV');
-            let inp = document.createElement('INPUT');
-            inp.type = 'range';
-            inp.min = 0;
-            inp.max = 1;
-            inp.step = 0.05;
-            inp.value = layer.options.opacity;
-            inp.oninput = () => {
-                layer.setOpacity(inp.value);
-            }
-            body.appendChild(inp);
-        });
         this.mapManager.on('remove:polygon', (e) => {
             this.sidebarRegions.list.removeItem(e.layer._configuration.id);
         });
     }
 
 
-    updateMap(configuration) {
+    updateMap(configuration, noswitch) {
         if (typeof configuration.id === 'undefined') return;
         try {
             configuration = MapIO.buildConfiguration(configuration);
@@ -859,9 +830,11 @@ class mapPage extends GuiExtension {
         this.sidebar.list.setKey(configuration.id, configuration.authors);
         this.sidebar.list.setTitle(configuration.id, configuration.name);
         this.maps[configuration.id] = configuration;
-        this.switchMap(configuration, true);
-        this.mapPane.show();
-        this.devPane.hide();
+        if (!noswitch) {
+            this.switchMap(configuration, true);
+            this.mapPane.show();
+            this.devPane.hide();
+        }
     }
 
 
@@ -1047,11 +1020,6 @@ class mapPage extends GuiExtension {
         this.mapManager._configuration.layers[key] = conf;
         this.mapManager.addLayer(conf);
     }
-
-
-
-
-
 
 
 

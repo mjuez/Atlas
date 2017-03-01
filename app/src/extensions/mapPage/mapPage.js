@@ -144,10 +144,6 @@ class mapPage extends GuiExtension {
                 }
             }
         };
-
-        this.mapPane.on('show', () => {
-            ipcRenderer.send("mapViewTrick");
-        });
         this.mapPane.hide();
         this.appendChild(this.mapPane);
 
@@ -326,6 +322,7 @@ class mapPage extends GuiExtension {
             click: () => {
                 MapIO.loadMapfromFile((conf) => {
                     this.addNewMap(conf);
+                    this.show();
                 });
             }
         }));
@@ -334,6 +331,7 @@ class mapPage extends GuiExtension {
             type: 'normal',
             click: () => {
                 this.createMap();
+                this.show();
             }
         }));
         mapMenu.append(new MenuItem({
@@ -343,6 +341,7 @@ class mapPage extends GuiExtension {
               this.mapPane.show();
               this.devPane.hide();
               this.mapPane.toggleBottom();
+              this.show();
             }
         }));
         mapMenu.append(new MenuItem({
@@ -380,11 +379,11 @@ class mapPage extends GuiExtension {
         mapMenu.append(new MenuItem({
             label: 'Show map',
             type: 'normal',
-            accelerator: 'CmdOrCtrl + Shift + M',
+            accelerator: 'CmdOrCtrl + M',
             click: () => {
-                this.show();
                 this.mapPane.show();
                 this.devPane.hide();
+                this.show();
             }
         }));
         this.menu = new MenuItem({

@@ -86,10 +86,6 @@ ipcMain.on("openDevTools", () =>{
 })
 
 
-ipcMain.on("mapViewTrick", () => {
-    win.setSize(win.getSize()[0] + 1, win.getSize()[1] + 1)
-    win.setSize(win.getSize()[0] - 1, win.getSize()[1] - 1)
-})
 
 ipcMain.on("imageJ",(event,arg)=>{
   let path = app.getPath('exe');

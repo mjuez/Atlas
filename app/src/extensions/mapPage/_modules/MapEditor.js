@@ -124,7 +124,7 @@ class MapEditor extends EventEmitter {
             parent: parent,
             value: layer.name,
             placeholder: 'layer name',
-            oninput: (inp) => {
+            onblur: (inp) => {
                 layer.name = inp.value;
                 this.emit('hard_change');
 
@@ -150,7 +150,7 @@ class MapEditor extends EventEmitter {
                     type: 'url',
                     value: layer.tilesUrlTemplate,
                     placeholder: 'tiles url template',
-                    oninput: (inp) => {
+                    onblur: (inp) => {
                         layer.tilesUrlTemplate = inp.value;
                         this.emit('hard_change');
                     }
@@ -162,7 +162,7 @@ class MapEditor extends EventEmitter {
                     type: 'number',
                     value: layer.maxZoom,
                     placeholder: 'MaxZoom',
-                    oninput: (inp) => {
+                    onblur: (inp) => {
                         layer.maxZoom = Number(inp.value);
                         this.emit('hard_change');
                     }
@@ -174,7 +174,7 @@ class MapEditor extends EventEmitter {
                     type: 'number',
                     value: layer.minZoom,
                     placeholder: 'minZoom',
-                    oninput: (inp) => {
+                    onblur: (inp) => {
                         layer.minZoom = Number(inp.value);
                         this.emit('hard_change');
                     }
@@ -250,7 +250,7 @@ class MapEditor extends EventEmitter {
                     type: 'text',
                     value: layer.pointsUrlTemplate,
                     placeholder: 'points url template',
-                    oninput: (inp) => {
+                    onblur: (inp) => {
                         layer.pointsUrlTemplate = inp.value;
                         this.emit('hard_change');
                     }
@@ -262,7 +262,7 @@ class MapEditor extends EventEmitter {
                     type: 'number',
                     value: layer.size,
                     placeholder: 'size',
-                    oninput: (inp) => {
+                    onblur: (inp) => {
                         layer.size = Number(inp.value);
                         this.emit('hard_change');
                     }
@@ -274,7 +274,7 @@ class MapEditor extends EventEmitter {
                     type: 'number',
                     value: layer.tileSize,
                     placeholder: 'size',
-                    oninput: (inp) => {
+                    onblur: (inp) => {
                         layer.tileSize = Number(inp.value);
                         this.emit('hard_change');
                     }
@@ -307,7 +307,7 @@ class MapEditor extends EventEmitter {
                     parent: parent,
                     type: 'color',
                     value: layer.color,
-                    oninput: (inp) => {
+                    onblur: (inp) => {
                         layer.color = inp.value;
                         this.emit('hard_change');
                     }
@@ -318,7 +318,7 @@ class MapEditor extends EventEmitter {
                     parent: parent,
                     type: 'number',
                     value: layer.radius || 4,
-                    oninput: (inp) => {
+                    onblur: (inp) => {
                         layer.radius = inp.value;
                         this.emit('hard_change');
                     }
@@ -333,7 +333,7 @@ class MapEditor extends EventEmitter {
                     type: 'text',
                     value: layer.pixelsUrlTemplate,
                     placeholder: 'pixels url template',
-                    oninput: (inp) => {
+                    onblur: (inp) => {
                         layer.pixelsUrlTemplate = inp.value;
                         this.emit('hard_change');
                     }
@@ -437,7 +437,7 @@ class MapEditor extends EventEmitter {
                     type: 'number',
                     value: layer.size,
                     placeholder: 'size',
-                    oninput: (inp) => {
+                    onblur: (inp) => {
                         layer.size = Number(inp.value);
                         this.emit('hard_change');
                     }
@@ -449,7 +449,7 @@ class MapEditor extends EventEmitter {
                     type: 'number',
                     value: layer.tileSize,
                     placeholder: 'tile size',
-                    oninput: (inp) => {
+                    onblur: (inp) => {
                         layer.tileSize = Number(inp.value);
                         this.emit('hard_change');
                     }

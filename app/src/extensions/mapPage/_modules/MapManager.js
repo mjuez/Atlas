@@ -748,7 +748,7 @@ if (L != undefined) {
 
         addGuideLayer: function(layerConfig) {
             if (!this.getBaseLayer()) return;
-            layerConfig.name = layerConfig.name || layerConfig.alias || layerConfig.Name || 'Guide';
+            layerConfig.name = layerConfig.name || 'Guide';
             let guideLayer = L.featureGroup();
             layerConfig.typeid = this._guideLayers.length;
             this._guideLayers.push(guideLayer);
@@ -830,9 +830,6 @@ if (L != undefined) {
                     layerConfig.imageUrl.startsWith("ftp://")) {
                     basePath = "";
                 }
-                if (!layerConfig.alias) {
-                    layerConfig.alias = layerConfig.name;
-                }
                 let options = layerConfig.options || {
                     opacity: layerConfig.opacity || 1,
                 };
@@ -857,7 +854,7 @@ if (L != undefined) {
 
                 if (this._layerControl) {
                     if (options.baseLayer) {
-                        this._layerControl.addBaseLayer(layer, options.alias);
+                        this._layerControl.addBaseLayer(layer, options.name);
                         layer.on("add", () => {
                             this._map.setMaxZoom(options.maxZoom);
                             this._map.setMinZoom(options.minZoom);
@@ -868,7 +865,7 @@ if (L != undefined) {
                             this._state.baseLayerOn = true;
                         }
                     } else {
-                        this._layerControl.addOverlay(layer, options.alias);
+                        this._layerControl.addOverlay(layer, options.name);
                     }
                 } else {
                     this._map.addLayer(layer);
@@ -905,7 +902,7 @@ if (L != undefined) {
 
                 if (this._layerControl) {
                     if (options.baseLayer) {
-                        this._layerControl.addBaseLayer(layer, options.alias);
+                        this._layerControl.addBaseLayer(layer, options.name);
                         layer.on("add", () => {
                             this._map.setMaxZoom(layerConfig.maxZoom);
                             this._activeBaseLayer = layer;
@@ -923,7 +920,7 @@ if (L != undefined) {
                             this._state.baseLayerOn = true;
                         }
                     } else {
-                        this._layerControl.addOverlay(layer, options.alias);
+                        this._layerControl.addOverlay(layer, options.name);
                     }
                 } else {
                     this._map.addLayer(layer);

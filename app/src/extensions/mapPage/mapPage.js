@@ -340,9 +340,9 @@ class mapPage extends GuiExtension {
             label: 'Edit map',
             accelerator: 'CmdOrCtrl + L',
             click: () => {
-                this.mapEditor.modal(this.mapManager._configuration, (c) => {
-                    this.updateMap(c);
-                });
+              this.mapPane.show();
+              this.devPane.hide();
+              this.mapPane.toggleBottom();
             }
         }));
         mapMenu.append(new MenuItem({
@@ -380,21 +380,11 @@ class mapPage extends GuiExtension {
         mapMenu.append(new MenuItem({
             label: 'Show map',
             type: 'normal',
-            accelerator: 'CmdOrCtrl + Shift +M',
+            accelerator: 'CmdOrCtrl + Shift + M',
             click: () => {
                 this.show();
                 this.mapPane.show();
                 this.devPane.hide();
-            }
-        }));
-        mapMenu.append(new MenuItem({
-            label: 'Toggle config',
-            type: 'normal',
-            accelerator: 'CmdOrCtrl + M',
-            click: () => {
-                this.mapPane.show();
-                this.devPane.hide();
-                this.mapPane.toggleBottom();
             }
         }));
         this.menu = new MenuItem({
@@ -583,9 +573,9 @@ class mapPage extends GuiExtension {
             label: 'Edit map',
             type: 'normal',
             click: () => {
-                this.mapEditor.modal(this.maps[configuration.id], (c) => {
-                    this.updateMap(c);
-                });
+              this.mapPane.show();
+              this.devPane.hide();
+              this.mapPane.toggleBottom();
             }
         }));
         edit.append(new MenuItem({

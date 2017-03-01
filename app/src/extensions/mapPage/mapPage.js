@@ -187,12 +187,15 @@ class mapPage extends GuiExtension {
         map.setView([-100, 100], 0);
         this.mapManager = L.mapManager(map);
         this.mapEditor = new MapEditor(this.mapManager);
-        this.mapEditor.on('change', () => {
+        this.mapEditor.on('soft_change', () => {
             this.updateMap();
         });
-        this.mapEditor.on('hard_change', () => {
+        this.mapEditor.on('change', () => {
             this.updateMap();
             this.mapManager.reload(true);
+        });
+        this.mapEditor.on('hard_change', () => {
+            this.updateMap(true);
         });
         this.regionAnalyzer = new RegionAnalyzer(this.mapManager, gui);
         this.listenMapManager();
@@ -1009,6 +1012,7 @@ class mapPage extends GuiExtension {
         let key = conf.name || conf.alias || conf.id || conf.type;
         this.mapManager._configuration.layers[key] = conf;
         this.mapManager.addLayer(conf);
+        this.updateMap(true);
     }
 
 

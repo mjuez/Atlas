@@ -38,8 +38,6 @@ function getLayersName(conf) {
     });
 }
 
-
-
 class MapEditor extends EventEmitter {
     constructor(manager) {
         super();
@@ -83,36 +81,32 @@ class MapEditor extends EventEmitter {
     }
 
     layerRemoveButton(layer, parent) {
+        if (!layer) return;
         let layers = this.manager._configuration.layers;
         let a = new ButtonsContainer(document.createElement('DIV'));
-        let text = 'Remove layer';
-        if (layer) {
-            if (Object.keys(layers).indexOf(layer.name) < 0) {
-                text = 'Layer removed';
-            }
-        }
         a.addButton({
             id: 'removelayerbutton',
-            text: text,
-            className: 'btn-positive',
-            toggle: true,
+            text: 'Remove layer',
+            className: 'btn-warning',
+            toggle: false,
             groupId: 'xxxx',
-            action: {
-                active: (btn) => {
-                    delete layers[layer.name]; //delete the layer
-                    btn.innerHTML = 'Layer removed';
-                },
-                deactive: (btn) => {
-                    layers[layer.name] = layer; //re-add the layer the only problem is that it changes the order of the layers...it's ok
-                    btn.innerHTML = 'Remove layer'
-                }
+            action: (btn) => {
+                dialog.showMessageBox({
+                 type: 'warning',
+                 buttons: ['Cancel', 'Delete'],
+                 defaultId: 1,
+                 title: 'Delete layer',
+                 message: `Remove layer ${layer.name} from the current map ?`,
+                 detail: 'WARNING: this action can not be undone',
+                 noLink: true
+               }, (id) =>{
+                 if (id>0){
+                   delete layers[layer.name]; //delete the layer
+                   this.emit('hard_change');
+                 }
+               });
             }
         });
-        if (layer) {
-            if (Object.keys(layers).indexOf(layer.name) < 0) {
-                a.buttons['removelayerbutton'].className = 'btn-positive active';
-            }
-        }
         parent.appendChild(a.element);
     }
 
@@ -126,8 +120,7 @@ class MapEditor extends EventEmitter {
             placeholder: 'layer name',
             onblur: (inp) => {
                 layer.name = inp.value;
-                this.emit('hard_change');
-
+                this.emit('change');
             }
         });
         Input.input({
@@ -138,7 +131,7 @@ class MapEditor extends EventEmitter {
             placeholder: 'layer authors',
             oninput: (inp) => {
                 layer.authors = inp.value;
-                this.emit('change');
+                this.emit('soft_change');
             }
         });
         switch (layer.type) {
@@ -152,7 +145,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'tiles url template',
                     onblur: (inp) => {
                         layer.tilesUrlTemplate = inp.value;
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.input({
@@ -164,7 +157,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'MaxZoom',
                     onblur: (inp) => {
                         layer.maxZoom = Number(inp.value);
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.input({
@@ -176,7 +169,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'minZoom',
                     onblur: (inp) => {
                         layer.minZoom = Number(inp.value);
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.input({
@@ -188,7 +181,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'cal size',
                     oninput: (inp) => {
                         layer.sizeCal = Number(inp.value);
-                        this.emit('change');
+                        this.emit('soft_change');
                     }
                 });
                 Input.input({
@@ -200,7 +193,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'cal size',
                     oninput: (inp) => {
                         layer.depthCal = Number(inp.value);
-                        this.emit('change');
+                        this.emit('soft_change');
                     }
                 });
                 Input.input({
@@ -211,7 +204,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'cal unit',
                     oninput: (inp) => {
                         layer.unitCal = inp.value;
-                        this.emit('change');
+                        this.emit('soft_change');
                     }
                 });
                 Input.input({
@@ -227,7 +220,7 @@ class MapEditor extends EventEmitter {
                     oninput: (inp) => {
                         layer.opacity = Number(inp.value);
                         this.manager.getLayers('tilesLayer')[layer.typeid].setOpacity(layer.opacity);
-                        this.emit('change');
+                        this.emit('soft_change');
                     }
                 });
                 Input.input({
@@ -238,7 +231,7 @@ class MapEditor extends EventEmitter {
                     checked: layer.baseLayer,
                     onchange: (inp) => {
                         layer.baseLayer = Boolean(inp.checked);
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 break;
@@ -252,7 +245,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'points url template',
                     onblur: (inp) => {
                         layer.pointsUrlTemplate = inp.value;
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.input({
@@ -264,7 +257,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'size',
                     onblur: (inp) => {
                         layer.size = Number(inp.value);
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.input({
@@ -276,7 +269,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'size',
                     onblur: (inp) => {
                         layer.tileSize = Number(inp.value);
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.input({
@@ -287,7 +280,7 @@ class MapEditor extends EventEmitter {
                     checked: layer.easyToDraw,
                     onchange: (inp) => {
                         layer.easyToDraw = Boolean(inp.checked);
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.input({
@@ -298,7 +291,7 @@ class MapEditor extends EventEmitter {
                     checked: layer.excludeCF,
                     onchange: (inp) => {
                         layer.excludeCF = Boolean(inp.checked);
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.input({
@@ -309,7 +302,7 @@ class MapEditor extends EventEmitter {
                     value: layer.color,
                     onblur: (inp) => {
                         layer.color = inp.value;
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.input({
@@ -320,7 +313,7 @@ class MapEditor extends EventEmitter {
                     value: layer.radius || 4,
                     onblur: (inp) => {
                         layer.radius = inp.value;
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
 
@@ -335,7 +328,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'pixels url template',
                     onblur: (inp) => {
                         layer.pixelsUrlTemplate = inp.value;
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.selectInput({
@@ -346,7 +339,7 @@ class MapEditor extends EventEmitter {
                     value: layer.role,
                     oninput: (inp) => {
                         layer.role = inp.value;
-                        this.emit('change');
+                        this.emit('soft_change');
                     }
                 });
                 Input.input({
@@ -358,7 +351,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'normalization',
                     oninput: (inp) => {
                         layer.norm = Number(inp.value);
-                        this.emit('change');
+                        this.emit('soft_change');
                     }
                 });
                 Input.input({
@@ -370,7 +363,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'size',
                     oninput: (inp) => {
                         layer.size = Number(inp.value);
-                        this.emit('change');
+                        this.emit('soft_change');
                     }
                 });
                 Input.input({
@@ -382,7 +375,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'size',
                     oninput: (inp) => {
                         layer.tileSize = Number(inp.value);
-                        this.emit('change');
+                        this.emit('soft_change');
                     }
                 });
                 break;
@@ -396,7 +389,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'image url',
                     oninput: (inp) => {
                         layer.imageUrl = inp.value;
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.input({
@@ -408,7 +401,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'original size',
                     oninput: (inp) => {
                         inp.value = layer.original_size;
-                        this.emit('change');
+                        this.emit('soft_change');
                     }
                 });
                 Input.input({
@@ -424,7 +417,7 @@ class MapEditor extends EventEmitter {
                     oninput: (inp) => {
                         layer.opacity = Number(inp.value);
                         this.manager.getLayers('imageLayer')[layer.typeid].setOpacity(layer.opacity);
-                        this.emit('change');
+                        this.emit('soft_change');
                     }
                 });
 
@@ -439,7 +432,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'size',
                     onblur: (inp) => {
                         layer.size = Number(inp.value);
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.input({
@@ -451,7 +444,7 @@ class MapEditor extends EventEmitter {
                     placeholder: 'tile size',
                     onblur: (inp) => {
                         layer.tileSize = Number(inp.value);
-                        this.emit('hard_change');
+                        this.emit('change');
                     }
                 });
                 Input.input({
@@ -463,10 +456,10 @@ class MapEditor extends EventEmitter {
                     oninput: (inp) => {
                         layer.color = inp.value;
                         this.manager.getLayers('guideLayer')[layer.typeid].setStyle({
-                          color: layer.color,
-                          fillColor: layer.color
+                            color: layer.color,
+                            fillColor: layer.color
                         });
-                        this.emit('change');
+                        this.emit('soft_change');
                     }
                 });
                 break;
@@ -494,7 +487,7 @@ class MapEditor extends EventEmitter {
             placeholder: 'map name',
             onblur: (inp) => {
                 conf.name = inp.value;
-                this.emit('change');
+                this.emit('soft_change');
             }
         });
 
@@ -506,7 +499,7 @@ class MapEditor extends EventEmitter {
             placeholder: 'authors',
             onblur: (inp) => {
                 conf.authors = inp.value;
-                this.emit('change');
+                this.emit('soft_change');
             }
         });
 
@@ -519,7 +512,7 @@ class MapEditor extends EventEmitter {
             placeholder: 'creation date',
             onblur: (inp) => {
                 conf.date = inp.value;
-                this.emit('change');
+                this.emit('soft_change');
             }
         });
 

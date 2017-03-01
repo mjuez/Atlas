@@ -382,78 +382,78 @@ class imagej extends GuiExtension {
                 }
 
             }
-       );
-}
+        );
+    }
 
-configImageJ() {
-    let conf = Util.clone({
-        memory: this.memory,
-        stackMemory: this.stackMemory
-    });
-    let modal = new Modal({
-        title: `Configure ImageJ`,
-        width: '600px',
-        height: 'auto'
-    });
-    let body = document.createElement('DIV');
-    body.className = 'flex-container';
-    let div = document.createElement('DIV');
-    body.appendChild(div);
-    Input.input({
-        parent: div,
-        label: 'Memory (MB)',
-        className: 'simple form-control',
-        value: this.memory,
-        type: 'number',
-        min: 100,
-        max: this.maxMemory,
-        step: 1,
-        placeholder: 'memory',
-        onblur: (inp) => {
-            conf.memory = parseInt(Math.min(inp.value, this.maxMemory));
-            inp.value = conf.memory;
-        }
-    });
-    Input.input({
-        parent: div,
-        label: 'Stack memory (MB)',
-        className: 'simple form-control',
-        value: this.stackMemory,
-        type: 'number',
-        min: 10,
-        max: this.maxStackMemory,
-        step: 1,
-        placeholder: 'memory',
-        onblur: (inp) => {
-            conf.stackMemory = parseInt(Math.min(inp.value, this.maxStackMemory));
-            inp.value = conf.stackMemory;
-        }
-    });
-    let Bc = new ButtonsContainer(document.createElement('DIV'));
-    Bc.addButton({
-        id: 'closeeimagejconfig',
-        text: 'Cancel',
-        action: () => {
-            modal.destroy();
-        },
-        className: 'btn-default'
-    });
-    Bc.addButton({
-        id: 'saveeeiamgejconfig',
-        text: 'Save',
-        action: () => {
-            this.memory = conf.memory;
-            this.stackMemory = conf.stackMemory;
-            modal.destroy();
-        },
-        className: 'btn-default'
-    });
-    let footer = document.createElement('DIV');
-    footer.appendChild(Bc.element);
-    modal.addBody(body);
-    modal.addFooter(footer);
-    modal.show();
-}
+    configImageJ() {
+        let conf = Util.clone({
+            memory: this.memory,
+            stackMemory: this.stackMemory
+        });
+        let modal = new Modal({
+            title: `Configure ImageJ`,
+            width: '600px',
+            height: 'auto'
+        });
+        let body = document.createElement('DIV');
+        body.className = 'flex-container';
+        let div = document.createElement('DIV');
+        body.appendChild(div);
+        Input.input({
+            parent: div,
+            label: 'Memory (MB)',
+            className: 'simple form-control',
+            value: this.memory,
+            type: 'number',
+            min: 100,
+            max: this.maxMemory,
+            step: 1,
+            placeholder: 'memory',
+            onblur: (inp) => {
+                conf.memory = parseInt(Math.min(inp.value, this.maxMemory));
+                inp.value = conf.memory;
+            }
+        });
+        Input.input({
+            parent: div,
+            label: 'Stack memory (MB)',
+            className: 'simple form-control',
+            value: this.stackMemory,
+            type: 'number',
+            min: 10,
+            max: this.maxStackMemory,
+            step: 1,
+            placeholder: 'memory',
+            onblur: (inp) => {
+                conf.stackMemory = parseInt(Math.min(inp.value, this.maxStackMemory));
+                inp.value = conf.stackMemory;
+            }
+        });
+        let Bc = new ButtonsContainer(document.createElement('DIV'));
+        Bc.addButton({
+            id: 'closeeimagejconfig',
+            text: 'Cancel',
+            action: () => {
+                modal.destroy();
+            },
+            className: 'btn-default'
+        });
+        Bc.addButton({
+            id: 'saveeeiamgejconfig',
+            text: 'Save',
+            action: () => {
+                this.memory = conf.memory;
+                this.stackMemory = conf.stackMemory;
+                modal.destroy();
+            },
+            className: 'btn-default'
+        });
+        let footer = document.createElement('DIV');
+        footer.appendChild(Bc.element);
+        modal.addBody(body);
+        modal.addFooter(footer);
+        modal.show();
+    }
 
 }
 

@@ -128,7 +128,7 @@ class mapPage extends GuiExtension {
         this.mapPane.top.ondragover = (ev) => {
             ev.dataTransfer.dropEffect = "none";
             for (let f of ev.dataTransfer.files) {
-                let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)|(png)))$/i;
+                let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)|(png)|(tif)|(tiff)))$/i;
                 if (regx.test(f.name)) {
                     ev.dataTransfer.dropEffect = "link";
                     ev.preventDefault();
@@ -138,7 +138,7 @@ class mapPage extends GuiExtension {
         this.mapPane.top.ondrop = (ev) => {
             ev.preventDefault();
             for (let f of ev.dataTransfer.files) {
-                let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)|(png)))$/i;
+                let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)|(png)|(tif)|(tiff)))$/i;
                 if (regx.test(f.name)) {
                     this.addLayerFile(f.path);
                 }
@@ -188,10 +188,10 @@ class mapPage extends GuiExtension {
         this.mapManager = L.mapManager(map);
         this.mapEditor = new MapEditor(this.mapManager);
         this.mapEditor.on('change', () => {
-            this.updateMap(this.mapManager._configuration,true);
+            this.updateMap();
         });
         this.mapEditor.on('hard_change', () => {
-            this.updateMap(this.mapManager._configuration,true);
+            this.updateMap();
             this.mapManager.reload(true);
         });
         this.regionAnalyzer = new RegionAnalyzer(this.mapManager, gui);
@@ -492,7 +492,7 @@ class mapPage extends GuiExtension {
         if (configuration.new) {
             this.addNewMap(configuration);
         } else {
-            this.updateMap(configuration);
+            this.updateMap();
         }
     }
 
@@ -806,7 +806,8 @@ class mapPage extends GuiExtension {
     }
 
 
-    updateMap(configuration, noswitch) {
+    updateMap(hard) {
+        let configuration = this.mapManager._configuration;
         if (typeof configuration.id === 'undefined') return;
         try {
             configuration = MapIO.buildConfiguration(configuration);
@@ -819,7 +820,7 @@ class mapPage extends GuiExtension {
         this.sidebar.list.setKey(configuration.id, configuration.authors);
         this.sidebar.list.setTitle(configuration.id, configuration.name);
         this.maps[configuration.id] = configuration;
-        if (!noswitch) {
+        if (hard) {
             this.switchMap(configuration, true);
             this.mapPane.show();
             this.devPane.hide();
@@ -992,8 +993,8 @@ class mapPage extends GuiExtension {
                     maxNativeZoom: 0,
                     maxZoom: 8
                 });
-                gui.notify(`"${conf.name} added`);
-                Util.notifyOS(`"${conf.name} added"`);
+                gui.notify(`${path} added`);
+                Util.notifyOS(`"${path} added"`);
             }
             gui.notify(`${path} started conversion`);
             converter.convertArray([path], MapIO.basePath(null, path));

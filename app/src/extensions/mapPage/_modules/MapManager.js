@@ -31,6 +31,7 @@ const pointsLayer = require(`./pointsLayer`);
 
 
 if (L != undefined) {
+
     L.MapManager = L.Evented.extend({
 
         _map: null,

@@ -60,7 +60,7 @@ class imagej extends GuiExtension {
         this.maxStackMemory = 515;
         this.memory = this.maxMemory;
         this.stackMemory = this.maxStackMemory;
-        this.image = `${__dirname}${path.sep}_images${path.sep}imagej-logo.gif`;
+        this.image = path.join(__dirname,"_images","imagej-logo.gif");
         let platform = os.platform().replace('32', '');
         let arch = os.arch().replace('x', '');
         this.imagejcmnd = `./ImageJ-${platform}${arch}`;

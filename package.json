@@ -8,7 +8,7 @@
     "start": "electron ./app --enable-logging",
     "dev": "NODE_ENV='development' npm run start",
     "dist": "build  -lw --x64 --ia32 "
-    },
+  },
   "build": {
     "appId": "atlas.gherardovarando",
     "extraResources": [
@@ -23,20 +23,20 @@
     "mac": {
       "category": "your.app.category.type"
     },
-    "appx":{
+    "appx": {
       "backgroundColor": "#c8c9ce",
       "displayName": "Atlas",
       "publisherDisplayName": "Computational Intelligence Group",
       "identityName": "Atlas_CIG"
     },
-    "deb":{
-    "synopsis": "An extendible and flexible application for maps analysis and visualization based on electron and nodejs and using leafelt library"
+    "deb": {
+      "synopsis": "An extendible and flexible application for maps analysis and visualization based on electron and nodejs and using leafelt library"
     },
     "squirrelWindows": {
       "iconUrl": "https://github.com/ComputationalIntelligenceGroup/Atlas/raw/master/build/icon.ico",
       "msi": true
     },
-    "linux":{
+    "linux": {
       "category": "Science"
     },
     "win": {
@@ -45,6 +45,7 @@
     }
   },
   "dependencies": {
-    "dateformat": "^2.0.0"
+    "dateformat": "^2.0.0",
+    "gm": "^1.23.0"
   }
 }

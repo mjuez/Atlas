@@ -20,6 +20,7 @@
 
 "use strict";
 
+const sizeOf = require('image-size');
 const SplitPane = require('SplitPane');
 const RegionAnalyzer = require('./_modules/RegionAnalyzer.js');
 const Modal = require('Modal');
@@ -151,8 +152,6 @@ class mapPage extends GuiExtension {
         mapContainer.id = 'map';
 
         let editContainer = this.mapPane.bottom;
-
-        globalShortcut.unregisterAll();
         globalShortcut.register('CmdOrCtrl+Up', () => {
             this.mapManager.tUP();
         });
@@ -161,7 +160,7 @@ class mapPage extends GuiExtension {
             this.mapManager.tDOWN();
         });
 
-        globalShortcut.register('CmdOrCtrl + C', () => {
+        globalShortcut.register('F1', () => {
             this.mapManager.center();
         });
 
@@ -559,7 +558,6 @@ class mapPage extends GuiExtension {
 
 
         let ctn = new Menu();
-        let edit = new Menu();
         ctn.append(new MenuItem({
             label: 'Export map',
             type: 'normal',
@@ -571,7 +569,7 @@ class mapPage extends GuiExtension {
                 });
             }
         }));
-        edit.append(new MenuItem({
+        ctn.append(new MenuItem({
             label: 'Edit map',
             type: 'normal',
             click: () => {
@@ -580,7 +578,7 @@ class mapPage extends GuiExtension {
               this.mapPane.toggleBottom();
             }
         }));
-        edit.append(new MenuItem({
+        ctn.append(new MenuItem({
             label: 'Delete',
             type: 'normal',
             click: () => {
@@ -601,11 +599,6 @@ class mapPage extends GuiExtension {
                 });
 
             }
-        }));
-        ctn.append(new MenuItem({
-            label: 'Edit',
-            type: 'submenu',
-            submenu: edit
         }));
         ctn.append(new MenuItem({
             label: 'Dev view',
@@ -935,7 +928,6 @@ class mapPage extends GuiExtension {
             this.mapManager._configuration.layers[key] = MapIO.parseLayerConfig(conf);
             this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
         } else if (path.endsWith('.jpg') || path.endsWith('.JPG') || path.endsWith('.png') || path.endsWith('.gif')) {
-            const sizeOf = require('image-size');
             var dim = sizeOf(path);
             let siz = Math.max(dim.height, dim.width);
             this.addLayer({
@@ -979,7 +971,6 @@ class mapPage extends GuiExtension {
             });
 
             converter.progress = (converted, total) => {
-                const sizeOf = require('image-size');
                 var dim = sizeOf(`${converted[0].target}\/slice1.png`);
                 let siz = Math.max(dim.height, dim.width);
                 this.addLayer({

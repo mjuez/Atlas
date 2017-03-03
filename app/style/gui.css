@@ -354,6 +354,7 @@ img.imageicon {
     min-height: 100%;
     box-sizing: border-box;
     vertical-align: top;
+    overflow: hidden;
 }
 
 .tasks-pane .left-container {
@@ -382,7 +383,6 @@ img.imageicon {
 .task-container .main-info-container {
     padding: 10px 0;
     display: table;
-    width: 100%;
 }
 
 .task-container .main-info-container .status-icon-container, .task-container .main-info-container .middle-container, .task-container .main-info-container .cancel-container {

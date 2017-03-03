@@ -524,13 +524,13 @@ class MapEditor extends EventEmitter {
             oninput: (inp) => {
                 Util.empty(right, right.firstChild);
                 let layer = conf.layers[Object.keys(conf.layers)[inp.selectedIndex]];
-                this.layerEditors(layer, right);
                 this.layerRemoveButton(layer, right);
+                this.layerEditors(layer, right);
             }
         });
 
-        this.layerEditors(conf.layers[Object.keys(conf.layers)[0]], right);
         this.layerRemoveButton(conf.layers[Object.keys(conf.layers)[0]], right);
+        this.layerEditors(conf.layers[Object.keys(conf.layers)[0]], right);
 
         editor.addElement(left, 0, 0);
         editor.addElement(right, 0, 1);

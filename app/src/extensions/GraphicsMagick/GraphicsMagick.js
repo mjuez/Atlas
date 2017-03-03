@@ -20,6 +20,7 @@
 
 "use strict";
 
+const SplitPane = require('SplitPane');
 const nativeImage = require('electron').nativeImage;
 const Util = require('Util');
 const TaskManager = require('TaskManager');
@@ -117,11 +118,11 @@ class GraphicsMagick extends GuiExtension {
 
     activate() {
         super.activate();
-        this.pane = new ToggleElement(Util.div('', 'pane padded'));
+        this.pane = new SplitPane(Util.div('', 'pane padded'));
         this.appendChild(this.pane);
         this.canvas = document.createElement('CANVAS');
-        this.canvas.width = 800;
-        this.canvas.height = 800;
+        this.canvas.width = 1000;
+        this.canvas.height = 1000;
         this.cs = {
             size: 800,
             scale: 1,
@@ -132,15 +133,16 @@ class GraphicsMagick extends GuiExtension {
             ev.preventDefault();
             let ct = this.canvas.getContext('2d');
             let scale = Math.pow(2, -ev.deltaY / 100);
-            ct.clearRect(0, 0, 800, 800);
-            let x = this.cs.scale * ev.offsetX + this.cs.dx;
-            let y = this.cs.scale * ev.offsetY + this.cs.dy;
-            let dx = (1 - scale) * x;
-            let dy = (1 - scale) * y;
-            this.cs.dx = scale*this.cs.dx + dx;
-            this.cs.dy = scale*this.cs.dy + dy;
+            ct.clearRect(0, 0, 800 * this.cs.scale, 800 * this.cs.scale);
+            // let x = this.cs.scale * ev.offsetX + this.cs.dx;
+            // let y = this.cs.scale * ev.offsetY + this.cs.dy;
+            // let dx = (1 - scale) * x;
+            // let dy = (1 - scale) * y;
+            // this.cs.dx = scale * this.cs.dx + dx;
+            // this.cs.dy = scale * this.cs.dy + dy;
             this.cs.scale = this.cs.scale * scale;
-            ct.translate(dx, dy);
+            // ct.translate(dx, dy);
+
             ct.scale(scale, scale);
             ct.drawImage(this.display, 0, 0);
         });
@@ -157,7 +159,7 @@ class GraphicsMagick extends GuiExtension {
             cnt.clearRect(0, 0, 800, 800);
             cnt.drawImage(this.display, 10, 10);
         };
-        this.pane.appendChild(this.canvas);
+        this.pane.top.appendChild(this.canvas);
         this.addMenu()
     }
 
@@ -169,18 +171,18 @@ class GraphicsMagick extends GuiExtension {
 
     addMenu() {
         let menu = new Menu();
-        // menu.append(new MenuItem({
-        //     label: "Show",
-        //     click: () => {
-        //         this.show();
-        //     }
-        // }));
-        // menu.append(new MenuItem({
-        //     label: "Open image",
-        //     click: () => {
-        //         this.open();
-        //     }
-        // }));
+        menu.append(new MenuItem({
+            label: "Show",
+            click: () => {
+                this.show();
+            }
+        }));
+        menu.append(new MenuItem({
+            label: "Open image",
+            click: () => {
+                this.open();
+            }
+        }));
         menu.append(new MenuItem({
             label: "Display image",
             click: () => {
@@ -327,10 +329,21 @@ class GraphicsMagick extends GuiExtension {
             properties: ['openFile']
         }, (filenames) => {
             if (filenames) {
-                var bf = gm(filenames[0]).toBuffer('PNG', (err, buffer) => {
+                gm(filenames[0]).toBuffer('PNG', (err, buffer) => {
+                    this.buffer = buffer
                     let img = nativeImage.createFromBuffer(buffer);
                     this.display.src = img.toDataURL();
                     this.show();
+                });
+                gm(filenames[0]).identify((err, value) => {
+                    let file = filenames[0];
+                    if (err) {
+                        this.pane.bottom.innerHTML = `${path.basename(file)} gm error`;
+                    } else {
+                        this.pane.bottom.innerHTML = `${path.basename(file)}`;
+                        let tree = new TreeList(this.pane.bottom, value, 'Info');
+                        this.pane.showBottom();
+                    }
                 });
             }
         });

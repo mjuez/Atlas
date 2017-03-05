@@ -81,7 +81,9 @@ class MapIO {
                 extensions: ['mapconfig', 'json']
             }]
         }, (filename) => {
-            MapIO.loadMap(filename[0], cl);
+            if (filename) {
+                MapIO.loadMap(filename[0], cl);
+            }
         });
     }
 

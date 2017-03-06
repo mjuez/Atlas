@@ -342,6 +342,7 @@ class mapPage extends GuiExtension {
             click: () => {
               this.mapPane.show();
               this.devPane.hide();
+              this.fillEditor();
               this.mapPane.toggleBottom();
               this.show();
             }
@@ -807,7 +808,7 @@ class mapPage extends GuiExtension {
         if (typeof configuration.id === 'undefined') return;
         try {
             configuration = MapIO.buildConfiguration(configuration);
-            this.initRegionActions(configuration);
+            this.initRegionActions(configuration,true);
         } catch (e) {
             // otherwise means that the mapManager is unable to load the map
             console.log(e);

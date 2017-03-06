@@ -434,7 +434,7 @@ img.imageicon {
 
 .task-container .additional-info-container {
     width: 100%;
-    overflow: hidden;
+    overflow: auto;
     max-height: 0;
     transition: max-height 0.15s ease-out;
 }
@@ -466,7 +466,7 @@ img.imageicon {
     min-height: 70%;
     width: 100%;
     z-index: 0;
-    transition: height 0.4s;
+    transition: height 0.8s;
     background-color: #F6F6F5;
     overflow: hidden;
 }
@@ -476,7 +476,7 @@ img.imageicon {
     min-height: 0%;
     width: 100%;
     z-index: 0;
-    transition: height 0.4s;
+    transition: height 0.8s;
     background-color: #F6F6F5;
     overflow: auto;
     border-color: #b7b7b7;

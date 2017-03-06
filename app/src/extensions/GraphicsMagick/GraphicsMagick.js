@@ -171,12 +171,12 @@ class GraphicsMagick extends GuiExtension {
 
     addMenu() {
         let menu = new Menu();
-        menu.append(new MenuItem({
-            label: "Show",
-            click: () => {
-                this.show();
-            }
-        }));
+        // menu.append(new MenuItem({
+        //     label: "Show",
+        //     click: () => {
+        //         this.show();
+        //     }
+        // }));
         menu.append(new MenuItem({
             label: "Open image",
             click: () => {
@@ -253,8 +253,8 @@ class GraphicsMagick extends GuiExtension {
                                     modal.destroy();
                                     let task = new Task('GM converter', `input: ${path.basename(file)} output: ${path.basename(filename)}`);
                                     TaskManager.addTask(task);
-                                    TaskManager.tasks[task.id].domElement.additionalInfoGrid.addElement(Util.div(`Input path: ${file}`), 0, 3);
-                                    TaskManager.tasks[task.id].domElement.additionalInfoGrid.addElement(Util.div(`Output path: ${filename}`), 1, 3);
+                                    TaskManager.tasks[task.id].domElement.additionalInfoGrid.addElement(Util.div(`<strong>Input path:</strong> ${file}`), 0, 3);
+                                    TaskManager.tasks[task.id].domElement.additionalInfoGrid.addElement(Util.div(`<strong>Output path:</strong> ${filename}`), 1, 3);
                                     task.run();
                                     gm(file).write(filename, (err) => {
                                         if (err) {

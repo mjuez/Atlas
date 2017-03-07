@@ -88,14 +88,12 @@ class imagej extends GuiExtension {
         this.pane.element.className = 'pane';
         this.pane.show();
         this.element.appendChild(this.pane.element);
-        super.activate();
         this.createMenu();
-
-
+        super.activate();
     }
 
     deactivate() {
-        //  this.removeToggleButton('imageJToggleButton');
+        //this.removeToggleButton('imageJToggleButton');
         gui.removeSubmenu(this.menu);
         this.element.removeChild(this.pane.element);
     }

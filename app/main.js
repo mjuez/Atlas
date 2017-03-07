@@ -16,12 +16,16 @@ const {
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
+let minHeight = 60;
+if (process.platform === 'win32'){
+  minHeight = 80;
+}
 
 
 
 function createWindow() {
 
-     let frame=true;
+     let frame=false;
 
      if (process.platform === "linux" | process.platform === "darwin"){
        frame = true;
@@ -29,7 +33,7 @@ function createWindow() {
     // Create the browser window.
     win = new BrowserWindow({
         width: 900,
-        height: 600,
+        height: minHeight,
         frame: frame,
         titleBarStyle:'hidden',
         icon: 'icon.png'

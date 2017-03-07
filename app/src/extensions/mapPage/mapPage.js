@@ -214,7 +214,6 @@ class mapPage extends GuiExtension {
                 let maps = gui.workspace.spaces.mapPage || {};
                 let tot = Object.keys(maps).length;
                 Object.keys(maps).map((id, i) => {
-                    gui.footer.progressBar.setBar(100 * (i + 1) / tot);
                     this.addNewMap(MapIO.buildConfiguration(maps[id]));
                 });
                 gui.workspace.addSpace(this, this.maps, true); //overwriting

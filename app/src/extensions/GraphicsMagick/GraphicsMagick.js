@@ -117,6 +117,7 @@ class GraphicsMagick extends GuiExtension {
 
 
     activate() {
+
         super.activate();
         this.pane = new SplitPane(Util.div('', 'pane padded'));
         this.appendChild(this.pane);
@@ -161,6 +162,14 @@ class GraphicsMagick extends GuiExtension {
         };
         this.pane.top.appendChild(this.canvas);
         this.addMenu()
+        gm(this.image).format((err, value) => {
+            if (err) {
+                gui.notify(`Error loading GraphicsMagick extension, probably you need to install graphicsMagick in your system`);
+                this.deactivate();
+            } else {
+                gui.notify('GraphicsMagick extensions up and running');
+            }
+        });
     }
 
     deactivate() {

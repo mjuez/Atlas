@@ -95,6 +95,7 @@ class tasksPage extends GuiExtension {
 
 
         taskManager.on("progress", (p)=>{
+          gui.setProgress(p);
           Util.setProgress(p);
           this.progressBar.setBar(p);
         });

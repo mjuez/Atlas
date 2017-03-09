@@ -437,16 +437,16 @@ class MapIO {
                     let l = conf.layers[key];
                     switch (l.type) { //remove the base path from the url of the layers
                         case "tilesLayer":
-                            l.tilesUrlTemplate = l.tilesUrlTemplate.replace(conf.basePath, "");
+                            l.tilesUrlTemplate = l.tilesUrlTemplate.replace(path, "");
                             break;
                         case "pointsLayer":
-                            l.pointsUrlTemplate = l.pointsUrlTemplate.replace(conf.basePath, "");
+                            l.pointsUrlTemplate = l.pointsUrlTemplate.replace(path, "");
                             break;
                         case "pixelsLayer":
-                            l.pixelsUrlTemplate = l.pixelsUrlTemplate.replace(conf.basePath, "");
+                            l.pixelsUrlTemplate = l.pixelsUrlTemplate.replace(path, "");
                             break;
                         case "imageLayer":
-                            l.imageUrl = l.imageUrl.replace(conf.basePath, "");
+                            l.imageUrl = l.imageUrl.replace(path, "");
                             break;
                         default:
                     }

@@ -83,7 +83,6 @@ class mapPage extends GuiExtension {
     }
 
     activate() {
-        super.activate();
         this.addToggleButton({
             id: 'mapPageToggleButton',
             buttonsContainer: gui.header.actionsContainer,
@@ -124,7 +123,7 @@ class mapPage extends GuiExtension {
 
         this.sidebar.show();
 
-        this.mapPane = new SplitPane(document.createElement('DIV'));
+        this.mapPane = new SplitPane(Util.div());
 
         this.mapPane.top.ondragover = (ev) => {
             ev.dataTransfer.dropEffect = "none";
@@ -164,10 +163,9 @@ class mapPage extends GuiExtension {
             this.mapManager.center();
         });
 
-        this.devPane = new ToggleElement(document.createElement('DIV'));
-        this.devPane.element.className = 'pane padded';
+        this.devPane = new ToggleElement(Util.div(null,'pane padded'));
         this.devPane.hide();
-        this.element.appendChild(this.devPane.element);
+        this.appendChild(this.devPane);
 
         this.sidebarRegions = new Sidebar(this.element);
         this.sidebarRegions.addList();
@@ -199,12 +197,7 @@ class mapPage extends GuiExtension {
         this.regionAnalyzer = new RegionAnalyzer(this.mapManager, gui);
         this.listenMapManager();
         this.makeMenu();
-        taskManager.on('progress', (prog)=>{
-          gui.setProgress(prog);
-        });
-
         gui.workspace.addSpace(this, this.maps, false); //without overwriting
-
         //saving to workspace and retriving loaded worspace
         if (gui.workspace instanceof Workspace) {
             gui.workspace.addSpace(this, this.maps);
@@ -221,7 +214,7 @@ class mapPage extends GuiExtension {
             });
         }
 
-        //check if there is a mapPage space in the curretn workspace and retrive it
+        //check if there is a mapPage space in the current workspace and retrive it, this is useful on deactivate/activate of mapPage
         if (gui.workspace.spaces.mapPage) {
             this.cleanMaps();
             let maps = gui.workspace.spaces.mapPage;
@@ -230,9 +223,9 @@ class mapPage extends GuiExtension {
             });
             gui.workspace.addSpace(this, this.maps, true); //overwriting
         }
+        super.activate();
 
     } //end activate
-
 
 
     makeMenu() {
@@ -347,6 +340,13 @@ class mapPage extends GuiExtension {
             }
         }));
         mapMenu.append(new MenuItem({
+            label: 'Reload map',
+            click: () => {
+              this.updateMap(true);
+              this.show();
+            }
+        }));
+        mapMenu.append(new MenuItem({
             label: '',
             type: 'separator'
         }));
@@ -401,7 +401,7 @@ class mapPage extends GuiExtension {
         this.sidebarRegions.remove();
         this.element.removeChild(this.mapPane.element);
         this.element.removeChild(this.devPane.element);
-        gui.removeSubmenu(this.menu);
+        gui.removeSubmenu(this.menu);  //compulsory
         this.removeToggleButton('mapPageToggleButton'); //this is compulsory to leave the interface clean
         super.deactivate(); //we will also call the super class deactivate method
     }
@@ -487,6 +487,18 @@ class mapPage extends GuiExtension {
             this.devPane.show();
             this.show();
         }
+    }
+
+
+    loadMap(path,cl){
+      MapIO.loadMap(path,(conf) => {
+          this.addNewMap(conf);
+          gui.notify(`map ${conf.name} added to workspace`);
+          this.show();
+          if (typeof cl === 'function'){
+            cl(conf);
+          }
+      });
     }
 
 

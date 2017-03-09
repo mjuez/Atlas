@@ -794,7 +794,7 @@ if (L != undefined) {
                 if (layerConfig.size ) {
                     scale = layerConfig.size / this.getSize();
                     let tileSize = layerConfig.tileSize || layerConfig.size;
-                    if (tileSize > 0) {
+                    if (tileSize > 0 && layerConfig.size < 100 * tileSize) {
                         for (let i = 0; i <= layerConfig.size; i = i + tileSize) {
                             for (let j = 0; j <= layerConfig.size; j = j + tileSize) {
                                 guideLayer.addLayer(L.circleMarker([-i / scale, j / scale], {

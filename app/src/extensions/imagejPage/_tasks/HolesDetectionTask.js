@@ -27,7 +27,6 @@ const Input = require('Input');
 const Grid = require('Grid');
 const FolderSelector = require('FolderSelector');
 const ButtonsContainer = require('ButtonsContainer');
-const MapIO = require('../extensions/mapPage/_modules/MapIO.js');
 const ChildProcess = require('child_process').ChildProcess;
 const {
     dialog

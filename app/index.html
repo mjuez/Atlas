@@ -43,7 +43,7 @@
 
 <body>
 
-    <div class="window">
+    <div class="window app">
         <header class="toolbar toolbar-header" id="header">
             <div class="toolbar-actions">
             </div>
@@ -69,11 +69,13 @@
         <footer class="toolbar toolbar-footer" id="footer">
 
         </footer>
+    </div>
 
 </body>
 
 
 <script>
+    let t = new Date();
     //prevent app closing
     document.addEventListener('dragover', function(event) {
         event.preventDefault();
@@ -84,24 +86,26 @@
         event.preventDefault();
         return false;
     }, false);
+
     let gui = require(`./src/node_modules/Gui`);
+    gui.startWaiting();
     gui.bindExtensionManager();
     gui.bindWorkspace();
     gui.menu();
-    gui.extensionsManager.loadExtension('./../extensions/helpPage/helpPage');
-    gui.extensionsManager.loadExtension('./../extensions/mapPage/mapPage');
-    gui.extensionsManager.loadExtension("./../extensions/imagejPage/imagejPage");
-    gui.extensionsManager.loadExtension("./../extensions/regionStatsPage/regionStatsPage");
-    gui.extensionsManager.loadExtension("./../extensions/tasksPage/tasksPage");
-    gui.extensionsManager.loadExtension("./../extensions/GraphicsMagick/GraphicsMagick");
-    gui.extensionsManager.extensions.helpPage.activate();
-    gui.extensionsManager.extensions.mapPage.activate();
-    gui.extensionsManager.extensions.imagej.activate();
-    gui.extensionsManager.extensions.regionStatsPage.activate();
-    gui.extensionsManager.extensions.tasksPage.activate();
-    gui.extensionsManager.extensions.GraphicsMagick.activate();
-    gui.extensionsManager.extensions.mapPage.show();
+    gui.extensionsManager.loadAllExtensions();
 
+    gui.extensionsManager.on('load:all', () => {
+        gui.extensionsManager.extensions.mapPage.activate();
+        gui.extensionsManager.extensions.regionStatsPage.activate();
+        gui.extensionsManager.extensions.tasksPage.activate();
+        gui.extensionsManager.extensions.helpPage.activate();
+        gui.extensionsManager.extensions.imagej.activate();
+        gui.stopWaiting();
+        gui.setProgress(0);
+        gui.extensionsManager.extensions.mapPage.show();
+        gui.viewTrick();
+        gui.notify(`App loaded in ${(new Date())-t} ms`);
+    })
 
 </script>
 

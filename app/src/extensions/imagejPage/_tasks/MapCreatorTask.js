@@ -27,7 +27,6 @@ const Input = require('Input');
 const Grid = require('Grid');
 const FolderSelector = require('FolderSelector');
 const ButtonsContainer = require('ButtonsContainer');
-const MapIO = require('../extensions/mapPage/_modules/MapIO.js');
 const ChildProcess = require('child_process').ChildProcess;
 const {
     dialog
@@ -105,11 +104,7 @@ class MapCreatorTask extends Task {
         if (this.isMap) {
             this.customAction["caption"] = "Load map to workspace";
             this.customAction["onclick"] = () => {
-                MapIO.loadMap(this.jsonFile, (conf) => {
-                    gui.extensionsManager.extensions.mapPage.addNewMap(conf);
-                    gui.notify(`map ${conf.name} added to workspace`);
-                    gui.extensionsManager.extensions.mapPage.show();
-                });
+              gui.extensionsManager.extensions.mapPage.loadMap(this.jsonFile);
             };
         } else {
             this.customAction["caption"] = "Add layer to a map in workspace";

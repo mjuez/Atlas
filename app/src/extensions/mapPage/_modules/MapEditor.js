@@ -92,19 +92,19 @@ class MapEditor extends EventEmitter {
             groupId: 'xxxx',
             action: (btn) => {
                 dialog.showMessageBox({
-                 type: 'warning',
-                 buttons: ['Cancel', 'Delete'],
-                 defaultId: 1,
-                 title: 'Delete layer',
-                 message: `Remove layer ${layer.name} from the current map ?`,
-                 detail: 'WARNING: this action can not be undone',
-                 noLink: true
-               }, (id) =>{
-                 if (id>0){
-                   delete layers[layer.name]; //delete the layer
-                   this.emit('hard_change');
-                 }
-               });
+                    type: 'warning',
+                    buttons: ['Cancel', 'Delete'],
+                    defaultId: 1,
+                    title: 'Delete layer',
+                    message: `Remove layer ${layer.name} from the current map ?`,
+                    detail: 'WARNING: this action can not be undone',
+                    noLink: true
+                }, (id) => {
+                    if (id > 0) {
+                        delete layers[layer.name]; //delete the layer
+                        this.emit('hard_change');
+                    }
+                });
             }
         });
         parent.appendChild(a.element);
@@ -476,8 +476,8 @@ class MapEditor extends EventEmitter {
     editor(parent) {
         let conf = this.manager._configuration;
         let editor = new Grid(1, 2);
-        let left = document.createElement('DIV');
-        let right = document.createElement('DIV');
+        let left = Util.div('<strong>Map</strong>','box');
+        let right = Util.div('<strong>Layer</strong>','box');
 
         Input.input({
             parent: left,
@@ -523,15 +523,17 @@ class MapEditor extends EventEmitter {
             className: 'simple form-control',
             oninput: (inp) => {
                 Util.empty(right, right.firstChild);
+                right.appendChild(Util.div('<strong>Layer</strong>'));
                 let layer = conf.layers[Object.keys(conf.layers)[inp.selectedIndex]];
                 this.layerRemoveButton(layer, right);
                 this.layerEditors(layer, right);
             }
         });
 
-        this.layerRemoveButton(conf.layers[Object.keys(conf.layers)[0]], right);
-        this.layerEditors(conf.layers[Object.keys(conf.layers)[0]], right);
-
+        if (Object.keys(conf.layers).length > 0) {
+            this.layerRemoveButton(conf.layers[Object.keys(conf.layers)[0]], right);
+            this.layerEditors(conf.layers[Object.keys(conf.layers)[0]], right);
+        }
         editor.addElement(left, 0, 0);
         editor.addElement(right, 0, 1);
 

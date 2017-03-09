@@ -130,23 +130,23 @@ class GraphicsMagick extends GuiExtension {
             dx: 0,
             dy: 0
         };
-        this.canvas.addEventListener('wheel', (ev) => {
-            ev.preventDefault();
-            let ct = this.canvas.getContext('2d');
-            let scale = Math.pow(2, -ev.deltaY / 100);
-            ct.clearRect(0, 0, 800 * this.cs.scale, 800 * this.cs.scale);
-            // let x = this.cs.scale * ev.offsetX + this.cs.dx;
-            // let y = this.cs.scale * ev.offsetY + this.cs.dy;
-            // let dx = (1 - scale) * x;
-            // let dy = (1 - scale) * y;
-            // this.cs.dx = scale * this.cs.dx + dx;
-            // this.cs.dy = scale * this.cs.dy + dy;
-            this.cs.scale = this.cs.scale * scale;
-            // ct.translate(dx, dy);
-
-            ct.scale(scale, scale);
-            ct.drawImage(this.display, 0, 0);
-        });
+        // this.canvas.addEventListener('wheel', (ev) => {
+        //     ev.preventDefault();
+        //     let ct = this.canvas.getContext('2d');
+        //     let scale = Math.pow(2, -ev.deltaY / 100);
+        //     ct.clearRect(0, 0, 800 * this.cs.scale, 800 * this.cs.scale);
+        //     // let x = this.cs.scale * ev.offsetX + this.cs.dx;
+        //     // let y = this.cs.scale * ev.offsetY + this.cs.dy;
+        //     // let dx = (1 - scale) * x;
+        //     // let dy = (1 - scale) * y;
+        //     // this.cs.dx = scale * this.cs.dx + dx;
+        //     // this.cs.dy = scale * this.cs.dy + dy;
+        //     this.cs.scale = this.cs.scale * scale;
+        //     // ct.translate(dx, dy);
+        //
+        //     ct.scale(scale, scale);
+        //     ct.drawImage(this.display, 0, 0);
+        // });
         this.display = new Image();
         let cnt = this.canvas.getContext('2d');
         this.display.onload = () => {
@@ -162,7 +162,7 @@ class GraphicsMagick extends GuiExtension {
         };
         this.pane.top.appendChild(this.canvas);
         this.addMenu()
-        gm(this.image).format((err, value) => {
+        gm(2, 2, "#ddff99f3").stream((err) => {
             if (err) {
                 gui.notify(`Error loading GraphicsMagick extension, probably you need to install graphicsMagick in your system`);
                 this.deactivate();
@@ -173,6 +173,7 @@ class GraphicsMagick extends GuiExtension {
     }
 
     deactivate() {
+        Util.empty(this.element,this.element.firstChild);
         gui.removeSubmenu(this.menu);
         super.deactivate();
 

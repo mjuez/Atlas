@@ -19,8 +19,9 @@
 'use strict';
 //use non-map convention x-y if v=coords x=v[0] y=v[1]
 //
+const http = require('http');
 const Baby = require("babyparse");
-const fss = require("fs");
+const fs = require("fs");
 
 class pointsLayer {
 
@@ -234,31 +235,81 @@ class pointsLayer {
         url = url.replace("{x}", reference.col);
         url = url.replace("{y}", reference.row);
         try {
-            let contents = '';
-            if (this.isRemote()) {
-                contents = url;
-            } else {
-                contents = fss.readFileSync(url).toString();
+            let bParse = (contents) => {
+                Baby.parse(contents, {
+                    dynamicTyping: true,
+                    fastMode: true,
+                    step: (results, parser) => {
+                        if (!this.configuration.excludeCF || results.data[0][3] == 0) {
+                            step([results.data[0][0] + reference.x, results.data[0][1] + reference.y]);
+                        }
+                    },
+                    complete: (results, file) => {
+                        if (end) {
+                            end(num);
+                        }
+                    },
+                    error: (e, file) => {
+                        if (error) {
+                            error(e);
+                        }
+                    }
+                });
             }
-            Baby.parse(contents, {
-                dynamicTyping: true,
-                fastMode: true,
-                step: (results, parser) => {
-                    if (!this.configuration.excludeCF || results.data[0][3] == 0) {
-                        step([results.data[0][0] + reference.x, results.data[0][1] + reference.y]);
-                    }
-                },
-                complete: (results, file) => {
-                    if (end) {
-                        end(num);
-                    }
-                },
-                error: (e, file) => {
-                    if (error) {
+            if (this.isRemote()) {
+                if (XMLHttpRequest) {
+                    let xhr = new XMLHttpRequest();
+                    xhr.onreadystatechange = () => {
+                        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                            bParse(xhr.responseText);
+                        }
+                    };
+                    xhr.open("GET", url, true);
+                    xhr.send();
+                } else {
+                    http.get(url, (res) => {
+                        const statusCode = res.statusCode;
+                        const contentType = res.headers['content-type'];
+                        let err;
+                        if (statusCode !== 200) {
+                            err = new Error(`Request Failed.\n` +
+                                `Status Code: ${statusCode}`);
+                        }
+                        if (err) {
+                            if (typeof error === 'function') {
+                                error(err);
+                            }
+                            // consume response data to free up memory
+                            res.resume();
+                            return;
+                        }
+                        res.setEncoding('utf8');
+                        let rawData = '';
+                        res.on('data', (chunk) => rawData += chunk);
+                        res.on('end', () => {
+                            try {
+                                bParse(rawData);
+                            } catch (e) {
+                                if (typeof error === 'function') {
+                                    error(e);
+                                }
+                            }
+                        });
+                    }).on('error', (e) => {
                         error(e);
-                    }
+                    });
                 }
-            });
+            } else {
+                fs.readFile(url, (err, data) => {
+                    if (err) {
+                        if (typeof error === 'function') {
+                            error(err);
+                        }
+                    } else {
+                        bParse(data.toString());
+                    }
+                });
+            }
         } catch (e) {
             if (error) {
                 if (typeof error === 'function') {
@@ -267,6 +318,7 @@ class pointsLayer {
             }
         }
     }
+
 }
 
 //export as node module

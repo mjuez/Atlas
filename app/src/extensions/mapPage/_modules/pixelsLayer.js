@@ -20,7 +20,7 @@
 //use non-map convention x-y if v=coords x=v[0] y=v[1]
 //
 const Baby = require("babyparse");
-const fss = require("fs");
+const fs = require("fs");
 
 class pixelsLayer {
 
@@ -248,35 +248,85 @@ class pixelsLayer {
         url = url.replace("{y}", reference.row);
         let j = 0;
         try {
-            let contents = '';
+            let bParse = (contents) => {
+                Baby.parse(contents, {
+                    dynamicTyping: true,
+                    fastMode: true,
+                    step: (results, parser) => { //read line by line
+                        let y = j + reference.row * this.configuration.tileSize;
+                        for (let i = 0; i < results.data[0].length; i++) {
+                            let x = i + reference.col * this.configuration.tileSize;
+                            step(results.data[0][i], x, y); //read one cell of the csv
+                        }
+                        j++; //increment lines count
+                    },
+                    complete: (results, file) => {
+                        if (end) {
+                            end();
+                        }
+                    },
+                    error: (e, file) => {
+                        if (typeof error === 'function') {
+                            error(e);
+                        }
+                    }
+                });
+            };
             if (this.isRemote()) {
-                contents = url;
-
-            } else {
-                contents = fss.readFileSync(url).toString();
-            }
-            Baby.parse(contents, {
-                dynamicTyping: true,
-                fastMode: true,
-                step: (results, parser) => { //read line by line
-                    let y = j + reference.row * this.configuration.tileSize;
-                    for (let i = 0; i < results.data[0].length; i++) {
-                        let x = i + reference.col * this.configuration.tileSize;
-                        step(results.data[0][i], x, y); //read one cell of the csv
-                    }
-                    j++; //increment lines count
-                },
-                complete: (results, file) => {
-                    if (end) {
-                        end();
-                    }
-                },
-                error: (e, file) => {
-                    if (typeof error === 'function') {
+                if (XMLHttpRequest) {
+                    let xhr = new XMLHttpRequest();
+                    xhr.onreadystatechange = () => {
+                        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                            bParse(xhr.responseText);
+                        }
+                    };
+                    xhr.open("GET", url, true);
+                    xhr.send();
+                } else {
+                    http.get(url, (res) => {
+                        const statusCode = res.statusCode;
+                        const contentType = res.headers['content-type'];
+                        let err;
+                        if (statusCode !== 200) {
+                            err = new Error(`Request Failed.\n` +
+                                `Status Code: ${statusCode}`);
+                        }
+                        if (err) {
+                            if (typeof error === 'function') {
+                                error(err);
+                            }
+                            // consume response data to free up memory
+                            res.resume();
+                            return;
+                        }
+                        res.setEncoding('utf8');
+                        let rawData = '';
+                        res.on('data', (chunk) => rawData += chunk);
+                        res.on('end', () => {
+                            try {
+                                bParse(rawData);
+                            } catch (e) {
+                                if (typeof error === 'function') {
+                                    error(e);
+                                }
+                            }
+                        });
+                    }).on('error', (e) => {
                         error(e);
-                    }
+                    });
                 }
-            });
+            } else {
+                fs.readFile(url, (err, data) => {
+                    if (err) {
+                        if (typeof error === 'function') {
+                            error(err);
+                        }
+                    } else {
+                        bParse(data.toString());
+                    }
+                });
+            }
+
         } catch (e) {
             if (error) {
                 error(e);

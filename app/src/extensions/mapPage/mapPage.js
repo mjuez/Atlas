@@ -311,10 +311,20 @@ class mapPage extends GuiExtension {
             }
         }));
         mapMenu.append(new MenuItem({
-            label: 'Load map',
+            label: 'Load map from config file',
             type: 'normal',
             click: () => {
                 MapIO.loadMapfromFile((conf) => {
+                    this.addNewMap(conf);
+                    this.show();
+                });
+            }
+        }));
+        mapMenu.append(new MenuItem({
+            label: 'Load map from url',
+            type: 'normal',
+            click: () => {
+                MapIO.loadMapfromUrl((conf) => {
                     this.addNewMap(conf);
                     this.show();
                 });

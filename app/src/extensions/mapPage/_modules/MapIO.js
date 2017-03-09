@@ -18,6 +18,7 @@
 
 'use strict';
 
+const url = require('url');
 const {
     app
 } = require('electron').remote;
@@ -142,32 +143,32 @@ class MapIO {
         }
     }
 
-    static findConfigurationSync(path, name) {
+    static findConfigurationSync(dir, name) {
         let options = [];
-        let files = fs.readdirSync(path);
+        let files = fs.readdirSync(dir);
         if (files) {
             for (var f in files) {
                 if (files[f].endsWith(".layerconfig")) {
-                    if (files[f].includes(name)) return Util.readJSONsync(path + files[f]);
+                    if (files[f].includes(name)) return Util.readJSONsync(dir + files[f]);
                     options.push(files[f]);
                 }
                 if (files[f].endsWith(".json")) {
-                    if (files[f].includes(name)) return Util.readJSONsync(path + files[f]);
+                    if (files[f].includes(name)) return Util.readJSONsync(dir + files[f]);
                     options.push(files[f]);
                 }
                 if (files[f].endsWith(".mapconfig")) {
-                    if (files[f].includes(name)) return Util.readJSONsync(path + files[f]);
+                    if (files[f].includes(name)) return Util.readJSONsync(dir + files[f]);
                     options.push(files[f]);
                 }
             }
         }
         if (options.length == 1) {
-            return Util.readJSONsync(path + options[0]);
+            return Util.readJSONsync(dir + options[0]);
         } else {
             if (options.length == 0) {
                 return;
             } else {
-                return Util.readJSONsync(path + options[0]);
+                return Util.readJSONsync(dir + options[0]);
             }
         }
     }
@@ -333,16 +334,16 @@ class MapIO {
             config.previewImageUrl = `${app.getAppPath()}${path.sep}images${path.sep}points.png`;
             config.pointsUrlTemplate = config.pointsUrlTemplate || '';
             config.excludeCF = config.excludeCF || false;
-            if (config.pointsUrlTemplate.startsWith("http://") ||
-                config.pointsUrlTemplate.startsWith("file://") ||
-                config.pointsUrlTemplate.startsWith("https://") ||
+            if (config.pointsUrlTemplate.startsWith("http:") ||
+                config.pointsUrlTemplate.startsWith("file:") ||
+                config.pointsUrlTemplate.startsWith("https:") ||
                 path.isAbsolute(config.pointsUrlTemplate)) {
                 config.basePath = '';
             }
             if (config.pointsUrlTemplate.startsWith(config.basePath)) {
                 config.basePath = '';
             }
-            config.pointsUrlTemplate = path.join(config.basePath, config.pointsUrlTemplate);
+            config.pointsUrlTemplate = config.basePath + config.pointsUrlTemplate;
             config.__color = 'red';
             Util.setOne(config, 'color', ['COLOR', 'Color', '__color']);
 
@@ -350,9 +351,9 @@ class MapIO {
         if (config.type.includes('pixelsLayer')) {
             config.previewImageUrl = path.join(app.getAppPath(), 'images', 'points.png');
             config.pixelsUrlTemplate = config.pixelsUrlTemplate || '';
-            if (config.pixelsUrlTemplate.startsWith("http://") ||
-                config.pixelsUrlTemplate.startsWith("file://") ||
-                config.pixelsUrlTemplate.startsWith("https://") ||
+            if (config.pixelsUrlTemplate.startsWith("http:") ||
+                config.pixelsUrlTemplate.startsWith("file:") ||
+                config.pixelsUrlTemplate.startsWith("https:") ||
                 path.isAbsolute(config.pixelsUrlTemplate)) {
                 config.basePath = '';
             }
@@ -361,7 +362,7 @@ class MapIO {
             }
             config.norm = config.norm || 1;
             config.role = config.role || 'area';
-            config.pixelsUrlTemplate = path.join(config.basePath, config.pixelsUrlTemplate);
+            config.pixelsUrlTemplate = config.basePath + config.pixelsUrlTemplate;
         }
         if (config.type.includes('guideLayer')) {
             config.previewImageUrl = path.join(app.getAppPath(), 'images', 'grid.png');
@@ -376,9 +377,9 @@ class MapIO {
         }
         if (config.type.includes('imageLayer')) {
             config.imageUrl = config.imageUrl || '';
-            if (config.imageUrl.startsWith("http://") ||
-                config.imageUrl.startsWith("file://") ||
-                config.imageUrl.startsWith("https://") ||
+            if (config.imageUrl.startsWith("http:") ||
+                config.imageUrl.startsWith("file:") ||
+                config.imageUrl.startsWith("https:") ||
                 path.isAbsolute(config.imageUrl)) {
                 config.basePath = '';
             }
@@ -429,24 +430,25 @@ class MapIO {
 
 
 
-    static exportConfiguration(configuration, path, cl) {
+    static exportConfiguration(configuration, dir, cl) {
         try {
-            if (typeof path === 'string') {
+            if (typeof dir === 'string') {
+                let basePath = dir.replace(path.basename(dir), "");
                 let conf = JSON.parse(JSON.stringify(configuration)); //clone configuration object
                 Object.keys(conf.layers).map((key) => {
                     let l = conf.layers[key];
                     switch (l.type) { //remove the base path from the url of the layers
                         case "tilesLayer":
-                            l.tilesUrlTemplate = l.tilesUrlTemplate.replace(path, "");
+                            l.tilesUrlTemplate = l.tilesUrlTemplate.replace(basePath, "");
                             break;
                         case "pointsLayer":
-                            l.pointsUrlTemplate = l.pointsUrlTemplate.replace(path, "");
+                            l.pointsUrlTemplate = l.pointsUrlTemplate.replace(basePath, "");
                             break;
                         case "pixelsLayer":
-                            l.pixelsUrlTemplate = l.pixelsUrlTemplate.replace(path, "");
+                            l.pixelsUrlTemplate = l.pixelsUrlTemplate.replace(basePath, "");
                             break;
                         case "imageLayer":
-                            l.imageUrl = l.imageUrl.replace(path, "");
+                            l.imageUrl = l.imageUrl.replace(basePath, "");
                             break;
                         default:
                     }
@@ -454,16 +456,18 @@ class MapIO {
                     delete l.previewImageUrl //delete the previewImageUrl it will be created again from the tiles url
                     return l;
                 });
-                delete conf.basePath; //delete the base path from the map configuration (in this way it will be created again when the map will be loaded)
+                if (conf.source === 'local') {
+                    delete conf.basePath; //delete the base path from the map configuration (in this way it will be created again when the map will be loaded)
+                }
                 let content = JSON.stringify(conf);
-                fs.writeFile(path, content, (error) => {
+                fs.writeFile(dir, content, (error) => {
                     if (error) {
                         Util.notifyOS(error);
                     } else {
-                        Util.notifyOS(`Map ${configuration.map} saved in ${path}`);
+                        Util.notifyOS(`Map ${configuration.map} saved in ${dir}`);
                     }
                     if (typeof cl === 'function') {
-                        cl(configuration, path, error);
+                        cl(configuration, dir, error);
                     }
                 });
             }

@@ -718,7 +718,8 @@ if (L != undefined) {
                         markers.addLayer(mk);
                     },
                     error: (err) => {
-                        console.log(err);
+
+                        //console.log(err);
                     }
                 });
             }
@@ -822,15 +823,6 @@ if (L != undefined) {
 
         addImageLayer: function(layerConfig) {
             if (layerConfig.imageUrl) {
-                let basePath = this._configuration.basePath;
-                if (layerConfig.basePath) {
-                    basePath = layerConfig.basePath;
-                }
-                if (layerConfig.imageUrl.startsWith("http://") |
-                    layerConfig.imageUrl.startsWith("file://") |
-                    layerConfig.imageUrl.startsWith("ftp://")) {
-                    basePath = "";
-                }
                 let options = layerConfig.options || {
                     opacity: layerConfig.opacity || 1,
                 };

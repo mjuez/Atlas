@@ -73,8 +73,8 @@ class MapIO {
         });
     }
 
-    static loadMapfromUrl(){
-      let modal = new Modal();
+    static loadMapfromUrl() {
+        let modal = new Modal();
 
     }
 
@@ -108,32 +108,21 @@ class MapIO {
 
     static basePath(configuration, filename) {
         if (configuration) {
-
             if (configuration.basePath) {
-                if (configuration.source === "remote" |
-                    configuration.source === "online" |
-                    configuration.source === "server") {
-
+                let ch = dialog.showMessageBox({
+                    type: "question",
+                    buttons: ['yes', 'no'],
+                    title: 'Base path',
+                    message: 'redefine the basePath ? ',
+                    detail: `current basePath: ${configuration.basePath}, if redefined it will point to local directory`
+                });
+                if (ch === 1) {
+                    return configuration.basePath;
                 } else {
-                    let ch = dialog.showMessageBox({
-                        type: "question",
-                        buttons: ['yes', 'no'],
-                        title: 'Base path',
-                        message: 'redefine the basePath ? ',
-                        detail: `current basePath: ${configuration.basePath}, if redefined it will point to local directory`
-                    });
-                    if (ch === 1) {
-                        return configuration.basePath;
-                    } else {
-                        return filename.substr(0, filename.lastIndexOf(path.sep) + 1);
-                    }
+                    return filename.substr(0, filename.lastIndexOf(path.sep) + 1);
                 }
             } else {
-                if (configuration.source === "remote" |
-                    configuration.source === "online" |
-                    configuration.source === "server") {
-                    return "";
-                } else if (filename) {
+                if (filename) {
                     return filename.substr(0, filename.lastIndexOf(path.sep) + 1);
                 } else {
                     return "";
@@ -182,24 +171,19 @@ class MapIO {
     static buildConfiguration(configuration) {
 
 
-        if (!configuration.source) {
-            if (configuration.basePath) {
-                if (configuration.basePath.startsWith('http')) {
-                    configuration.source = 'remote';
-                }
-                if (configuration.basePath.startsWith('/home')) {
-                    configuration.source = 'local';
-                }
-                if (configuration.basePath.startsWith('file://')) {
-                    configuration.source = 'local';
-                }
-                if (configuration.basePath.startsWith('C:')) {
-                    configuration.source = 'local';
-                }
+        if (configuration.basePath) {
+            if (configuration.basePath.startsWith('http')) {
+                configuration.source = 'remote';
             }
-        }
-        if (configuration.source === 'server' || configuration.source === 'online') {
-            configuration.source = 'remote';
+            if (configuration.basePath.startsWith('/home')) {
+                configuration.source = 'local';
+            }
+            if (configuration.basePath.startsWith('file://')) {
+                configuration.source = 'local';
+            }
+            if (configuration.basePath.startsWith('C:')) {
+                configuration.source = 'local';
+            }
         }
         configuration.source = configuration.source || 'local';
         let layers = configuration.layers;

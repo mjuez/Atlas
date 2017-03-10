@@ -66,6 +66,9 @@ class pointsLayer {
     }
 
     isRemote() {
+        if (typeof module == 'undefined' || !module.exports){
+
+        }
         if (typeof this.configuration.source === 'string') {
             if (this.configuration.source === 'remote') return true;
             if (this.configuration.source === 'local') return false;
@@ -257,16 +260,17 @@ class pointsLayer {
                 });
             }
             if (this.isRemote()) {
-                if (XMLHttpRequest) {
-                    let xhr = new XMLHttpRequest();
-                    xhr.onreadystatechange = () => {
-                        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-                            bParse(xhr.responseText);
-                        }
-                    };
-                    xhr.open("GET", url, true);
-                    xhr.send();
-                } else {
+                // //do not need this part because of http-browserify
+                // if (typeof XMLHttpRequest === 'function') {
+                //     let xhr = new XMLHttpRequest();
+                //     xhr.onreadystatechange = () => {
+                //         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                //             bParse(xhr.responseText);
+                //         }
+                //     };
+                //     xhr.open("GET", url, true);
+                //     xhr.send();
+                // } else {
                     http.get(url, (res) => {
                         const statusCode = res.statusCode;
                         const contentType = res.headers['content-type'];
@@ -298,7 +302,7 @@ class pointsLayer {
                     }).on('error', (e) => {
                         error(e);
                     });
-                }
+              //  }
             } else {
                 fs.readFile(url, (err, data) => {
                     if (err) {

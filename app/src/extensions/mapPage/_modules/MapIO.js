@@ -73,6 +73,11 @@ class MapIO {
         });
     }
 
+    static loadMapfromUrl(){
+      let modal = new Modal();
+
+    }
+
     static loadMapfromFile(cl) {
         dialog.showOpenDialog({
             title: "Select a configuration file",
@@ -115,7 +120,7 @@ class MapIO {
                         buttons: ['yes', 'no'],
                         title: 'Base path',
                         message: 'redefine the basePath ? ',
-                        detail: ''
+                        detail: `current basePath: ${configuration.basePath}, if redefined it will point to local directory`
                     });
                     if (ch === 1) {
                         return configuration.basePath;

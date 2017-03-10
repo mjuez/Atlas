@@ -45,6 +45,7 @@
     "leaflet-snap": "0.0.4",
     "leaflet.markercluster": "^1.0.0",
     "marked": "^0.3.6",
+    "papaparse": "^4.1.4",
     "sanitize-filename": "^1.6.1",
     "three": "^0.84.0",
     "tiff-to-png": "^1.0.5"

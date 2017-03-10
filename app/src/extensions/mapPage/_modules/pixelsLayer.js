@@ -21,6 +21,7 @@
 //
 const Baby = require("babyparse");
 const fs = require("fs");
+const http = require('http');
 
 class pixelsLayer {
 
@@ -273,16 +274,17 @@ class pixelsLayer {
                 });
             };
             if (this.isRemote()) {
-                if (XMLHttpRequest) {
-                    let xhr = new XMLHttpRequest();
-                    xhr.onreadystatechange = () => {
-                        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-                            bParse(xhr.responseText);
-                        }
-                    };
-                    xhr.open("GET", url, true);
-                    xhr.send();
-                } else {
+                //  // no need of this part because of http-browserify
+                // if (typeof XMLHttpRequest === 'function') {
+                //     let xhr = new XMLHttpRequest();
+                //     xhr.onreadystatechange = () => {
+                //         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                //             bParse(xhr.responseText);
+                //         }
+                //     };
+                //     xhr.open("GET", url, true);
+                //     xhr.send();
+                // } else {
                     http.get(url, (res) => {
                         const statusCode = res.statusCode;
                         const contentType = res.headers['content-type'];
@@ -314,19 +316,20 @@ class pixelsLayer {
                     }).on('error', (e) => {
                         error(e);
                     });
-                }
+                //}
             } else {
-                fs.readFile(url, (err, data) => {
-                    if (err) {
-                        if (typeof error === 'function') {
-                            error(err);
+                if (typeof fs.readFile === 'function') {
+                    fs.readFile(url, (err, data) => {
+                        if (err) {
+                            if (typeof error === 'function') {
+                                error(err);
+                            }
+                        } else {
+                            bParse(data.toString());
                         }
-                    } else {
-                        bParse(data.toString());
-                    }
-                });
+                    });
+                }
             }
-
         } catch (e) {
             if (error) {
                 error(e);

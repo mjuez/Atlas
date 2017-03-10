@@ -311,7 +311,7 @@ class mapPage extends GuiExtension {
             }
         }));
         mapMenu.append(new MenuItem({
-            label: 'Load map from config file',
+            label: 'Load map',
             type: 'normal',
             click: () => {
                 MapIO.loadMapfromFile((conf) => {
@@ -320,16 +320,16 @@ class mapPage extends GuiExtension {
                 });
             }
         }));
-        mapMenu.append(new MenuItem({
-            label: 'Load map from url',
-            type: 'normal',
-            click: () => {
-                MapIO.loadMapfromUrl((conf) => {
-                    this.addNewMap(conf);
-                    this.show();
-                });
-            }
-        }));
+        // mapMenu.append(new MenuItem({
+        //     label: 'Load map from url',
+        //     type: 'normal',
+        //     click: () => {
+        //         MapIO.loadMapfromUrl((conf) => {
+        //             this.addNewMap(conf);
+        //             this.show();
+        //         });
+        //     }
+        // }));
         mapMenu.append(new MenuItem({
             label: 'Crate map',
             type: 'normal',

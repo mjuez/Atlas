@@ -57,6 +57,7 @@ if (L != undefined) {
         _drawnPolygon: [],
         _drawnMarker: [],
         _polygons: [],
+        _markers: [],
 
 
         setMap: function(map) {
@@ -143,6 +144,7 @@ if (L != undefined) {
             this._gridLayers = [];
             this._guideLayers = [];
             this._polygons = [];
+            this._markers = [];
             this._activeBaseLayer = null;
         },
 
@@ -170,8 +172,25 @@ if (L != undefined) {
                         }
                     }
                 }
+                this.setIndex();
                 this._map.fitWorld();
             }
+        },
+
+
+        setIndex: function() {
+            this._indx = 0;
+            if (this._configuration) {
+                if (this._configuration.layers) {
+                    if (this._configuration.layers.drawnPolygons) {
+                        this._indx = Math.max(this._indx, Math.max(...Object.keys(this._configuration.layers.drawnPolygons.polygons)) || 0);
+                    }
+                    if (this._configuration.layers.drawnMarkers) {
+                        this._indx = Math.max(this._indx, Math.max(...Object.keys(this._configuration.layers.drawnMarkers.markers)) || 0);
+                    }
+                }
+            }
+
         },
 
         getDrawingColor: function() {
@@ -193,10 +212,48 @@ if (L != undefined) {
             }
         },
 
+        getUnitCal: function() {
+            let unit  = "u";
+            if (this._activeBaseLayer) {
+                depth = this._activeBaseLayer._configuration.unitCal || depth;
+            } else {
+                let temp = this.getLayers('tilesLayer')[0];
+                if (!temp) {
+                    temp = this.getLayers('imageLayer')[0];
+                }
+                if (temp) {
+                    size = temp._configuration.unitCal || depth;
+                }
+            }
+            return depth;
+        },
+
+        getDepthCal: function() {
+            let depth = 1;
+            if (this._activeBaseLayer) {
+                depth = this._activeBaseLayer._configuration.depthCal || depth;
+            } else {
+                let temp = this.getLayers('tilesLayer')[0];
+                if (!temp) {
+                    temp = this.getLayers('imageLayer')[0];
+                }
+                if (temp) {
+                    size = temp._configuration.depthCal || depth;
+                }
+            }
+            return depth;
+        },
+
         getSize: function() { //this is the maximum of the 2 dimension
             let temp = this.getSizes();
             return Math.max(temp[0], temp[1]);
         },
+
+        getSizeCal: function() {
+            let temp = this.getSizesCal();
+            return Math.max(temp[0], temp[1]);
+        },
+
 
         getSizes: function() {
             let size = [256, 256];
@@ -221,6 +278,31 @@ if (L != undefined) {
                 return (size);
             }
         },
+
+        getSizesCal: function() {
+            let size = [256, 256];
+            if (this._activeBaseLayer) {
+                size = this._activeBaseLayer._configuration.sizeCal || this._activeBaseLayer._configuration.tileSize || 256;
+            } else {
+                let temp = this.getLayers('tilesLayer')[0];
+                if (!temp) {
+                    temp = this.getLayers('imageLayer')[0];
+                }
+                if (temp) {
+                    size = temp._configuration.sizeCal || temp._configuration.tileSize || [256, 256];
+                }
+            }
+            if (typeof size === 'number') {
+                return [size, size];
+            }
+            if (size.x && size.y) {
+                return [size.x, size.y];
+            }
+            if (Array.isArray(size)) {
+                return (size);
+            }
+        },
+
 
 
         getLayers: function(types) {
@@ -250,6 +332,9 @@ if (L != undefined) {
                         break;
                     case 'polygon':
                         return this._polygons;
+                        break;
+                    case 'markers':
+                        return this._markers;
                         break;
                     default:
                         return null;
@@ -313,6 +398,9 @@ if (L != undefined) {
                 case 'drawnPolygons':
                     this.addDrawnPolygons(layer);
                     break;
+                case 'drawnMarkers':
+                    this.addDrawnMarkers(layer);
+                    break;
                 case 'imageLayer':
                     this.addImageLayer(layer);
                     break;
@@ -364,7 +452,7 @@ if (L != undefined) {
                     layer = e.layer;
 
                 if (type === 'marker') {
-                    this.addMarker(layer);
+                    this.addMarker(layer, true);
                 } else {
                     layer.setStyle({
                         color: this.getDrawingColor(),
@@ -381,9 +469,17 @@ if (L != undefined) {
                     if (layer.getLatLngs) {
                         this.removePolygon(layer, false);
                     } else {
+                        this.removeMarker(layer, false);
 
                     }
 
+                });
+            });
+
+            this._map.on('draw:edited', (e) => {
+                let layers = e.layers;
+                layers.eachLayer((layer) => {
+                    this.editDrawnLayer(layer);
                 });
             });
 
@@ -408,7 +504,7 @@ if (L != undefined) {
             if (!layer.getLatLngs) {
                 lyjson = layer; //we assume layer is written in json format with at least a latlngs field
                 lyjson.options = lyjson.options || {};
-                lyjson.name = lyjson.name || `Region ${this._indx}`;
+                lyjson.name = lyjson.name || `Region ${this._indxP}`;
                 layer = L.polygon(lyjson.latlngs ||
                     lyjson.latLngs ||
                     lyjson.path ||
@@ -421,7 +517,7 @@ if (L != undefined) {
                     weight: lyjson.options.weight || lyjson.weight || 3,
                     fill: true,
                     fillColor: lyjson.options.fillColor || lyjson.fillColor || this.getDrawingColor(),
-                    fillOpacity: lyjson.options.fillOpacity || lyjson.fillOpacity || 0.2
+                    fillOpacity: lyjson.options.fillOpacity || lyjson.fillOpacity || 0.3
                 });
             } else { //assume the layer is already a L.polygon
                 lyjson = {
@@ -458,11 +554,72 @@ if (L != undefined) {
             });
         },
 
-        addMarker: function(layer) {
-            if (this._drawnItems) {} else {}
+        editDrawnLayer: function(layer) {
+            if (layer.getLatLngs) {
+                layer._configuration.latlngs = layer.getLatLngs();
+            }
+            if (layer.getLatLng) {
+                layer._configuration.latlng = layer.getLatLng();
+            }
+        },
+
+
+        addMarker: function(layer, addToConfiguration) {
+            let lyjson = {};
+            this._indx++;
+            if (!layer.getLatLng) {
+                lyjson = layer; //we assume layer is written in json format with at least a latlngs field
+                lyjson.options = lyjson.options || {};
+                lyjson.name = lyjson.name || `Marker ${this._indx}`;
+                layer = L.marker(lyjson.latlng ||
+                    lyjson.latLng ||
+                    lyjson.point ||
+                    lyjson.coordinate ||
+                    lyjson.coord || [lyjson.lat || lyjson.y, lyjson.lang || lyjson.x]);
+            } else { //assume the layer is already a L.marker
+                lyjson = layer.configuration || {
+                    latlng: layer.getLatLng(),
+                    name: `Marker ${this._indx}`,
+                    options: layer.options,
+                };
+            }
+            layer.bindTooltip(lyjson.name);
+            if (this._drawnItems) {
+                this._drawnItems.addLayer(layer);
+            } else {
+                this._map.addLayer(layer);
+            }
+            if (addToConfiguration) {
+                this._configuration.layers.drawnMarkers = this._configuration.layers.drawnMarkers || {
+                    name: 'drawnMarkers',
+                    type: 'drawnMarkers',
+                    markers: {}
+                };
+                this._configuration.layers.drawnMarkers.markers[`${this._indx}`] = lyjson;
+            }
+            lyjson.id = lyjson.id || this._indx;
+            layer._id = lyjson.id;
+            layer._configuration = lyjson;
+            this._markers.push(layer);
             this.fire('add:marker', {
-                layer: layer,
-                manager: this
+                layer: layer
+            });
+        },
+
+        removeMarker: function(marker, removeLayer) {
+            if (removeLayer) {
+                if (this._drawnItems) {
+                    this._drawnItems.removeLayer(marker);
+                } else {
+                    this._map.removeLayer(marker);
+                }
+            }
+
+            this._markers.splice(this._markers.indexOf(marker), 1);
+
+            delete this._configuration.layers.drawnMarkers.markers[`${marker._id}`];
+            this.fire('remove:marker', {
+                layer: marker
             });
         },
 
@@ -483,22 +640,42 @@ if (L != undefined) {
             delete this._configuration.layers.drawnPolygons.polygons[polygon._id];
         },
 
+        addDrawnMarkers: function(layerConfig) {
+            if (Array.isArray(layerConfig.markers)) {
+                layerConfig.markers.map((pol) => {
+                    this.addMarker(pol);
+                });
+            } else { //assume is an object
+                Object.keys(layerConfig.markers).map((key) => {
+                    this.addMarker(layerConfig.markers[key]);
+                });
+            }
+
+            this.fire('add:drawnmarkers', {
+                layer: null,
+                layerConfig: layerConfig
+            });
+
+        },
+
+
 
         addDrawnPolygons: function(layerConfig) {
             if (Array.isArray(layerConfig.polygons)) {
                 layerConfig.polygons.map((pol) => {
+                    pol.options.fillOpacity = 0.3;
                     this.addPolygon(pol);
                 });
             } else { //assume is an object
                 Object.keys(layerConfig.polygons).map((key) => {
+                    layerConfig.polygons[key].options.fillOpacity = 0.3;
                     this.addPolygon(layerConfig.polygons[key]);
                 });
             }
 
             this.fire('add:drawnpolygons', {
                 layer: null,
-                layerConfig: layerConfig,
-                manager: this
+                layerConfig: layerConfig
             });
 
         },
@@ -516,6 +693,7 @@ if (L != undefined) {
                 }
                 // drawing part
                 let markers = L.markerClusterGroup();
+                markers.bindTooltip(layer.name);
                 if (this._layerControl) {
                     this._layerControl.addOverlay(markers, layer.name);
                 }
@@ -601,12 +779,12 @@ if (L != undefined) {
             } else {
                 let scale = 1;
                 let baselayer = this._activeBaseLayer || this._tilesLayers[0];
-                if (layerConfig.size && (baselayer.options || baselayer._configuration)) {
-                    scale = layerConfig.size / (baselayer._configuration.size || baselayer.options.tileSize);
+                if (layerConfig.size ) {
+                    scale = layerConfig.size / this.getSize();
                     let tileSize = layerConfig.tileSize || layerConfig.size;
                     if (tileSize > 0) {
-                        for (let i = 0; i <= layerConfig.size; i = i + layerConfig.tileSize) {
-                            for (let j = 0; j <= layerConfig.size; j = j + layerConfig.tileSize) {
+                        for (let i = 0; i <= layerConfig.size; i = i + tileSize) {
+                            for (let j = 0; j <= layerConfig.size; j = j + tileSize) {
                                 guideLayer.addLayer(L.circleMarker([-i / scale, j / scale], {
                                     radius: layerConfig.radius || 4,
                                     color: layerConfig.color || this.getDrawingColor()
@@ -748,6 +926,8 @@ if (L != undefined) {
         },
 
         tUP: function() {
+          if (!this._activeBaseLayer) return;
+          if (!this._activeBaseLayer.options.customKeys) return;
             if (this._activeBaseLayer.options.t >= 0 && this._activeBaseLayer.options.customKeys.t) {
                 let val = this._activeBaseLayer.options.customKeys.t;
                 let cur = this._activeBaseLayer.options.t;
@@ -763,7 +943,9 @@ if (L != undefined) {
         },
 
         tDOWN: function() {
-            if (this._activeBaseLayer.options.customKeys.t) {
+            if (!this._activeBaseLayer) return;
+            if (!this._activeBaseLayer.options.customKeys) return;
+            if (this._activeBaseLayer.options.t >= 0 && this._activeBaseLayer.options.customKeys.t) {
                 let val = this._activeBaseLayer.options.customKeys.t;
                 let cur = this._activeBaseLayer.options.t;
                 let pos = val.findIndex((e) => {

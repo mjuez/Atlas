@@ -163,7 +163,7 @@ class mapPage extends GuiExtension {
             this.mapManager.center();
         });
 
-        this.devPane = new ToggleElement(Util.div(null,'pane padded'));
+        this.devPane = new ToggleElement(Util.div(null, 'pane padded'));
         this.devPane.hide();
         this.appendChild(this.devPane);
 
@@ -342,18 +342,18 @@ class mapPage extends GuiExtension {
             label: 'Edit map',
             accelerator: 'CmdOrCtrl + L',
             click: () => {
-              this.mapPane.show();
-              this.devPane.hide();
-              this.fillEditor();
-              this.mapPane.toggleBottom();
-              this.show();
+                this.mapPane.show();
+                this.devPane.hide();
+                this.fillEditor();
+                this.mapPane.toggleBottom();
+                this.show();
             }
         }));
         mapMenu.append(new MenuItem({
             label: 'Reload map',
             click: () => {
-              this.updateMap(true);
-              this.show();
+                this.updateMap(true);
+                this.show();
             }
         }));
         mapMenu.append(new MenuItem({
@@ -411,7 +411,7 @@ class mapPage extends GuiExtension {
         this.sidebarRegions.remove();
         this.element.removeChild(this.mapPane.element);
         this.element.removeChild(this.devPane.element);
-        gui.removeSubmenu(this.menu);  //compulsory
+        gui.removeSubmenu(this.menu); //compulsory
         this.removeToggleButton('mapPageToggleButton'); //this is compulsory to leave the interface clean
         super.deactivate(); //we will also call the super class deactivate method
     }
@@ -500,15 +500,15 @@ class mapPage extends GuiExtension {
     }
 
 
-    loadMap(path,cl){
-      MapIO.loadMap(path,(conf) => {
-          this.addNewMap(conf);
-          gui.notify(`map ${conf.name} added to workspace`);
-          this.show();
-          if (typeof cl === 'function'){
-            cl(conf);
-          }
-      });
+    loadMap(path, cl) {
+        MapIO.loadMap(path, (conf) => {
+            this.addNewMap(conf);
+            gui.notify(`map ${conf.name} added to workspace`);
+            this.show();
+            if (typeof cl === 'function') {
+                cl(conf);
+            }
+        });
     }
 
 
@@ -526,9 +526,9 @@ class mapPage extends GuiExtension {
     }
 
     fillEditor() {
-            let cont = this.mapPane.bottom;
-            Util.empty(cont, cont.firstChild);
-            this.mapEditor.editor(cont);
+        let cont = this.mapPane.bottom;
+        Util.empty(cont, cont.firstChild);
+        this.mapEditor.editor(cont);
     }
 
     switchMap(configuration, force) {
@@ -595,9 +595,9 @@ class mapPage extends GuiExtension {
             label: 'Edit map',
             type: 'normal',
             click: () => {
-              this.mapPane.show();
-              this.devPane.hide();
-              this.mapPane.toggleBottom();
+                this.mapPane.show();
+                this.devPane.hide();
+                this.mapPane.toggleBottom();
             }
         }));
         ctn.append(new MenuItem({
@@ -735,24 +735,26 @@ class mapPage extends GuiExtension {
             }
 
             let context = new Menu();
-            context.append(new MenuItem({
-                label: 'Delete',
-                click: () => {
-                    if (this.selectedRegions.length === 0) {
-                        this.selectedRegions.push(layer);
+            if (!layer.group) {
+                context.append(new MenuItem({
+                    label: 'Delete',
+                    click: () => {
+                        if (this.selectedRegions.length === 0) {
+                            this.selectedRegions.push(layer);
+                        }
+                        this.deleteRegionsCheck(this.selectedRegions);
+                        this.selectedRegions = [];
                     }
-                    this.deleteRegionsCheck(this.selectedRegions);
-                    this.selectedRegions = [];
-                }
-            }));
-            context.append(new MenuItem({
-                label: 'Color',
-                click: () => {
-                    inpC.style.display = 'inline';
-                    inpC.focus();
-                    inpC.click();
-                }
-            }));
+                }));
+                context.append(new MenuItem({
+                    label: 'Color',
+                    click: () => {
+                        inpC.style.display = 'inline';
+                        inpC.focus();
+                        inpC.click();
+                    }
+                }));
+            }
             context.append(new MenuItem({
                 label: 'Compute',
                 click: () => {
@@ -829,7 +831,7 @@ class mapPage extends GuiExtension {
         if (typeof configuration.id === 'undefined') return;
         try {
             configuration = MapIO.buildConfiguration(configuration);
-            this.initRegionActions(configuration,true);
+            this.initRegionActions(configuration, true);
         } catch (e) {
             // otherwise means that the mapManager is unable to load the map
             console.log(e);
@@ -954,7 +956,7 @@ class mapPage extends GuiExtension {
             let siz = Math.max(dim.height, dim.width);
             this.addLayer({
                 name: `tilesLayer from ${path}`,
-                tilesUrlTemplate: `file://${path}`,
+                tilesUrlTemplate: `${path}`,
                 basePath: '',
                 source: 'local',
                 original_size: siz,

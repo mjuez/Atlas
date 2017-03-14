@@ -163,6 +163,8 @@ if (L != undefined) {
                     this.addDrawControl();
                 }
                 this.setMapOptions();
+                //this.setIndex();
+                this._indx = 0;
                 if (this._configuration.layers) {
                     if (this._configuration.layers instanceof Array) {
                         this._configuration.layers.map((layer, index) => {
@@ -174,7 +176,6 @@ if (L != undefined) {
                         }
                     }
                 }
-                this.setIndex();
                 this._map.fitWorld();
             }
         },
@@ -215,7 +216,7 @@ if (L != undefined) {
         },
 
         getUnitCal: function() {
-            let unit  = "u";
+            let unit = "u";
             if (this._activeBaseLayer) {
                 depth = this._activeBaseLayer._configuration.unitCal || depth;
             } else {
@@ -325,7 +326,7 @@ if (L != undefined) {
                         break;
                     case "pointsLayerD":
                         return this._pointsLayersD;
-                         break;
+                        break;
                     case "pixelsLayer":
                         return this._pixelsLayers;
                         break;
@@ -335,7 +336,7 @@ if (L != undefined) {
                     case "drawnPolygons":
                         return this._configuration.drawnPolygons;
                         break;
-                    case 'polygon':
+                    case 'polygons':
                         return this._polygons;
                         break;
                     case 'markers':
@@ -402,6 +403,9 @@ if (L != undefined) {
                     break;
                 case 'drawnPolygons':
                     this.addDrawnPolygons(layer);
+                    break;
+                case 'polygons':
+                    this.addPolygons(layer);
                     break;
                 case 'drawnMarkers':
                     this.addDrawnMarkers(layer);
@@ -503,13 +507,13 @@ if (L != undefined) {
         },
 
 
-        addPolygon: function(layer, addToConfiguration) {
+        addPolygon: function(layer, addToConfiguration, group) {
             let lyjson = {};
             this._indx++;
             if (!layer.getLatLngs) {
                 lyjson = layer; //we assume layer is written in json format with at least a latlngs field
                 lyjson.options = lyjson.options || {};
-                lyjson.name = lyjson.name || `Region ${this._indxP}`;
+                lyjson.name = lyjson.name || `Region ${this._indx}`;
                 layer = L.polygon(lyjson.latlngs ||
                     lyjson.latLngs ||
                     lyjson.path ||
@@ -528,15 +532,16 @@ if (L != undefined) {
                 lyjson = {
                     latlngs: layer.getLatLngs(),
                     name: `Region ${this._indx}`,
-                    options: layer.options,
+                    options: layer.options
                 };
             }
-
             if (this._options.region.tooltip) {
                 layer.bindTooltip(lyjson.name);
             }
-
-            if (this._drawnItems) {
+            layer.group = group;
+            if (group) {
+                group.addLayer(layer);
+            } else if (this._drawnItems) {
                 this._drawnItems.addLayer(layer);
 
             } else {
@@ -550,7 +555,7 @@ if (L != undefined) {
                 };
                 this._configuration.layers.drawnPolygons.polygons[`${this._indx}`] = lyjson;
             }
-            lyjson.id = lyjson.id || this._indx;
+            lyjson.id = this._indx;
             layer._id = lyjson.id;
             layer._configuration = lyjson;
             this._polygons.push(layer);
@@ -568,8 +573,7 @@ if (L != undefined) {
             }
         },
 
-
-        addMarker: function(layer, addToConfiguration) {
+        addMarker: function(layer, addToConfiguration, group) {
             let lyjson = {};
             this._indx++;
             if (!layer.getLatLng) {
@@ -589,7 +593,10 @@ if (L != undefined) {
                 };
             }
             layer.bindTooltip(lyjson.name);
-            if (this._drawnItems) {
+            layer.group = group;
+            if (group) {
+                group.addLayer(layer);
+            } else if (this._drawnItems) {
                 this._drawnItems.addLayer(layer);
             } else {
                 this._map.addLayer(layer);
@@ -613,7 +620,9 @@ if (L != undefined) {
 
         removeMarker: function(marker, removeLayer) {
             if (removeLayer) {
-                if (this._drawnItems) {
+                if (marker.group) {
+                    marker.group.removeLayer(marker);
+                } else if (this._drawnItems) {
                     this._drawnItems.removeLayer(marker);
                 } else {
                     this._map.removeLayer(marker);
@@ -621,8 +630,11 @@ if (L != undefined) {
             }
 
             this._markers.splice(this._markers.indexOf(marker), 1);
-
-            delete this._configuration.layers.drawnMarkers.markers[`${marker._id}`];
+            if (marker.group) {
+                delete marker.group._configuration.markers[marker._id];
+            } else {
+                delete this._configuration.layers.drawnMarkers.markers[`${marker._id}`];
+            }
             this.fire('remove:marker', {
                 layer: marker
             });
@@ -631,7 +643,9 @@ if (L != undefined) {
 
         removePolygon: function(polygon, removeLayer) {
             if (removeLayer) {
-                if (this._drawnItems) {
+                if (polygon.group) {
+                    polygon.group.removeLayer(polygon);
+                } else if (this._drawnItems) {
                     this._drawnItems.removeLayer(polygon);
                 } else {
                     this._map.removeLayer(polygon);
@@ -639,10 +653,15 @@ if (L != undefined) {
             }
             this.fire('remove:polygon', {
                 layer: polygon
-                    //layerConfig: this._configuration.layers.drawnPolygons.polygons[`${polygon._id}`]
+                //layerConfig: this._configuration.layers.drawnPolygons.polygons[`${polygon._id}`]
             });
             this._polygons.splice(this._polygons.indexOf(polygon), 1);
-            delete this._configuration.layers.drawnPolygons.polygons[polygon._id];
+            if (polygon.group) {
+                delete polygon.group._configuration.polygons[polygon._id];
+            } else {
+                delete this._configuration.layers.drawnPolygons.polygons[polygon._id];
+            }
+
         },
 
         addDrawnMarkers: function(layerConfig) {
@@ -663,8 +682,6 @@ if (L != undefined) {
 
         },
 
-
-
         addDrawnPolygons: function(layerConfig) {
             if (Array.isArray(layerConfig.polygons)) {
                 layerConfig.polygons.map((pol) => {
@@ -683,6 +700,31 @@ if (L != undefined) {
                 layerConfig: layerConfig
             });
 
+        },
+
+        addPolygons: function(layerConfig) {
+            let group = L.layerGroup();
+            group._configuration = layerConfig;
+            if (Array.isArray(layerConfig.polygons)) {
+                layerConfig.polygons.map((pol) => {
+                    pol.options.fillOpacity = 0.3;
+                    this.addPolygon(pol, false, group);
+                });
+            } else { //assume is an object
+                Object.keys(layerConfig.polygons).map((key) => {
+                    layerConfig.polygons[key].options.fillOpacity = 0.3;
+                    this.addPolygon(layerConfig.polygons[key], false, group);
+                });
+            }
+            if (this._layerControl) {
+                this._layerControl.addOverlay(group, layerConfig.name);
+            } else {
+                group.addTo(this._map);
+            }
+            this.fire('add:polygons', {
+                layer: group,
+                layerConfig: layerConfig
+            });
         },
 
         addPointsLayer: function(layer) {
@@ -738,8 +780,8 @@ if (L != undefined) {
 
         },
 
-        center(){
-          this._map.setView([0,0],0);
+        center() {
+            this._map.setView([0, 0], 0);
         },
 
 
@@ -792,7 +834,7 @@ if (L != undefined) {
             } else {
                 let scale = 1;
                 let baselayer = this._activeBaseLayer || this._tilesLayers[0];
-                if (layerConfig.size ) {
+                if (layerConfig.size) {
                     scale = layerConfig.size / this.getSize();
                     let tileSize = layerConfig.tileSize || layerConfig.size;
                     if (tileSize > 0 && layerConfig.size < 100 * tileSize) {
@@ -928,8 +970,8 @@ if (L != undefined) {
         },
 
         tUP: function() {
-          if (!this._activeBaseLayer) return;
-          if (!this._activeBaseLayer.options.customKeys) return;
+            if (!this._activeBaseLayer) return;
+            if (!this._activeBaseLayer.options.customKeys) return;
             if (this._activeBaseLayer.options.t >= 0 && this._activeBaseLayer.options.customKeys.t) {
                 let val = this._activeBaseLayer.options.customKeys.t;
                 let cur = this._activeBaseLayer.options.t;

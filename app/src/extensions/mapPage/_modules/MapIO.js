@@ -382,7 +382,10 @@ class MapIO {
         if (config.type.includes('drawnPolygons')) {
             config.previewImageUrl = path.join(app.getAppPath(), 'images', 'regions.png');
         }
-        delete config.basePath; //because we joined all in the path
+        if (config.type.includes('polygons')) {
+            config.previewImageUrl = path.join(app.getAppPath(), 'images', 'regions.png');
+        }
+        //delete config.basePath; //because we joined all in the path
         return config;
     }
 

@@ -18,6 +18,7 @@
 
 'use strict';
 
+const sanitize = require("sanitize-filename");
 const path = require('path');
 const Task = require('Task');
 const Util = require('Util');
@@ -26,9 +27,10 @@ const Input = require('Input');
 const Grid = require('Grid');
 const FolderSelector = require('FolderSelector');
 const ButtonsContainer = require('ButtonsContainer');
-const MapIO = require('../extensions/mapPage/_modules/MapIO.js');
 const ChildProcess = require('child_process').ChildProcess;
-const {dialog} = require('electron').remote;
+const {
+    dialog
+} = require('electron').remote;
 let gui = require('Gui');
 
 class MapCreatorTask extends Task {
@@ -51,7 +53,6 @@ class MapCreatorTask extends Task {
             let create = "";
             if (params.use) use = "use ";
             if (this.isMap) create = "create ";
-
             let args = `${this.isFolder}#${params.initialSlice}#${params.lastSlice}#${params.scale}#${runPath}#map=[${params.map}] pixel=${params.pixel} maximum=${params.maximum} slice=${params.slice} ${use}${create}choose=${params.path}#${params.merge}`;
             this.childProcess = this.imageJExtension.run(this.macro, args);
             this.childProcess.stdout.setEncoding('utf8');
@@ -103,9 +104,7 @@ class MapCreatorTask extends Task {
         if (this.isMap) {
             this.customAction["caption"] = "Load map to workspace";
             this.customAction["onclick"] = () => {
-                MapIO.loadMap(this.jsonFile, (conf) => {
-                    gui.extensionsManager.extensions.mapPage.addNewMap(conf);
-                });
+              gui.extensionsManager.extensions.mapPage.loadMap(this.jsonFile);
             };
         } else {
             this.customAction["caption"] = "Add layer to a map in workspace";
@@ -208,7 +207,10 @@ class MapCreatorTask extends Task {
         let txtMapName = Input.input({
             type: "text",
             id: "txtmapname",
-            value: `${path.basename(imagePath)}`
+            value: `${sanitize(path.basename(imagePath).replace(/\.[^/.]+$/, ''))}`,
+            oninput: () => {
+                txtMapName.value = sanitize(txtMapName.value);
+            }
         });
         let lblMapName = document.createElement("LABEL");
         lblMapName.htmlFor = "txtmapname";
@@ -313,7 +315,7 @@ class MapCreatorTask extends Task {
                             initialSlice: numInitialSlice.value || "[]",
                             lastSlice: numLastSlice.value || "[]",
                             scale: numScale.value || "[]",
-                            map: txtMapName.value || "[]",
+                            map: sanitize(txtMapName.value) || "[]",
                             pixel: txtPixelTiles.value || "[]",
                             maximum: numMaximumZoom.value || "[]",
                             slice: numUsedSlice.value || "[]",

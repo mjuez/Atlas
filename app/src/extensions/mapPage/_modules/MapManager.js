@@ -31,6 +31,7 @@ const pointsLayer = require(`./pointsLayer`);
 
 
 if (L != undefined) {
+
     L.MapManager = L.Evented.extend({
 
         _map: null,
@@ -38,6 +39,7 @@ if (L != undefined) {
         _configuration: {},
         _tilesLayers: [],
         _pointsLayers: [],
+        _pointsLayersD: [],
         _pixelsLayers: [],
         _gridLayers: [],
         _guideLayers: [],
@@ -321,6 +323,9 @@ if (L != undefined) {
                     case "pointsLayer":
                         return this._pointsLayers;
                         break;
+                    case "pointsLayerD":
+                        return this._pointsLayersD;
+                         break;
                     case "pixelsLayer":
                         return this._pixelsLayers;
                         break;
@@ -693,6 +698,9 @@ if (L != undefined) {
                 }
                 // drawing part
                 let markers = L.markerClusterGroup();
+                layer.typeid = this._pointsLayersD.length;
+                this._pointsLayersD.push(markers);
+
                 markers.bindTooltip(layer.name);
                 if (this._layerControl) {
                     this._layerControl.addOverlay(markers, layer.name);
@@ -702,7 +710,6 @@ if (L != undefined) {
                 points.count({
                     maxTiles: 10,
                     cl: (point) => {
-
                         point = [-point[1] / scale, point[0] / scale];
                         let mk = L.circleMarker(point, {
                             color: layer.color || this.getDrawingColor(),
@@ -711,7 +718,8 @@ if (L != undefined) {
                         markers.addLayer(mk);
                     },
                     error: (err) => {
-                        console.log(err);
+
+                        //console.log(err);
                     }
                 });
             }
@@ -730,6 +738,10 @@ if (L != undefined) {
 
         },
 
+        center(){
+          this._map.setView([0,0],0);
+        },
+
 
         getBaseLayer: function() {
             return this._activeBaseLayer || this._tilesLayers[0];
@@ -738,8 +750,9 @@ if (L != undefined) {
 
         addGuideLayer: function(layerConfig) {
             if (!this.getBaseLayer()) return;
-            layerConfig.name = layerConfig.name || layerConfig.alias || layerConfig.Name || 'Guide';
+            layerConfig.name = layerConfig.name || 'Guide';
             let guideLayer = L.featureGroup();
+            layerConfig.typeid = this._guideLayers.length;
             this._guideLayers.push(guideLayer);
             guideLayer.on("add", () => {
                 this._guideLayers.map((g) => {
@@ -782,7 +795,7 @@ if (L != undefined) {
                 if (layerConfig.size ) {
                     scale = layerConfig.size / this.getSize();
                     let tileSize = layerConfig.tileSize || layerConfig.size;
-                    if (tileSize > 0) {
+                    if (tileSize > 0 && layerConfig.size < 100 * tileSize) {
                         for (let i = 0; i <= layerConfig.size; i = i + tileSize) {
                             for (let j = 0; j <= layerConfig.size; j = j + tileSize) {
                                 guideLayer.addLayer(L.circleMarker([-i / scale, j / scale], {
@@ -808,22 +821,8 @@ if (L != undefined) {
 
         },
 
-
-
         addImageLayer: function(layerConfig) {
             if (layerConfig.imageUrl) {
-                let basePath = this._configuration.basePath;
-                if (layerConfig.basePath) {
-                    basePath = layerConfig.basePath;
-                }
-                if (layerConfig.imageUrl.startsWith("http://") |
-                    layerConfig.imageUrl.startsWith("file://") |
-                    layerConfig.imageUrl.startsWith("ftp://")) {
-                    basePath = "";
-                }
-                if (!layerConfig.alias) {
-                    layerConfig.alias = layerConfig.name;
-                }
                 let options = layerConfig.options || {
                     opacity: layerConfig.opacity || 1,
                 };
@@ -838,6 +837,7 @@ if (L != undefined) {
                 ];
                 let layer = L.imageOverlay(basePath + options.imageUrl, options.bounds, options);
                 layer._configuration = options;
+                layer._configuration.typeid = this._imageLayers.length;
                 this._imageLayers.push(layer);
                 if (options.baseLayer) {
                     this._configuration.size = this._configuration.size || options.size;
@@ -847,7 +847,7 @@ if (L != undefined) {
 
                 if (this._layerControl) {
                     if (options.baseLayer) {
-                        this._layerControl.addBaseLayer(layer, options.alias);
+                        this._layerControl.addBaseLayer(layer, options.name);
                         layer.on("add", () => {
                             this._map.setMaxZoom(options.maxZoom);
                             this._map.setMinZoom(options.minZoom);
@@ -858,7 +858,7 @@ if (L != undefined) {
                             this._state.baseLayerOn = true;
                         }
                     } else {
-                        this._layerControl.addOverlay(layer, options.alias);
+                        this._layerControl.addOverlay(layer, options.name);
                     }
                 } else {
                     this._map.addLayer(layer);
@@ -889,11 +889,13 @@ if (L != undefined) {
 
                 let layer = L.tileLayer(options.tilesUrlTemplate, options);
                 layer._configuration = layerConfig;
+                layer._configuration.typeid = this._tilesLayers.length;
                 this._tilesLayers.push(layer);
+
 
                 if (this._layerControl) {
                     if (options.baseLayer) {
-                        this._layerControl.addBaseLayer(layer, options.alias);
+                        this._layerControl.addBaseLayer(layer, options.name);
                         layer.on("add", () => {
                             this._map.setMaxZoom(layerConfig.maxZoom);
                             this._activeBaseLayer = layer;
@@ -911,7 +913,7 @@ if (L != undefined) {
                             this._state.baseLayerOn = true;
                         }
                     } else {
-                        this._layerControl.addOverlay(layer, options.alias);
+                        this._layerControl.addOverlay(layer, options.name);
                     }
                 } else {
                     this._map.addLayer(layer);

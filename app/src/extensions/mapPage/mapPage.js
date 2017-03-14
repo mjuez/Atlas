@@ -845,6 +845,13 @@ class mapPage extends GuiExtension {
             let layerConfig = e.layer._configuration;
 
             let context = new Menu();
+            
+            context.append(new MenuItem({
+                label: 'Delete',
+                click: () => {
+                    this.deleteMarkerCheck(layer);
+                }
+            }));
 
             let txtTitle = Input.input({
                 type: `text`,
@@ -867,6 +874,9 @@ class mapPage extends GuiExtension {
                 }
             });
             txtTitle.size = layerConfig.name.length + 1;
+            txtTitle.oncontextmenu = () => {
+                context.popup();
+            };
 
             let title = document.createElement('STRONG');
             title.appendChild(txtTitle);
@@ -888,9 +898,15 @@ class mapPage extends GuiExtension {
                 }
             });
 
-            layer.on('contextmenu', (e) => {
+            layer.on('dblclick', (e) => {
+                // OPEN A MODAL ASKING FOR DETAILS.
             });
         });
+
+        this.mapManager.on('remove:marker', (e) => {
+            this.sidebarRegions.markers.removeItem(e.layer._configuration.id);
+        });
+
         this.mapManager.on('remove:polygon', (e) => {
             this.sidebarRegions.list.removeItem(e.layer._configuration.id);
         });
@@ -918,8 +934,20 @@ class mapPage extends GuiExtension {
         }
     }
 
-
-
+    deleteMarkerCheck(marker){
+        dialog.showMessageBox({
+            title: 'Delete selected marker?',
+            type: 'warning',
+            buttons: ['No', 'Yes'],
+            message: `Delete the selected marker? (no undo available)`,
+            detail: `Marker to be deleted: ${marker._configuration.name}.`,
+            noLink: true
+        }, (id) => {
+            if(id > 0){
+                this.mapManager.removeMarker(marker, true);
+            }
+        });
+    }
 
     deleteRegionsCheck(regions) {
         dialog.showMessageBox({

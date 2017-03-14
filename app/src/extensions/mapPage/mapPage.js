@@ -29,6 +29,7 @@ const Sidebar = require('Sidebar');
 const GuiExtension = require('GuiExtension');
 const ListGroup = require('ListGroup');
 const NavGroup = require('NavGroup');
+const TabGroup = require('TabGroup');
 const ButtonsContainer = require('ButtonsContainer');
 const {
     TreeList,
@@ -62,6 +63,7 @@ const {
 const {
     app
 } = require('electron').remote;
+const Input = require('Input');
 
 let taskManager = require('TaskManager');
 
@@ -163,14 +165,39 @@ class mapPage extends GuiExtension {
             this.mapManager.center();
         });
 
-        this.devPane = new ToggleElement(Util.div(null,'pane padded'));
+        this.devPane = new ToggleElement(Util.div(null, 'pane padded'));
         this.devPane.hide();
         this.appendChild(this.devPane);
 
         this.sidebarRegions = new Sidebar(this.element);
+        this.sidebarRegionsTabGroup = new TabGroup(this.sidebarRegions);
+
+        this.sidebarRegionsTabGroup.addItem({
+            id: `regions`,
+            name: `Regions`
+        });
+
+        this.sidebarRegionsTabGroup.addItem({
+            id: `markers`,
+            name: `Markers`
+        });
+
         this.sidebarRegions.addList();
         this.sidebarRegions.list.addSearch({
             placeholder: 'Search regions'
+        });
+
+        this.sidebarRegions.addList(`markers`);
+        this.sidebarRegions.markers.hide();
+
+        this.sidebarRegionsTabGroup.addClickListener(`regions`, () => {
+            this.sidebarRegions.list.show();
+            this.sidebarRegions.markers.hide();
+        });
+
+        this.sidebarRegionsTabGroup.addClickListener(`markers`, () => {
+            this.sidebarRegions.markers.show();
+            this.sidebarRegions.list.hide();
         });
 
         let arg = {
@@ -342,18 +369,18 @@ class mapPage extends GuiExtension {
             label: 'Edit map',
             accelerator: 'CmdOrCtrl + L',
             click: () => {
-              this.mapPane.show();
-              this.devPane.hide();
-              this.fillEditor();
-              this.mapPane.toggleBottom();
-              this.show();
+                this.mapPane.show();
+                this.devPane.hide();
+                this.fillEditor();
+                this.mapPane.toggleBottom();
+                this.show();
             }
         }));
         mapMenu.append(new MenuItem({
             label: 'Reload map',
             click: () => {
-              this.updateMap(true);
-              this.show();
+                this.updateMap(true);
+                this.show();
             }
         }));
         mapMenu.append(new MenuItem({
@@ -433,6 +460,7 @@ class mapPage extends GuiExtension {
         }
         this.sidebar.list.clean();
         this.sidebarRegions.list.clean();
+        this.sidebarRegions.markers.clean();
     }
 
 
@@ -500,15 +528,15 @@ class mapPage extends GuiExtension {
     }
 
 
-    loadMap(path,cl){
-      MapIO.loadMap(path,(conf) => {
-          this.addNewMap(conf);
-          gui.notify(`map ${conf.name} added to workspace`);
-          this.show();
-          if (typeof cl === 'function'){
-            cl(conf);
-          }
-      });
+    loadMap(path, cl) {
+        MapIO.loadMap(path, (conf) => {
+            this.addNewMap(conf);
+            gui.notify(`map ${conf.name} added to workspace`);
+            this.show();
+            if (typeof cl === 'function') {
+                cl(conf);
+            }
+        });
     }
 
 
@@ -523,12 +551,13 @@ class mapPage extends GuiExtension {
     initRegionActions(configuration, force) {
         if (configuration === this.mapManager._configuration && !force) return;
         this.sidebarRegions.list.clean();
+        this.sidebarRegions.markers.clean();
     }
 
     fillEditor() {
-            let cont = this.mapPane.bottom;
-            Util.empty(cont, cont.firstChild);
-            this.mapEditor.editor(cont);
+        let cont = this.mapPane.bottom;
+        Util.empty(cont, cont.firstChild);
+        this.mapEditor.editor(cont);
     }
 
     switchMap(configuration, force) {
@@ -595,9 +624,9 @@ class mapPage extends GuiExtension {
             label: 'Edit map',
             type: 'normal',
             click: () => {
-              this.mapPane.show();
-              this.devPane.hide();
-              this.mapPane.toggleBottom();
+                this.mapPane.show();
+                this.devPane.hide();
+                this.mapPane.toggleBottom();
             }
         }));
         ctn.append(new MenuItem({
@@ -812,11 +841,55 @@ class mapPage extends GuiExtension {
         });
 
         this.mapManager.on('add:marker', (e) => {
-            let mark = e.layer;
-            mark.on('contextmenu', (e) => {
+            let layer = e.layer;
+            let layerConfig = e.layer._configuration;
 
+            let context = new Menu();
+
+            let txtTitle = Input.input({
+                type: `text`,
+                id: `txtmarker_${layerConfig.id}`,
+                value: layerConfig.name,
+                className: `list-input`,
+                readOnly: true,
+                onchange: () => {
+                    layerConfig.name = txtTitle.value;
+                    layer.setTooltipContent(txtTitle.value);
+                    txtTitle.readOnly = true;
+                },
+                onblur: () => {
+                    txtTitle.value = layerConfig.name;
+                    txtTitle.readOnly = true;
+                },
+                ondblclick: (event) => {
+                    event.stopPropagation();
+                    txtTitle.readOnly = false;
+                }
+            });
+            txtTitle.size = layerConfig.name.length + 1;
+
+            let title = document.createElement('STRONG');
+            title.appendChild(txtTitle);
+
+            this.sidebarRegions.markers.addItem({
+                id: layerConfig.id,
+                title: title,
+                toggle: {
+                    justOne: true
+                },
+                onclick: {
+                    active: () => {
+                        this.mapManager._map.setView(layer.getLatLng());
+                    },
+
+                    deactive: () => {
+
+                    }
+                }
             });
 
+            layer.on('contextmenu', (e) => {
+            });
         });
         this.mapManager.on('remove:polygon', (e) => {
             this.sidebarRegions.list.removeItem(e.layer._configuration.id);
@@ -829,7 +902,7 @@ class mapPage extends GuiExtension {
         if (typeof configuration.id === 'undefined') return;
         try {
             configuration = MapIO.buildConfiguration(configuration);
-            this.initRegionActions(configuration,true);
+            this.initRegionActions(configuration, true);
         } catch (e) {
             // otherwise means that the mapManager is unable to load the map
             console.log(e);
@@ -854,7 +927,7 @@ class mapPage extends GuiExtension {
             type: 'warning',
             buttons: ['No', "Yes"],
             message: `Delete the selected regions? (no undo available)`,
-            detail: `Regions to be deleted: ${regions.map((reg)=> {return reg._configuration.name})}`,
+            detail: `Regions to be deleted: ${regions.map((reg) => { return reg._configuration.name })}`,
             noLink: true
         }, (id) => {
             if (id > 0) {

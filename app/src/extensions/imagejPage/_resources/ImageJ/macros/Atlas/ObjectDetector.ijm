@@ -30,8 +30,10 @@ File.makeDirectory(outFolderP);
 outFolderO = outputPath + File.separator +"objects";
 File.makeDirectory(outFolderO);
 
-setBatchMode(true);
 run("Input/Output...", "file=.csv");
+
+
+setBatchMode(true);
 
 if(mode == FOLDER){
     list = getFileList(path);

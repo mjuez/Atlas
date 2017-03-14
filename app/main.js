@@ -1,11 +1,13 @@
-
 const {
     fork,
     exec
 } = require('child_process')
 const {
     app,
-    BrowserWindow
+    BrowserWindow,
+    Tray,
+    Menu,
+    dialog
 } = require('electron')
 const path = require('path')
 const {
@@ -16,30 +18,36 @@ const {
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
+let minHeight = 65;
+let trayimg = `${__dirname}/icon.png`
+if (process.platform === 'win32') {
+    minHeight = 100;
+    trayimg = `${__dirname}/icon.ico`
+}
+
 
 
 
 function createWindow() {
 
-     let frame=true;
-
-     if (process.platform === "linux" | process.platform === "darwin"){
-       frame = true;
-     }
+    let frame = true;
+    if (process.platform === "linux" | process.platform === "darwin") {
+        frame = true;
+    }
     // Create the browser window.
     win = new BrowserWindow({
         width: 900,
-        height: 600,
+        height: minHeight,
         frame: frame,
-        titleBarStyle:'hidden',
-        icon: 'icon.png'
+        titleBarStyle: 'hidden',
+        icon: `${__dirname}/icon.png`
     })
 
     // and load the index.html of the app.
     win.loadURL(`file://${__dirname}/index.html`)
 
     // Open the DevTools.
-   //win.webContents.openDevTools()
+    //win.webContents.openDevTools()
 
 
     // Emitted when the window is closed.
@@ -60,6 +68,46 @@ app.commandLine.appendSwitch("disable-renderer-backgrounding");
 // Some APIs can only be used after this event occurs.
 app.on('ready', createWindow)
 
+// app.on('ready', () => {
+//     tray = new Tray(trayimg)
+//     const contextMenu = Menu.buildFromTemplate([{
+//             label: 'Show',
+//             type: 'normal',
+//             click: () => {
+//               win.show()
+//             }
+//         },
+//         {
+//             label: 'Minimize',
+//             type: 'normal',
+//             click: ()=>{
+//               win.hide();
+//             }
+//         },
+//         {
+//             label: 'Quit',
+//             type: 'normal',
+//             click: ()=>{
+//               dialog.showMessageBox({
+//                 type: 'question',
+//                 buttons: ['No', 'Yes'],
+//                 title: 'Atlas',
+//                 message: 'Do you really want to quit?',
+//                 detail: 'all unsaved data will be lost',
+//                 noLink: true
+//               },(id)=>{
+//                 if (id>0){
+//                   app.quit();
+//                 }
+//               })
+//             }
+//         }
+//     ])
+//     tray.setToolTip('Atlas')
+//     tray.setContextMenu(contextMenu)
+// })
+
+
 //Quit when all windows are closed.
 app.on('window-all-closed', () => {
     // On macOS it is common for applications and their menu bar
@@ -77,25 +125,23 @@ app.on('activate', () => {
     }
 })
 
-ipcMain.on("focusWindow", () =>{
-  win.focus();
+ipcMain.on("focusWindow", () => {
+    win.focus();
 })
 
-ipcMain.on("openDevTools", () =>{
-  win.webContents.openDevTools()
+ipcMain.on("openDevTools", () => {
+    win.webContents.openDevTools()
 })
 
 
-ipcMain.on("mapViewTrick", () => {
-    win.setSize(win.getSize()[0] + 1, win.getSize()[1] + 1)
-    win.setSize(win.getSize()[0] - 1, win.getSize()[1] - 1)
+
+ipcMain.on("imageJ", (event, arg) => {
+    let path = app.getPath('exe');
+    exec('java -Xmx512m -jar ij.jar', {
+        cwd: `${process.resourcesPath}/ImageJ/`
+    }, (error, stdout, stderr) => {})
 })
 
-ipcMain.on("imageJ",(event,arg)=>{
-  let path = app.getPath('exe');
-  exec('java -Xmx512m -jar ij.jar',{cwd:`${process.resourcesPath}/ImageJ/`},(error, stdout, stderr)=>{})
-})
-
-ipcMain.on('setProgress',(event,arg)=>{
-  win.setProgressBar(arg.value);
+ipcMain.on('setProgress', (event, arg) => {
+    win.setProgressBar(arg.value);
 });

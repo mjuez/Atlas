@@ -26,6 +26,7 @@ const Table = require('Table');
 const taskManager = require('TaskManager');
 const Task = require('Task');
 const Util = require('Util');
+const ProgressBar = require('ProgressBar');
 
 
 const icon = "fa fa-tasks";
@@ -47,14 +48,15 @@ class tasksPage extends GuiExtension {
         this.addToggleButton({
             id: toggleButtonId,
             buttonsContainer: gui.header.actionsContainer,
-            className: 'btn btn-default pull-right',
+            className: 'btn btn-default',
+            groupClassName: 'pull-right',
+            groupId: 'tasksPage',
             icon: icon
         });
 
         this.toggleButton = this.buttonsContainer.buttons[`${toggleButtonId}`];
-        this.notifBadge = document.createElement("I");
-        this.notifBadge.className = "fa fa-circle notif-off";
-        this.toggleButton.appendChild(this.notifBadge);
+        this.progressBar = new ProgressBar(this.toggleButton);
+        this.progressBar.setHeight(3);
 
         this.addPane();
         this.element.appendChild(this.pane.element);
@@ -75,7 +77,6 @@ class tasksPage extends GuiExtension {
                     }
                     if (!this.finishedTasksContainer.contains(domElement)) {
                         this.finishedTasksContainer.insertBefore(domElement, this.finishedTasksContainer.firstChild);
-                        this._updateBadge();
                     }
                 }
             }
@@ -92,8 +93,11 @@ class tasksPage extends GuiExtension {
         taskManager.on("change", this.taskManagerChangeListener);
         taskManager.on("task.removed", this.taskRemovedListener);
 
+
         taskManager.on("progress", (p)=>{
+          gui.setProgress(p);
           Util.setProgress(p);
+          this.progressBar.setBar(p);
         });
     }
 
@@ -107,7 +111,6 @@ class tasksPage extends GuiExtension {
 
     show(){
         super.show();
-        this._updateBadge();
     }
 
     addPane() {
@@ -140,23 +143,6 @@ class tasksPage extends GuiExtension {
         this.pane.element.appendChild(rightContainer);
     }
 
-    _isHidden() {
-        return this.element.style.display === 'none';
-    }
-
-    _updateBadge() {
-        if (this._isHidden()) {
-            if (this.notifBadge.classList.contains("notif-off")) {
-                this.notifBadge.classList.remove("notif-off");
-                this.notifBadge.classList.add("notif-on");
-            }
-        }else{
-            if (this.notifBadge.classList.contains("notif-on")) {
-                this.notifBadge.classList.remove("notif-on");
-                this.notifBadge.classList.add("notif-off");
-            }
-        }
-    }
 }
 
 module.exports = tasksPage;

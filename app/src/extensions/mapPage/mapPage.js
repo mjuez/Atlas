@@ -190,6 +190,9 @@ class mapPage extends GuiExtension {
 
         this.sidebarRegions.addList(`markers`);
         this.sidebarRegions.markers.hide();
+        this.sidebarRegions.markers.addSearch({
+            placeholder: 'Search markers'
+        });
 
         this.sidebarRegionsTabGroup.addClickListener(`regions`, () => {
             this.sidebarRegions.list.show();
@@ -738,6 +741,7 @@ class mapPage extends GuiExtension {
             inp.className = 'list-input';
             inp.readOnly = true;
             inp.onchange = () => {
+                this.sidebarRegions.list.setKey(layerConfig.id, inp.value);
                 layerConfig.name = inp.value;
                 layer.setTooltipContent(inp.value);
                 inp.readOnly = true;
@@ -868,6 +872,7 @@ class mapPage extends GuiExtension {
                 className: `list-input`,
                 readOnly: true,
                 onchange: () => {
+                    this.sidebarRegions.markers.setKey(layerConfig.id, txtTitle.value);
                     layerConfig.name = txtTitle.value;
                     layer.setTooltipContent(txtTitle.value);
                     txtTitle.readOnly = true;
@@ -892,6 +897,7 @@ class mapPage extends GuiExtension {
             this.sidebarRegions.markers.addItem({
                 id: layerConfig.id,
                 title: title,
+                key: layerConfig.name,
                 toggle: {
                     justOne: true
                 },
@@ -964,6 +970,7 @@ class mapPage extends GuiExtension {
             id: "SaveMarker00",
             text: "Save",
             action: () => {
+                this.sidebarRegions.markers.setKey(marker._configuration.name,txtMarkerName.value);
                 marker._configuration.name = txtMarkerName.value;
                 marker._configuration.details = taMarkerDetails.value;
                 marker.setTooltipContent(txtMarkerName.value);

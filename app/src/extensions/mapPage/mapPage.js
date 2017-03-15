@@ -670,7 +670,7 @@ class mapPage extends GuiExtension {
 
         this.maps[configuration.id] = configuration;
         configuration.new = false;
-        this.switchMap(configuration, true);
+        //this.switchMap(configuration, true);
         this.sidebar.list.activeJustOne(configuration.id);
         this.mapPane.show();
         this.devPane.hide();
@@ -682,6 +682,7 @@ class mapPage extends GuiExtension {
         this.mapManager.on('add:polygon', (e) => {
             let layer = e.layer;
             let layerConfig = e.layer._configuration;
+            console.log(layerConfig.name);
 
             layer.on('click', () => {
                 if (!this.sidebarRegions.list.items[layerConfig.id].element.className.includes('active')) {

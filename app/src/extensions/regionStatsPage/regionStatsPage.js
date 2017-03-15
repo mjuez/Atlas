@@ -96,7 +96,6 @@ class regionStatsPage extends GuiExtension {
     }
 
     addMapToSidebar(map) {
-
         this.sidebar.addItem({
             id: `${map.id}`,
             title: map.name,
@@ -115,17 +114,17 @@ class regionStatsPage extends GuiExtension {
     }
 
     showRegionsStats(map) {
+        let polygons = gui.extensionsManager.extensions.mapPage.mapManager.getLayers('polygons');
         if (!map.layers) return;
-        if (map.layers.drawnPolygons) {
-            var polygons = map.layers.drawnPolygons.polygons;
+        if (polygons.length > 0) {
             var table = new Table();
             Object.keys(polygons).map((key) => {
-                if (polygons[key].stats) {
-                    let row = this.createRow(polygons[key].stats, polygons[key].name);
+                let pol = polygons[key]._configuration;
+                if (pol.stats) {
+                    let row = this.createRow(pol.stats, pol.name);
                     table.addRow(row);
                 }
             });
-
             if (table.tbody.hasChildNodes()) {
                 let exportContainer = document.createElement('DIV');
                 exportContainer.className = "padded";

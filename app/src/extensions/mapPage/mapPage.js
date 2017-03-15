@@ -442,7 +442,7 @@ class mapPage extends GuiExtension {
         this.sidebarRegions.remove();
         this.element.removeChild(this.mapPane.element);
         this.element.removeChild(this.devPane.element);
-        gui.removeSubmenu(this.menu);  //compulsory
+        gui.removeSubmenu(this.menu); //compulsory
         this.removeToggleButton('mapPageToggleButton'); //this is compulsory to leave the interface clean
         super.deactivate(); //we will also call the super class deactivate method
     }
@@ -769,24 +769,26 @@ class mapPage extends GuiExtension {
             }
 
             let context = new Menu();
-            context.append(new MenuItem({
-                label: 'Delete',
-                click: () => {
-                    if (this.selectedRegions.length === 0) {
-                        this.selectedRegions.push(layer);
+            if (!layer.group) {
+                context.append(new MenuItem({
+                    label: 'Delete',
+                    click: () => {
+                        if (this.selectedRegions.length === 0) {
+                            this.selectedRegions.push(layer);
+                        }
+                        this.deleteRegionsCheck(this.selectedRegions);
+                        this.selectedRegions = [];
                     }
-                    this.deleteRegionsCheck(this.selectedRegions);
-                    this.selectedRegions = [];
-                }
-            }));
-            context.append(new MenuItem({
-                label: 'Color',
-                click: () => {
-                    inpC.style.display = 'inline';
-                    inpC.focus();
-                    inpC.click();
-                }
-            }));
+                }));
+                context.append(new MenuItem({
+                    label: 'Color',
+                    click: () => {
+                        inpC.style.display = 'inline';
+                        inpC.focus();
+                        inpC.click();
+                    }
+                }));
+            }
             context.append(new MenuItem({
                 label: 'Compute',
                 click: () => {
@@ -1128,7 +1130,7 @@ class mapPage extends GuiExtension {
             let siz = Math.max(dim.height, dim.width);
             this.addLayer({
                 name: `tilesLayer from ${path}`,
-                tilesUrlTemplate: `file://${path}`,
+                tilesUrlTemplate: `${path}`,
                 basePath: '',
                 source: 'local',
                 original_size: siz,

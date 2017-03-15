@@ -576,6 +576,7 @@ if (L != undefined) {
                 lyjson = layer; //we assume layer is written in json format with at least a latlngs field
                 lyjson.options = lyjson.options || {};
                 lyjson.name = lyjson.name || `Marker ${this._indx}`;
+                lyjson.details = lyjson.details || ``;
                 layer = L.marker(lyjson.latlng ||
                     lyjson.latLng ||
                     lyjson.point ||
@@ -586,6 +587,7 @@ if (L != undefined) {
                     latlng: layer.getLatLng(),
                     name: `Marker ${this._indx}`,
                     options: layer.options,
+                    details: ``
                 };
             }
             layer.bindTooltip(lyjson.name);

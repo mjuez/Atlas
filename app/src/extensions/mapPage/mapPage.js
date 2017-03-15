@@ -24,11 +24,13 @@ const sizeOf = require('image-size');
 const SplitPane = require('SplitPane');
 const RegionAnalyzer = require('./_modules/RegionAnalyzer.js');
 const Modal = require('Modal');
+const Grid = require('Grid');
 const Workspace = require('Workspace');
 const Sidebar = require('Sidebar');
 const GuiExtension = require('GuiExtension');
 const ListGroup = require('ListGroup');
 const NavGroup = require('NavGroup');
+const TabGroup = require('TabGroup');
 const ButtonsContainer = require('ButtonsContainer');
 const {
     TreeList,
@@ -62,6 +64,7 @@ const {
 const {
     app
 } = require('electron').remote;
+const Input = require('Input');
 
 let taskManager = require('TaskManager');
 
@@ -168,9 +171,37 @@ class mapPage extends GuiExtension {
         this.appendChild(this.devPane);
 
         this.sidebarRegions = new Sidebar(this.element);
+        this.sidebarRegionsTabGroup = new TabGroup(this.sidebarRegions);
+
+        this.sidebarRegionsTabGroup.addItem({
+            id: `regions`,
+            name: `Regions`
+        });
+
+        this.sidebarRegionsTabGroup.addItem({
+            id: `markers`,
+            name: `Markers`
+        });
+
         this.sidebarRegions.addList();
         this.sidebarRegions.list.addSearch({
             placeholder: 'Search regions'
+        });
+
+        this.sidebarRegions.addList(`markers`);
+        this.sidebarRegions.markers.hide();
+        this.sidebarRegions.markers.addSearch({
+            placeholder: 'Search markers'
+        });
+
+        this.sidebarRegionsTabGroup.addClickListener(`regions`, () => {
+            this.sidebarRegions.list.show();
+            this.sidebarRegions.markers.hide();
+        });
+
+        this.sidebarRegionsTabGroup.addClickListener(`markers`, () => {
+            this.sidebarRegions.markers.show();
+            this.sidebarRegions.list.hide();
         });
 
         let arg = {
@@ -433,6 +464,7 @@ class mapPage extends GuiExtension {
         }
         this.sidebar.list.clean();
         this.sidebarRegions.list.clean();
+        this.sidebarRegions.markers.clean();
     }
 
 
@@ -523,6 +555,7 @@ class mapPage extends GuiExtension {
     initRegionActions(configuration, force) {
         if (configuration === this.mapManager._configuration && !force) return;
         this.sidebarRegions.list.clean();
+        this.sidebarRegions.markers.clean();
     }
 
     fillEditor() {
@@ -709,6 +742,7 @@ class mapPage extends GuiExtension {
             inp.className = 'list-input';
             inp.readOnly = true;
             inp.onchange = () => {
+                this.sidebarRegions.list.setKey(layerConfig.id, inp.value);
                 layerConfig.name = inp.value;
                 layer.setTooltipContent(inp.value);
                 inp.readOnly = true;
@@ -815,17 +849,145 @@ class mapPage extends GuiExtension {
         });
 
         this.mapManager.on('add:marker', (e) => {
-            let mark = e.layer;
-            mark.on('contextmenu', (e) => {
+            let layer = e.layer;
+            let layerConfig = e.layer._configuration;
 
+            let context = new Menu();
+
+            context.append(new MenuItem({
+                label: 'Edit details',
+                click: () => {
+                    this.editMarkerDetails(layer);
+                }
+            }));
+
+            context.append(new MenuItem({
+                label: 'Delete',
+                click: () => {
+                    this.deleteMarkerCheck(layer);
+                }
+            }));
+
+            let txtTitle = Input.input({
+                type: `text`,
+                id: `txtmarker_${layerConfig.id}`,
+                value: layerConfig.name,
+                className: `list-input`,
+                readOnly: true,
+                onchange: () => {
+                    this.sidebarRegions.markers.setKey(layerConfig.id, txtTitle.value);
+                    layerConfig.name = txtTitle.value;
+                    layer.setTooltipContent(txtTitle.value);
+                    txtTitle.readOnly = true;
+                },
+                onblur: () => {
+                    txtTitle.value = layerConfig.name;
+                    txtTitle.readOnly = true;
+                },
+                ondblclick: (event) => {
+                    event.stopPropagation();
+                    txtTitle.readOnly = false;
+                }
+            });
+            txtTitle.size = layerConfig.name.length + 1;
+            txtTitle.oncontextmenu = () => {
+                context.popup();
+            };
+
+            let title = document.createElement('STRONG');
+            title.appendChild(txtTitle);
+
+            this.sidebarRegions.markers.addItem({
+                id: layerConfig.id,
+                title: title,
+                key: layerConfig.name,
+                toggle: {
+                    justOne: true
+                },
+                onclick: {
+                    active: () => {
+                        this.mapManager._map.setView(layer.getLatLng());
+                    },
+
+                    deactive: () => {
+
+                    }
+                }
             });
 
+            layer.on('dblclick', (e) => {
+                this.editMarkerDetails(layer);
+            });
         });
+
+        this.mapManager.on('remove:marker', (e) => {
+            this.sidebarRegions.markers.removeItem(e.layer._configuration.id);
+        });
+
         this.mapManager.on('remove:polygon', (e) => {
             this.sidebarRegions.list.removeItem(e.layer._configuration.id);
         });
     }
 
+    editMarkerDetails(marker){
+        // OPEN A MODAL ASKING FOR DETAILS.
+        var modal = new Modal({
+            title: "Edit marker details",
+            height: "auto"
+        });
+
+        let grid = new Grid(2, 2);
+
+        let txtMarkerName = Input.input({
+            type: "text",
+            id: "txtmarkername",
+            value: marker._configuration.name
+        });
+        let lblMarkerName = document.createElement("LABEL");
+        lblMarkerName.htmlFor = "txtmarkername";
+        lblMarkerName.innerHTML = "Marker name: ";
+        grid.addElement(lblMarkerName, 0, 0);
+        grid.addElement(txtMarkerName, 0, 1);
+
+        let taMarkerDetails = document.createElement("TEXTAREA");
+        taMarkerDetails.id = "tamarkerdetails";
+        taMarkerDetails.value = marker._configuration.details;
+        taMarkerDetails.rows = 5
+        taMarkerDetails.style.width = '100%';
+        let lblMarkerDetails = document.createElement("LABEL");
+        lblMarkerDetails.htmlFor = "tamarkerdetails";
+        lblMarkerDetails.innerHTML = "Marker details: ";
+        grid.addElement(lblMarkerDetails, 1, 0);
+        grid.addElement(taMarkerDetails, 1, 1);
+
+        let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
+        buttonsContainer.addButton({
+            id: "CancelMarker00",
+            text: "Cancel",
+            action: () => {
+                modal.destroy();
+            },
+            className: "btn-default"
+        });
+        buttonsContainer.addButton({
+            id: "SaveMarker00",
+            text: "Save",
+            action: () => {
+                this.sidebarRegions.markers.setKey(marker._configuration.name,txtMarkerName.value);
+                marker._configuration.name = txtMarkerName.value;
+                marker._configuration.details = taMarkerDetails.value;
+                marker.setTooltipContent(txtMarkerName.value);
+                modal.destroy();
+            },
+            className: "btn-default"
+        });
+        let footer = Util.div();
+        footer.appendChild(buttonsContainer.element);
+
+        modal.addBody(grid.element);
+        modal.addFooter(footer);
+        modal.show();
+    }
 
     updateMap(hard) {
         let configuration = this.mapManager._configuration;
@@ -848,8 +1010,20 @@ class mapPage extends GuiExtension {
         }
     }
 
-
-
+    deleteMarkerCheck(marker){
+        dialog.showMessageBox({
+            title: 'Delete selected marker?',
+            type: 'warning',
+            buttons: ['No', 'Yes'],
+            message: `Delete the selected marker? (no undo available)`,
+            detail: `Marker to be deleted: ${marker._configuration.name}.`,
+            noLink: true
+        }, (id) => {
+            if(id > 0){
+                this.mapManager.removeMarker(marker, true);
+            }
+        });
+    }
 
     deleteRegionsCheck(regions) {
         dialog.showMessageBox({
@@ -857,7 +1031,7 @@ class mapPage extends GuiExtension {
             type: 'warning',
             buttons: ['No', "Yes"],
             message: `Delete the selected regions? (no undo available)`,
-            detail: `Regions to be deleted: ${regions.map((reg)=> {return reg._configuration.name})}`,
+            detail: `Regions to be deleted: ${regions.map((reg) => { return reg._configuration.name })}`,
             noLink: true
         }, (id) => {
             if (id > 0) {

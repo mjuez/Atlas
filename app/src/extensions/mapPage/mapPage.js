@@ -24,6 +24,7 @@ const sizeOf = require('image-size');
 const SplitPane = require('SplitPane');
 const RegionAnalyzer = require('./_modules/RegionAnalyzer.js');
 const Modal = require('Modal');
+const Grid = require('Grid');
 const Workspace = require('Workspace');
 const Sidebar = require('Sidebar');
 const GuiExtension = require('GuiExtension');
@@ -845,7 +846,14 @@ class mapPage extends GuiExtension {
             let layerConfig = e.layer._configuration;
 
             let context = new Menu();
-            
+
+            context.append(new MenuItem({
+                label: 'Edit details',
+                click: () => {
+                    this.editMarkerDetails(layer);
+                }
+            }));
+
             context.append(new MenuItem({
                 label: 'Delete',
                 click: () => {
@@ -899,7 +907,7 @@ class mapPage extends GuiExtension {
             });
 
             layer.on('dblclick', (e) => {
-                // OPEN A MODAL ASKING FOR DETAILS.
+                this.editMarkerDetails(layer);
             });
         });
 
@@ -912,6 +920,64 @@ class mapPage extends GuiExtension {
         });
     }
 
+    editMarkerDetails(marker){
+        // OPEN A MODAL ASKING FOR DETAILS.
+        var modal = new Modal({
+            title: "Edit marker details",
+            height: "auto"
+        });
+
+        let grid = new Grid(2, 2);
+
+        let txtMarkerName = Input.input({
+            type: "text",
+            id: "txtmarkername",
+            value: marker._configuration.name
+        });
+        let lblMarkerName = document.createElement("LABEL");
+        lblMarkerName.htmlFor = "txtmarkername";
+        lblMarkerName.innerHTML = "Marker name: ";
+        grid.addElement(lblMarkerName, 0, 0);
+        grid.addElement(txtMarkerName, 0, 1);
+
+        let taMarkerDetails = document.createElement("TEXTAREA");
+        taMarkerDetails.id = "tamarkerdetails";
+        taMarkerDetails.value = marker._configuration.details;
+        taMarkerDetails.rows = 5
+        taMarkerDetails.style.width = '100%';
+        let lblMarkerDetails = document.createElement("LABEL");
+        lblMarkerDetails.htmlFor = "tamarkerdetails";
+        lblMarkerDetails.innerHTML = "Marker details: ";
+        grid.addElement(lblMarkerDetails, 1, 0);
+        grid.addElement(taMarkerDetails, 1, 1);
+
+        let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
+        buttonsContainer.addButton({
+            id: "CancelMarker00",
+            text: "Cancel",
+            action: () => {
+                modal.destroy();
+            },
+            className: "btn-default"
+        });
+        buttonsContainer.addButton({
+            id: "SaveMarker00",
+            text: "Save",
+            action: () => {
+                marker._configuration.name = txtMarkerName.value;
+                marker._configuration.details = taMarkerDetails.value;
+                marker.setTooltipContent(txtMarkerName.value);
+                modal.destroy();
+            },
+            className: "btn-default"
+        });
+        let footer = Util.div();
+        footer.appendChild(buttonsContainer.element);
+
+        modal.addBody(grid.element);
+        modal.addFooter(footer);
+        modal.show();
+    }
 
     updateMap(hard) {
         let configuration = this.mapManager._configuration;

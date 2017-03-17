@@ -203,6 +203,14 @@ if (L != undefined) {
             }
         },
 
+        setMaxZoom: function(zoom) {
+            this._map.setMaxZoom(zoom);
+        },
+
+        setMinZoom: function(zoom) {
+            this._map.setMinZoom(zoom);
+        },
+
         getUnitCal: function() {
             let unit = "u";
             if (this._activeBaseLayer) {

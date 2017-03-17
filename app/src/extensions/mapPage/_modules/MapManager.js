@@ -48,17 +48,15 @@ if (L != undefined) {
             baseLayerOn: false
         },
         _options: {
-            drawControl: true,
-            layerControl: true,
+            drawControl: false,
+            layerControl: false,
             region: {
-                tooltip: true,
-                popup: true,
-                onclick: () => {}
+                tooltip: false,
+                popup: false
             },
             marker: {
-                tooltip: true,
-                popup: true,
-                onclick: () => {}
+                tooltip: false,
+                popup: false
             }
         },
         _drawnPolygons: [],
@@ -107,13 +105,7 @@ if (L != undefined) {
 
         setOptions: function(options) {
             if (!options) return;
-            if (options.drawControl) {
-                this._options.drawControl = options.drawControl;
-            }
-
-            if (options.layerControl) {
-                this._options.layerControl = options.layerControl;
-            }
+            Object.assign(this._options, options);
             this.reload();
         },
 
@@ -159,6 +151,7 @@ if (L != undefined) {
             this._markers = [];
             this._pointsLayersD = [];
             this._activeBaseLayer = null;
+            this.fire('clean');
         },
 
         reload: function() {
@@ -187,6 +180,7 @@ if (L != undefined) {
                     }
                 }
                 this._map.fitWorld();
+                this.fire('reload');
             }
         },
 
@@ -985,8 +979,8 @@ if (L != undefined) {
 
     });
 
-    L.mapManager = function(map, configuration) {
-        return (new L.MapManager(map, configuration));
+    L.mapManager = function(map, options, configuration) {
+        return (new L.MapManager(map, options, configuration));
     }
 
 

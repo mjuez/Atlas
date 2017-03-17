@@ -147,7 +147,7 @@ class mapPage extends GuiExtension {
                 }
             }
         };
-        this.mapPane.hide();
+        this.mapPane.show();
         this.appendChild(this.mapPane);
 
         let mapContainer = this.mapPane.top;
@@ -214,7 +214,18 @@ class mapPage extends GuiExtension {
         }
         let map = L.map('map', arg);
         map.setView([-100, 100], 0);
-        this.mapManager = L.mapManager(map);
+        this.mapManager = L.mapManager(map, {
+            drawControl: true,
+            layerControl: true,
+            region: {
+                tooltip: true,
+                popup: true
+            },
+            marker: {
+                tooltip: true,
+                popup: true
+            }
+        });
         this.mapEditor = new MapEditor(this.mapManager);
         this.mapEditor.on('soft_change', () => {
             this.updateMap();
@@ -557,8 +568,7 @@ class mapPage extends GuiExtension {
 
     initRegionActions(configuration, force) {
         if (configuration === this.mapManager._configuration && !force) return;
-        this.sidebarRegions.list.clean();
-        this.sidebarRegions.markers.clean();
+
     }
 
     fillEditor() {
@@ -699,7 +709,7 @@ class mapPage extends GuiExtension {
                     this.switchMap(this.maps[configuration.id]);
                 },
                 deactive: () => {
-                  //  this.sidebarRegions.hide();
+                    //  this.sidebarRegions.hide();
                 }
             }
         });
@@ -714,6 +724,11 @@ class mapPage extends GuiExtension {
 
 
     listenMapManager() {
+
+        this.mapManager.on('clean', () => {
+            this.sidebarRegions.list.clean();
+            this.sidebarRegions.markers.clean();
+        });
         //when a polygon is added create region element in the sidebarRegions and relative actions,
         this.mapManager.on('add:polygon', (e) => {
             let layer = e.layer;
@@ -911,14 +926,14 @@ class mapPage extends GuiExtension {
                         layer.openPopup();
                     },
                     deactive: () => {
-                      layer.closePopup();
+                        layer.closePopup();
                     }
                 }
             });
 
-            layer.on('click',()=>{
-              this.sidebarRegions.markers.activeJustOne(layerConfig.id);
-              this.mapManager._map.setView(layer.getLatLng());
+            layer.on('click', () => {
+                this.sidebarRegions.markers.activeJustOne(layerConfig.id);
+                this.mapManager._map.setView(layer.getLatLng());
             });
 
             layer.on('dblclick', (e) => {
@@ -935,7 +950,7 @@ class mapPage extends GuiExtension {
         });
     }
 
-    editMarkerDetails(marker){
+    editMarkerDetails(marker) {
         // OPEN A MODAL ASKING FOR DETAILS.
         var modal = new Modal({
             title: "Edit marker details",
@@ -979,7 +994,7 @@ class mapPage extends GuiExtension {
             id: "SaveMarker00",
             text: "Save",
             action: () => {
-                this.sidebarRegions.markers.setKey(marker._configuration.name,txtMarkerName.value);
+                this.sidebarRegions.markers.setKey(marker._configuration.name, txtMarkerName.value);
                 marker._configuration.name = txtMarkerName.value;
                 marker._configuration.details = taMarkerDetails.value;
                 marker.setTooltipContent(txtMarkerName.value);
@@ -1017,7 +1032,7 @@ class mapPage extends GuiExtension {
         }
     }
 
-    deleteMarkerCheck(marker){
+    deleteMarkerCheck(marker) {
         dialog.showMessageBox({
             title: 'Delete selected marker?',
             type: 'warning',
@@ -1026,7 +1041,7 @@ class mapPage extends GuiExtension {
             detail: `Marker to be deleted: ${marker._configuration.name}.`,
             noLink: true
         }, (id) => {
-            if(id > 0){
+            if (id > 0) {
                 this.mapManager.removeMarker(marker, true);
             }
         });

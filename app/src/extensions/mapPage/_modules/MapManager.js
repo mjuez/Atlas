@@ -186,6 +186,10 @@ if (L != undefined) {
             }
         },
 
+        getIndex: function() {
+            return this._indx;
+        },
+
         getDrawingColor: function() {
             if (typeof this._configuration.drawingColor === 'string') return this._configuration.drawingColor;
             return "#ed8414";
@@ -911,7 +915,7 @@ if (L != undefined) {
         addTilesLayer: function(layerConfig) {
             //create layer
             if (layerConfig.tilesUrlTemplate) {
-                let options =  Object.assign({}, layerConfig);
+                let options = Object.assign({}, layerConfig);
                 if (Array.isArray(options.tileSize)) {
                     options.tileSize = L.point(options.tileSize[0], options.tileSize[1]);
                 }

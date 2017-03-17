@@ -725,10 +725,12 @@ class mapPage extends GuiExtension {
 
     listenMapManager() {
 
+        //when clean mapmanager clean interface
         this.mapManager.on('clean', () => {
             this.sidebarRegions.list.clean();
             this.sidebarRegions.markers.clean();
         });
+
         //when a polygon is added create region element in the sidebarRegions and relative actions,
         this.mapManager.on('add:polygon', (e) => {
             let layer = e.layer;
@@ -819,8 +821,37 @@ class mapPage extends GuiExtension {
 
                 }
             }));
+                context.append(new MenuItem({
+                    label: 'Create polygons layer from selected',
+                    click: () => {
+
+                        if (this.selectedRegions.length == 0) {
+                            return;
+                        }
+                        dialog.showMessageBox({
+                          type: 'question',
+                          buttons: ['Cancel', 'Create'],
+                          defaultId: 0,
+                          title: 'Create polygons layer',
+                          message: `Do you want to create a new polygon layers from the selected regions: ${this.selectedRegions}`,
+                          noLink: true
+                        }, (id)=>{
+                         if (id>0){
+                           let conf= {
+                               name: `Polygons${this.mapManager.getIndex()}`,
+                               type: 'polygons',
+                               polygons: this.selectedRegions.map((pol) => {
+                                   return Object.assign({},pol._configuration);
+                               })
+                           };
+                           this.addLayer(conf);
+                           this.selectedRegions = [];
+                         }
+                        });
+                    }
+                }));
             context.append(new MenuItem({
-                label: 'Export',
+                label: 'Export statistics',
                 click: () => {
                     if (this.selectedRegions.length === 0) {
                         this.exportsRegions([layer]);
@@ -1223,8 +1254,7 @@ class mapPage extends GuiExtension {
         conf = MapIO.parseLayerConfig(conf);
         let key = conf.name || conf.alias || conf.id || conf.type;
         this.mapManager._configuration.layers[key] = conf;
-        this.mapManager.addLayer(conf);
-        this.updateMap(true);
+        this.mapManager.reload();
     }
 
 

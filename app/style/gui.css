@@ -531,7 +531,7 @@ img.imageicon {
 
 .flex-layout .drag-v .line {
     height: 1px;
-    background-color: #DDDDDD;
+    background-color: #989698;
     cursor: row-resize;
 }
 
@@ -561,7 +561,7 @@ img.imageicon {
 .flex-layout .drag-h .line {
     width: 1px;
     height: 100%;
-    background-color: #DDDDDD;
+    background-color: #989698;
     cursor: col-resize;
 }
 
@@ -571,4 +571,49 @@ img.imageicon {
     width: 50%;
     vertical-align: top;
     display: inline-block;
+}
+
+.layers-widget {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.layers-widget .top-bar {
+    position: absolute;
+    box-sizing: border-box;
+    height: 60px;
+    border-bottom: 1px solid #DDDDDD;
+    background-color: #e8e6e8;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 5px 10px;
+}
+
+.layers-widget .top-bar .title {
+    font-weight: bold;
+    font-size: 10px;
+    color: #333333;
+    text-transform: uppercase;
+}
+
+.layers-widget .grid {
+    margin: 0;
+    width: 100%;
+    font-size: 10px;
+}
+
+.layers-widget .grid td {
+    padding: 0;
+}
+
+.layers-widget .content {
+    position: absolute;
+    box-sizing: border-box;
+    left: 0;
+    right: 0;
+    top: 60px;
+    bottom: 0;
+    overflow-y: auto;
 }

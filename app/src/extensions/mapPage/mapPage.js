@@ -48,6 +48,7 @@ const fs = require('fs');
 const mapManager = require('./_modules/MapManager.js');
 const MapIO = require('./_modules/MapIO.js');
 const MapEditor = require('./_modules/MapEditor.js');
+const LayersWidget = require('./_modules/LayersWidget.js');
 const leaflet = require('leaflet');
 const {
     ipcRenderer
@@ -65,6 +66,7 @@ const {
     app
 } = require('electron').remote;
 const Input = require('Input');
+const FlexLayout = require('FlexLayout');
 
 let taskManager = require('TaskManager');
 
@@ -97,11 +99,21 @@ class mapPage extends GuiExtension {
             }
         });
         //add the sidebars
+        this.sidebartest = new Sidebar(this.element);
+        let flexLayout = new FlexLayout(this.sidebartest.element, FlexLayout.Type.VERTICAL, 60);
+
+        this.layersContainer = new LayersWidget();
+        flexLayout.appendToLastContainer(this.layersContainer.element);
+        this.sidebartest.show();
+
         this.sidebar = new Sidebar(this.element);
         this.sidebar.addList();
         this.sidebar.list.addSearch({
             placeholder: 'Search maps'
         });
+
+        flexLayout.appendToFirstContainer(this.sidebar.list.element);
+
         this.sidebar.element.ondragover = (ev) => {
             ev.dataTransfer.dropEffect = "none";
             for (let f of ev.dataTransfer.files) {
@@ -124,7 +136,7 @@ class mapPage extends GuiExtension {
             }
         };
 
-        this.sidebar.show();
+        //this.sidebar.show();
 
         this.mapPane = new SplitPane(Util.div());
 
@@ -214,6 +226,9 @@ class mapPage extends GuiExtension {
         let map = L.map('map', arg);
         map.setView([-100, 100], 0);
         this.mapManager = L.mapManager(map);
+
+        this.layersContainer.setMapManager(this.mapManager);
+
         this.mapEditor = new MapEditor(this.mapManager);
         this.mapEditor.on('soft_change', () => {
             this.updateMap();
@@ -577,6 +592,7 @@ class mapPage extends GuiExtension {
             this.mapManager.setConfiguration(configuration, force);
             this.fillEditor();
             this.sidebarRegions.show();
+            this.layersContainer.reload();
         } else {
             this.switchMap(this.mapManager._configuration);
         }
@@ -734,8 +750,12 @@ class mapPage extends GuiExtension {
             });
             let inpC = document.createElement('INPUT');
             let inp = document.createElement('INPUT');
+            inpC.id = `${layerConfig.name}_color`;
             inpC.type = 'color';
-            inpC.style.display = 'none';
+            inpC.style.width = '0px';
+            inpC.style.height = '0px';
+            inpC.style.padding = '0';
+            inpC.style.visibility = 'hidden';
 
             inp.type = 'text';
             inp.className = 'list-input';
@@ -753,9 +773,10 @@ class mapPage extends GuiExtension {
             inp.ondblclick = (event) => {
                 event.stopPropagation();
                 inp.readOnly = false;
+                inpC["onclick"].apply(inpC);
             }
             inpC.onchange = () => {
-                inpC.style.display = 'none';
+                //inpC.style.display = 'none';
                 layer.setStyle({
                     fillColor: inpC.value,
                     color: inpC.value
@@ -780,12 +801,13 @@ class mapPage extends GuiExtension {
                         this.selectedRegions = [];
                     }
                 }));
+
                 context.append(new MenuItem({
                     label: 'Color',
                     click: () => {
-                        inpC.style.display = 'inline';
-                        inpC.focus();
-                        inpC.click();
+                        //inpC.style.display = 'inline';
+                        //inpC.focus();
+                        inpC["onclick"].call(inpC);
                     }
                 }));
             }
@@ -928,7 +950,7 @@ class mapPage extends GuiExtension {
         });
     }
 
-    editMarkerDetails(marker){
+    editMarkerDetails(marker) {
         // OPEN A MODAL ASKING FOR DETAILS.
         var modal = new Modal({
             title: "Edit marker details",
@@ -972,7 +994,7 @@ class mapPage extends GuiExtension {
             id: "SaveMarker00",
             text: "Save",
             action: () => {
-                this.sidebarRegions.markers.setKey(marker._configuration.name,txtMarkerName.value);
+                this.sidebarRegions.markers.setKey(marker._configuration.name, txtMarkerName.value);
                 marker._configuration.name = txtMarkerName.value;
                 marker._configuration.details = taMarkerDetails.value;
                 marker.setTooltipContent(txtMarkerName.value);
@@ -1009,7 +1031,7 @@ class mapPage extends GuiExtension {
         }
     }
 
-    deleteMarkerCheck(marker){
+    deleteMarkerCheck(marker) {
         dialog.showMessageBox({
             title: 'Delete selected marker?',
             type: 'warning',
@@ -1018,7 +1040,7 @@ class mapPage extends GuiExtension {
             detail: `Marker to be deleted: ${marker._configuration.name}.`,
             noLink: true
         }, (id) => {
-            if(id > 0){
+            if (id > 0) {
                 this.mapManager.removeMarker(marker, true);
             }
         });

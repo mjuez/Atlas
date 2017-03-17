@@ -52,6 +52,12 @@ if (L != undefined) {
             layerControl: true,
             region: {
                 tooltip: true,
+                popup: true,
+                onclick: () => {}
+            },
+            marker: {
+                tooltip: true,
+                popup: true,
                 onclick: () => {}
             }
         },
@@ -502,6 +508,9 @@ if (L != undefined) {
             if (this._options.region.tooltip) {
                 layer.bindTooltip(lyjson.name);
             }
+            if (this._options.region.popup) {
+                layer.bindPopup(lyjson.name);
+            }
             layer.group = group;
             if (group) {
                 group.addLayer(layer);
@@ -558,7 +567,12 @@ if (L != undefined) {
                     details: ``
                 };
             }
-            layer.bindTooltip(lyjson.name);
+            if (this._options.marker.tooltip) {
+                layer.bindTooltip(lyjson.name);
+            }
+            if (this._options.marker.popup) {
+                layer.bindPopup(lyjson.name);
+            }
             layer.group = group;
             if (group) {
                 group.addLayer(layer);

@@ -171,6 +171,7 @@ class mapPage extends GuiExtension {
         this.appendChild(this.devPane);
 
         this.sidebarRegions = new Sidebar(this.element);
+        this.sidebarRegions.show();
         this.sidebarRegionsTabGroup = new TabGroup(this.sidebarRegions);
 
         this.sidebarRegionsTabGroup.addItem({
@@ -698,7 +699,7 @@ class mapPage extends GuiExtension {
                     this.switchMap(this.maps[configuration.id]);
                 },
                 deactive: () => {
-                    this.sidebarRegions.hide();
+                  //  this.sidebarRegions.hide();
                 }
             }
         });
@@ -907,12 +908,17 @@ class mapPage extends GuiExtension {
                 onclick: {
                     active: () => {
                         this.mapManager._map.setView(layer.getLatLng());
+                        layer.openPopup();
                     },
-
                     deactive: () => {
-
+                      layer.closePopup();
                     }
                 }
+            });
+
+            layer.on('click',()=>{
+              this.sidebarRegions.markers.activeJustOne(layerConfig.id);
+              this.mapManager._map.setView(layer.getLatLng());
             });
 
             layer.on('dblclick', (e) => {

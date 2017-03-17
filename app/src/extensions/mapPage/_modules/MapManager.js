@@ -68,7 +68,7 @@ if (L != undefined) {
         setMap: function(map) {
             if (map) {
                 this._map = map;
-                this.fire("mapAdded", map);
+                this.fire("map-added", map);
             } else {
                 throw {
                     type: "map error",
@@ -121,25 +121,27 @@ if (L != undefined) {
         },
 
         clean: function() {
-            this._map.eachLayer((layer) => {
-                this._map.removeLayer(layer);
-            });
-            if (this._drawControl) {
-                this._map.removeControl(this._drawControl);
+            if (this._map) {
+                this._map.eachLayer((layer) => {
+                    this._map.removeLayer(layer);
+                });
+                if (this._drawControl) {
+                    this._map.removeControl(this._drawControl);
+                }
+                if (this._layerControl) {
+                    this._map.removeControl(this._layerControl);
+                }
+                this._map.off("draw:created");
+                this._map.off("draw:edited");
+                this._map.off("draw:deleted");
+                this._map.off("draw:created");
+                this._map.off("draw:drawstart");
+                this._map.off("draw:drawstop");
+                this._map.off("draw:editstart");
+                this._map.off("draw:editstop");
+                this._map.off("draw:deletestart");
+                this._map.off("draw:deletestop");
             }
-            if (this._layerControl) {
-                this._map.removeControl(this._layerControl);
-            }
-            this._map.off("draw:created");
-            this._map.off("draw:edited");
-            this._map.off("draw:deleted");
-            this._map.off("draw:created");
-            this._map.off("draw:drawstart");
-            this._map.off("draw:drawstop");
-            this._map.off("draw:editstart");
-            this._map.off("draw:editstop");
-            this._map.off("draw:deletestart");
-            this._map.off("draw:deletestop");
             this._state.baseLayerOn = false;
             this._tilesLayers = [];
             this._imageLayers = [];
@@ -633,16 +635,16 @@ if (L != undefined) {
                     this._map.removeLayer(polygon);
                 }
             }
-            this.fire('remove:polygon', {
-                layer: polygon
-                //layerConfig: this._configuration.layers.drawnPolygons.polygons[`${polygon._id}`]
-            });
+
             this._polygons.splice(this._polygons.indexOf(polygon), 1);
             if (polygon.group) {
                 delete polygon.group._configuration.polygons[polygon._id];
             } else {
                 delete this._configuration.layers.drawnPolygons.polygons[polygon._id];
             }
+            this.fire('remove:polygon', {
+                layer: polygon
+            });
 
         },
 
@@ -658,8 +660,7 @@ if (L != undefined) {
             }
 
             this.fire('add:drawnmarkers', {
-                layer: null,
-                layerConfig: layerConfig
+                configuration: layerConfig
             });
 
         },
@@ -678,8 +679,7 @@ if (L != undefined) {
             }
 
             this.fire('add:drawnpolygons', {
-                layer: null,
-                layerConfig: layerConfig
+                configuration: layerConfig
             });
 
         },
@@ -705,31 +705,32 @@ if (L != undefined) {
             }
             this.fire('add:polygons', {
                 layer: group,
-                layerConfig: layerConfig
+                configuration: layerConfig
             });
         },
 
         addPointsLayer: function(layer) {
             if (layer.pointsUrlTemplate) {
                 this._pointsLayers.push(layer);
-
                 layer.color = layer.color || this.getDrawingColor();
-
-
                 layer.easyToDraw = layer.easyToDraw || false;
+
+                let points = new pointsLayer(layer);
                 if (!layer.easyToDraw) {
                     return;
                 }
                 // drawing part
                 let markers = L.markerClusterGroup();
                 layer.typeid = this._pointsLayersD.length;
-                this._pointsLayersD.push(markers);
-
                 markers.bindTooltip(layer.name);
                 if (this._layerControl) {
                     this._layerControl.addOverlay(markers, layer.name);
                 }
-                let points = new pointsLayer(layer);
+                this._pointsLayersD.push(markers);
+                this.fire('add:pointslayermarkers', {
+                    layer: markers,
+                    configuration: layer
+                })
                 let scale = points.configuration.size / this.getSize();
                 points.count({
                     maxTiles: 10,
@@ -746,6 +747,11 @@ if (L != undefined) {
                         //console.log(err);
                     }
                 });
+
+                this.fire('add:pointslayer', {
+                    layer: points,
+                    configuration: layer
+                });
             }
 
         },
@@ -756,7 +762,12 @@ if (L != undefined) {
                 if (!layer.easyToDraw) {
                     return;
                 }
-                // drawing part
+                // drawing part not implemented
+
+                this.fire('add:pixelslayer', {
+                    layer: null,
+                    configuration: layer
+                });
 
             }
 
@@ -835,8 +846,7 @@ if (L != undefined) {
             this._layerControl.addOverlay(guideLayer, layerConfig.name);
             this.fire('add:guidelayer', {
                 layer: guideLayer,
-                layerConfig: layerConfig,
-                manager: this
+                configuration: layerConfig
             });
 
         },
@@ -945,7 +955,7 @@ if (L != undefined) {
                 this._map.setView(options.view || [-100, 100], 0);
                 this.fire('add:tileslayer', {
                     layer: layer,
-                    layerConfig: layerConfig
+                    configuration: layerConfig
                 });
 
             }

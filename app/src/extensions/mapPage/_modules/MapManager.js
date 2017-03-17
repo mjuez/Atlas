@@ -509,7 +509,7 @@ if (L != undefined) {
                 layer.bindTooltip(lyjson.name);
             }
             if (this._options.region.popup) {
-                layer.bindPopup(lyjson.name);
+                layer.bindPopup(`<strong>${lyjson.name}</strong> <p> ${lyjson.details || ''}</p>`);
             }
             layer.group = group;
             if (group) {
@@ -571,7 +571,7 @@ if (L != undefined) {
                 layer.bindTooltip(lyjson.name);
             }
             if (this._options.marker.popup) {
-                layer.bindPopup(lyjson.name);
+                layer.bindPopup(`<strong>${lyjson.name}</strong> <p> ${lyjson.details || ''}</p>`);
             }
             layer.group = group;
             if (group) {

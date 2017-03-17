@@ -983,6 +983,7 @@ class mapPage extends GuiExtension {
                 marker._configuration.name = txtMarkerName.value;
                 marker._configuration.details = taMarkerDetails.value;
                 marker.setTooltipContent(txtMarkerName.value);
+                marker.setPopupContent(`<strong>${txtMarkerName.value}</strong> <p> ${taMarkerDetails.value}</p>`);
                 modal.destroy();
             },
             className: "btn-default"

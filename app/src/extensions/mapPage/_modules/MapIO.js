@@ -65,7 +65,7 @@ class MapIO {
                 configuration.basePath = MapIO.basePath(configuration, filename);
                 configuration = MapIO.buildConfiguration(configuration);
                 configuration.new = true;
-                Util.merge(configuration, MapIO.baseConfiguration());
+                configuration = Object.assign(MapIO.baseConfiguration(), configuration);
                 if (typeof next === 'function') {
                     next(configuration);
                 }

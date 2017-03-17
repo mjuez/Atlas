@@ -911,8 +911,7 @@ if (L != undefined) {
         addTilesLayer: function(layerConfig) {
             //create layer
             if (layerConfig.tilesUrlTemplate) {
-                let options = {};
-                Util.merge(options, layerConfig);
+                let options =  Object.assign({}, layerConfig);
                 if (Array.isArray(options.tileSize)) {
                     options.tileSize = L.point(options.tileSize[0], options.tileSize[1]);
                 }
@@ -925,7 +924,6 @@ if (L != undefined) {
                 layer._configuration = layerConfig;
                 layer._configuration.typeid = this._tilesLayers.length;
                 this._tilesLayers.push(layer);
-
 
                 if (this._layerControl) {
                     if (options.baseLayer) {

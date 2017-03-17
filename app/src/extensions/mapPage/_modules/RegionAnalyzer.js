@@ -37,6 +37,32 @@ let gui = require('Gui');
 
 
 
+/**
+ * compute the area of a polygon
+ * code from http://www.mathopenref.com/coordpolygonarea2.html
+ * original from http://alienryderflex.com/polygon_area/
+ *  Public-domain function by Darel Rex Finley, 2006.
+ * @param  {array of ltlng} coords array of the vertex of the polygon
+ * @return {number}        area of the polygon
+ */
+let polygonArea = function(coords) {
+    coords = coords[0]; //lealfet 1 uncomment this line
+    coords = coords.map(function(ltlng) {
+        return ([ltlng.lat, ltlng.lng])
+    });
+    var numPoints = coords.length;
+    var area = 0; // Accumulates area in the loop
+    var j = numPoints - 1; // The last vertex is the 'previous' one to the first
+
+    for (var i = 0; i < numPoints; i++) {
+        area = area + (coords[j][0] + coords[i][0]) * (coords[j][1] -
+            coords[i][1]);
+        j = i; //j is previous vertex to i
+    }
+    return Math.abs(area / 2);
+}
+
+
 
 class RegionAnalyzer {
     constructor(mapManager) {
@@ -44,7 +70,7 @@ class RegionAnalyzer {
     }
 
     areaPx(polygon) {
-        return this.mapManager.polygonArea(polygon.getLatLngs());
+        return polygonArea(polygon.getLatLngs());
     }
 
     areaCal(polygon) {
@@ -123,7 +149,7 @@ class RegionAnalyzer {
                             polygon._configuration.stats[`${pixel.name}_probability`] = m.meanNorm;
                             break;
                         default:
-                        polygon._configuration.stats[`${pixel.name}_${pixel.role}`] = m[pixel.role] || m.sumNorm;
+                            polygon._configuration.stats[`${pixel.name}_${pixel.role}`] = m[pixel.role] || m.sumNorm;
                     }
                     resolve();
                 });

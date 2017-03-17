@@ -21,7 +21,6 @@ const Util = require('Util');
 const leafelt = require('leaflet');
 const leafeltEasyButton = require('leaflet-easybutton');
 const leafletMarkerCluster = require('leaflet.markercluster');
-//const pointsLayer = require(`./_modules/pointsLayer.js`);
 const geometryUtil = require('leaflet-geometryutil');
 const leafletDraw = require('leaflet-draw');
 const snap = require(`leaflet-snap`);
@@ -56,7 +55,7 @@ if (L != undefined) {
                 onclick: () => {}
             }
         },
-        _drawnPolygon: [],
+        _drawnPolygons: [],
         _drawnMarker: [],
         _polygons: [],
         _markers: [],
@@ -95,6 +94,10 @@ if (L != undefined) {
             }
         },
 
+        getConfiguration: function() {
+            return this._configuration;
+        },
+
 
         setOptions: function(options) {
             if (!options) return;
@@ -105,6 +108,7 @@ if (L != undefined) {
             if (options.layerControl) {
                 this._options.layerControl = options.layerControl;
             }
+            this.reload();
         },
 
         initialize: function(map, options, configuration) {
@@ -147,6 +151,7 @@ if (L != undefined) {
             this._guideLayers = [];
             this._polygons = [];
             this._markers = [];
+            this._pointsLayersD = [];
             this._activeBaseLayer = null;
         },
 
@@ -163,7 +168,6 @@ if (L != undefined) {
                     this.addDrawControl();
                 }
                 this.setMapOptions();
-                //this.setIndex();
                 this._indx = 0;
                 if (this._configuration.layers) {
                     if (this._configuration.layers instanceof Array) {
@@ -178,22 +182,6 @@ if (L != undefined) {
                 }
                 this._map.fitWorld();
             }
-        },
-
-
-        setIndex: function() {
-            this._indx = 0;
-            if (this._configuration) {
-                if (this._configuration.layers) {
-                    if (this._configuration.layers.drawnPolygons) {
-                        this._indx = Math.max(this._indx, Math.max(...Object.keys(this._configuration.layers.drawnPolygons.polygons)) || 0);
-                    }
-                    if (this._configuration.layers.drawnMarkers) {
-                        this._indx = Math.max(this._indx, Math.max(...Object.keys(this._configuration.layers.drawnMarkers.markers)) || 0);
-                    }
-                }
-            }
-
         },
 
         getDrawingColor: function() {
@@ -324,7 +312,7 @@ if (L != undefined) {
                     case "pointsLayer":
                         return this._pointsLayers;
                         break;
-                    case "pointsLayerD":
+                    case "pointsLayerMarkers":
                         return this._pointsLayersD;
                         break;
                     case "pixelsLayer":
@@ -334,7 +322,7 @@ if (L != undefined) {
                         return this._guideLayers;
                         break;
                     case "drawnPolygons":
-                        return this._configuration.drawnPolygons;
+                        return this._drawnPolygons;
                         break;
                     case 'polygons':
                         return this._polygons;
@@ -347,36 +335,12 @@ if (L != undefined) {
 
                 }
             } else if (types === undefined || types === null || !types) {
-                return this.getLayers(['tilesLayer', 'pointsLayer', 'pixelsLayer', 'guideLayer', 'drawnPolygons']);
+                return this.getLayers(['tilesLayer', 'pointsLayer', 'pixelsLayer', 'guideLayer', 'polygons', 'markers']);
             }
 
         },
 
 
-        /**
-         * compute the area of a polygon
-         * code from http://www.mathopenref.com/coordpolygonarea2.html
-         * original from http://alienryderflex.com/polygon_area/
-         *  Public-domain function by Darel Rex Finley, 2006.
-         * @param  {array of ltlng} coords array of the vertex of the polygon
-         * @return {number}        area of the polygon
-         */
-        polygonArea: function(coords) {
-            coords = coords[0]; //lealfet 1 uncomment this line
-            coords = coords.map(function(ltlng) {
-                return ([ltlng.lat, ltlng.lng])
-            });
-            var numPoints = coords.length;
-            var area = 0; // Accumulates area in the loop
-            var j = numPoints - 1; // The last vertex is the 'previous' one to the first
-
-            for (var i = 0; i < numPoints; i++) {
-                area = area + (coords[j][0] + coords[i][0]) * (coords[j][1] -
-                    coords[i][1]);
-                j = i; //j is previous vertex to i
-            }
-            return Math.abs(area / 2);
-        },
 
         addLayer: function(layer) {
             switch (layer.type) {
@@ -543,7 +507,7 @@ if (L != undefined) {
                 group.addLayer(layer);
             } else if (this._drawnItems) {
                 this._drawnItems.addLayer(layer);
-
+                this._drawnPolygons.push(layer);
             } else {
                 this._map.addLayer(layer);
             }
@@ -620,8 +584,8 @@ if (L != undefined) {
             });
         },
 
-        removeMarker: function(marker, removeLayer) {
-            if (removeLayer) {
+        removeMarker: function(marker, removeFromMap) {
+            if (removeFromMap) {
                 if (marker.group) {
                     marker.group.removeLayer(marker);
                 } else if (this._drawnItems) {
@@ -643,8 +607,8 @@ if (L != undefined) {
         },
 
 
-        removePolygon: function(polygon, removeLayer) {
-            if (removeLayer) {
+        removePolygon: function(polygon, removeFromMap) {
+            if (removeFromMap) {
                 if (polygon.group) {
                     polygon.group.removeLayer(polygon);
                 } else if (this._drawnItems) {

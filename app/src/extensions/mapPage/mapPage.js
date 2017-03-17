@@ -254,6 +254,8 @@ class mapPage extends GuiExtension {
             });
             gui.workspace.addSpace(this, this.maps, true); //overwriting
         }
+
+        gui.mapManager = this.mapManager
         super.activate();
 
     } //end activate
@@ -715,8 +717,6 @@ class mapPage extends GuiExtension {
         this.mapManager.on('add:polygon', (e) => {
             let layer = e.layer;
             let layerConfig = e.layer._configuration;
-            console.log(layerConfig.name);
-
             layer.on('click', () => {
                 if (!this.sidebarRegions.list.items[layerConfig.id].element.className.includes('active')) {
                     this.sidebarRegions.list.items[layerConfig.id].element.className = 'list-group-item active';

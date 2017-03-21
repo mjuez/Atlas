@@ -21,7 +21,6 @@ const Util = require('Util');
 const leafelt = require('leaflet');
 const leafeltEasyButton = require('leaflet-easybutton');
 const leafletMarkerCluster = require('leaflet.markercluster');
-//const pointsLayer = require(`./_modules/pointsLayer.js`);
 const geometryUtil = require('leaflet-geometryutil');
 const leafletDraw = require('leaflet-draw');
 const snap = require(`leaflet-snap`);
@@ -50,22 +49,26 @@ if (L != undefined) {
         },
         _options: {
             drawControl: true,
-            layerControl: true,
+            layerControl: false,
             region: {
-                tooltip: true,
-                onclick: () => {}
+                tooltip: false,
+                popup: false
+            },
+            marker: {
+                tooltip: false,
+                popup: false
             }
         },
-        _drawnPolygon: [],
+        _drawnPolygons: [],
         _drawnMarker: [],
         _polygons: [],
         _markers: [],
 
 
-        setMap: function(map) {
+        setMap: function (map) {
             if (map) {
                 this._map = map;
-                this.fire("mapAdded", map);
+                this.fire("map-added", map);
             } else {
                 throw {
                     type: "map error",
@@ -75,7 +78,7 @@ if (L != undefined) {
 
         },
 
-        parse: function(configuration) {
+        parse: function (configuration) {
             configuration.type = configuration.type || 'undefined';
             if (configuration.type.includes("map")) {
                 return configuration;
@@ -85,7 +88,7 @@ if (L != undefined) {
 
         },
 
-        setConfiguration: function(configuration, force) {
+        setConfiguration: function (configuration, force) {
             if (configuration === this._configuration && !force) return;
             try {
                 this._configuration = this.parse(configuration);
@@ -95,49 +98,50 @@ if (L != undefined) {
             }
         },
 
-
-        setOptions: function(options) {
-            if (!options) return;
-            if (options.drawControl) {
-                this._options.drawControl = options.drawControl;
-            }
-
-            if (options.layerControl) {
-                this._options.layerControl = options.layerControl;
-            }
+        getConfiguration: function () {
+            return this._configuration;
         },
 
-        initialize: function(map, options, configuration) {
+
+        setOptions: function (options) {
+            if (!options) return;
+            Object.assign(this._options, options);
+            this.reload();
+        },
+
+        initialize: function (map, options, configuration) {
             try {
                 this.setMap(map);
                 this.setOptions(options);
                 this.setConfiguration(configuration || {
                     type: 'map'
                 });
-            } catch (e) {}
+            } catch (e) { }
 
         },
 
-        clean: function() {
-            this._map.eachLayer((layer) => {
-                this._map.removeLayer(layer);
-            });
-            if (this._drawControl) {
-                this._map.removeControl(this._drawControl);
+        clean: function () {
+            if (this._map) {
+                this._map.eachLayer((layer) => {
+                    this._map.removeLayer(layer);
+                });
+                if (this._drawControl) {
+                    this._map.removeControl(this._drawControl);
+                }
+                if (this._layerControl) {
+                    this._map.removeControl(this._layerControl);
+                }
+                this._map.off("draw:created");
+                this._map.off("draw:edited");
+                this._map.off("draw:deleted");
+                this._map.off("draw:created");
+                this._map.off("draw:drawstart");
+                this._map.off("draw:drawstop");
+                this._map.off("draw:editstart");
+                this._map.off("draw:editstop");
+                this._map.off("draw:deletestart");
+                this._map.off("draw:deletestop");
             }
-            if (this._layerControl) {
-                this._map.removeControl(this._layerControl);
-            }
-            this._map.off("draw:created");
-            this._map.off("draw:edited");
-            this._map.off("draw:deleted");
-            this._map.off("draw:created");
-            this._map.off("draw:drawstart");
-            this._map.off("draw:drawstop");
-            this._map.off("draw:editstart");
-            this._map.off("draw:editstop");
-            this._map.off("draw:deletestart");
-            this._map.off("draw:deletestop");
             this._state.baseLayerOn = false;
             this._tilesLayers = [];
             this._imageLayers = [];
@@ -147,13 +151,16 @@ if (L != undefined) {
             this._guideLayers = [];
             this._polygons = [];
             this._markers = [];
+            this._pointsLayersD = [];
             this._activeBaseLayer = null;
+            this.fire('clean');
         },
 
-        reload: function() {
+        reload: function () {
             if (!this._map) {
                 return;
             } else {
+                this.fire('reload');
                 this.clean();
                 if (this._options.layerControl) {
                     this.addLayerControl();
@@ -163,7 +170,6 @@ if (L != undefined) {
                     this.addDrawControl();
                 }
                 this.setMapOptions();
-                //this.setIndex();
                 this._indx = 0;
                 if (this._configuration.layers) {
                     if (this._configuration.layers instanceof Array) {
@@ -180,32 +186,20 @@ if (L != undefined) {
             }
         },
 
-
-        setIndex: function() {
-            this._indx = 0;
-            if (this._configuration) {
-                if (this._configuration.layers) {
-                    if (this._configuration.layers.drawnPolygons) {
-                        this._indx = Math.max(this._indx, Math.max(...Object.keys(this._configuration.layers.drawnPolygons.polygons)) || 0);
-                    }
-                    if (this._configuration.layers.drawnMarkers) {
-                        this._indx = Math.max(this._indx, Math.max(...Object.keys(this._configuration.layers.drawnMarkers.markers)) || 0);
-                    }
-                }
-            }
-
+        getIndex: function () {
+            return this._indx;
         },
 
-        getDrawingColor: function() {
+        getDrawingColor: function () {
             if (typeof this._configuration.drawingColor === 'string') return this._configuration.drawingColor;
             return "#ed8414";
         },
 
-        setDrawingColor: function(color) {
+        setDrawingColor: function (color) {
             if (typeof color === 'string') this._configuration.drawingColor = color;
         },
 
-        setMapOptions: function() {
+        setMapOptions: function () {
             if (this._configuration) {
                 this._configuration.minZoom = this._configuration.minZoom || 0;
                 this._map.setMinZoom(this._configuration.minZoom);
@@ -215,7 +209,15 @@ if (L != undefined) {
             }
         },
 
-        getUnitCal: function() {
+        setMaxZoom: function (zoom) {
+            this._map.setMaxZoom(zoom);
+        },
+
+        setMinZoom: function (zoom) {
+            this._map.setMinZoom(zoom);
+        },
+
+        getUnitCal: function () {
             let unit = "u";
             if (this._activeBaseLayer) {
                 depth = this._activeBaseLayer._configuration.unitCal || depth;
@@ -231,7 +233,7 @@ if (L != undefined) {
             return depth;
         },
 
-        getDepthCal: function() {
+        getDepthCal: function () {
             let depth = 1;
             if (this._activeBaseLayer) {
                 depth = this._activeBaseLayer._configuration.depthCal || depth;
@@ -247,18 +249,18 @@ if (L != undefined) {
             return depth;
         },
 
-        getSize: function() { //this is the maximum of the 2 dimension
+        getSize: function () { //this is the maximum of the 2 dimension
             let temp = this.getSizes();
             return Math.max(temp[0], temp[1]);
         },
 
-        getSizeCal: function() {
+        getSizeCal: function () {
             let temp = this.getSizesCal();
             return Math.max(temp[0], temp[1]);
         },
 
 
-        getSizes: function() {
+        getSizes: function () {
             let size = [256, 256];
             if (this._activeBaseLayer) {
                 size = this._activeBaseLayer._configuration.size || this._activeBaseLayer._configuration.tileSize || 256;
@@ -282,7 +284,7 @@ if (L != undefined) {
             }
         },
 
-        getSizesCal: function() {
+        getSizesCal: function () {
             let size = [256, 256];
             if (this._activeBaseLayer) {
                 size = this._activeBaseLayer._configuration.sizeCal || this._activeBaseLayer._configuration.tileSize || 256;
@@ -308,7 +310,7 @@ if (L != undefined) {
 
 
 
-        getLayers: function(types) {
+        getLayers: function (types) {
             if (Array.isArray(types)) {
                 return types.map((t) => {
                     return this.getLayers(t);
@@ -324,7 +326,7 @@ if (L != undefined) {
                     case "pointsLayer":
                         return this._pointsLayers;
                         break;
-                    case "pointsLayerD":
+                    case "pointsLayerMarkers":
                         return this._pointsLayersD;
                         break;
                     case "pixelsLayer":
@@ -334,7 +336,7 @@ if (L != undefined) {
                         return this._guideLayers;
                         break;
                     case "drawnPolygons":
-                        return this._configuration.drawnPolygons;
+                        return this._drawnPolygons;
                         break;
                     case 'polygons':
                         return this._polygons;
@@ -347,38 +349,14 @@ if (L != undefined) {
 
                 }
             } else if (types === undefined || types === null || !types) {
-                return this.getLayers(['tilesLayer', 'pointsLayer', 'pixelsLayer', 'guideLayer', 'drawnPolygons']);
+                return this.getLayers(['tilesLayer', 'pointsLayer', 'pixelsLayer', 'guideLayer', 'polygons', 'markers']);
             }
 
         },
 
 
-        /**
-         * compute the area of a polygon
-         * code from http://www.mathopenref.com/coordpolygonarea2.html
-         * original from http://alienryderflex.com/polygon_area/
-         *  Public-domain function by Darel Rex Finley, 2006.
-         * @param  {array of ltlng} coords array of the vertex of the polygon
-         * @return {number}        area of the polygon
-         */
-        polygonArea: function(coords) {
-            coords = coords[0]; //lealfet 1 uncomment this line
-            coords = coords.map(function(ltlng) {
-                return ([ltlng.lat, ltlng.lng])
-            });
-            var numPoints = coords.length;
-            var area = 0; // Accumulates area in the loop
-            var j = numPoints - 1; // The last vertex is the 'previous' one to the first
 
-            for (var i = 0; i < numPoints; i++) {
-                area = area + (coords[j][0] + coords[i][0]) * (coords[j][1] -
-                    coords[i][1]);
-                j = i; //j is previous vertex to i
-            }
-            return Math.abs(area / 2);
-        },
-
-        addLayer: function(layer) {
+        addLayer: function (layer) {
             switch (layer.type) {
                 case 'tilesLayer':
                     this.addTilesLayer(layer);
@@ -498,7 +476,7 @@ if (L != undefined) {
 
         },
 
-        addLayerControl: function() {
+        addLayerControl: function () {
             this._layerControl = L.control.layers(null, null, {
                 position: "bottomleft",
                 hideSingleBase: "true"
@@ -507,7 +485,7 @@ if (L != undefined) {
         },
 
 
-        addPolygon: function(layer, addToConfiguration, group) {
+        addPolygon: function (layer, addToConfiguration, group) {
             let lyjson = {};
             this._indx++;
             if (!layer.getLatLngs) {
@@ -538,12 +516,15 @@ if (L != undefined) {
             if (this._options.region.tooltip) {
                 layer.bindTooltip(lyjson.name);
             }
+            if (this._options.region.popup) {
+                layer.bindPopup(`<strong>${lyjson.name}</strong> <p> ${lyjson.details || ''}</p>`);
+            }
             layer.group = group;
             if (group) {
                 group.addLayer(layer);
             } else if (this._drawnItems) {
                 this._drawnItems.addLayer(layer);
-
+                this._drawnPolygons.push(layer);
             } else {
                 this._map.addLayer(layer);
             }
@@ -564,7 +545,7 @@ if (L != undefined) {
             });
         },
 
-        editDrawnLayer: function(layer) {
+        editDrawnLayer: function (layer) {
             if (layer.getLatLngs) {
                 layer._configuration.latlngs = layer.getLatLngs();
             }
@@ -573,7 +554,7 @@ if (L != undefined) {
             }
         },
 
-        addMarker: function(layer, addToConfiguration, group) {
+        addMarker: function (layer, addToConfiguration, group) {
             let lyjson = {};
             this._indx++;
             if (!layer.getLatLng) {
@@ -594,7 +575,12 @@ if (L != undefined) {
                     details: ``
                 };
             }
-            layer.bindTooltip(lyjson.name);
+            if (this._options.marker.tooltip) {
+                layer.bindTooltip(lyjson.name);
+            }
+            if (this._options.marker.popup) {
+                layer.bindPopup(`<strong>${lyjson.name}</strong> <p> ${lyjson.details || ''}</p>`);
+            }
             layer.group = group;
             if (group) {
                 group.addLayer(layer);
@@ -620,8 +606,8 @@ if (L != undefined) {
             });
         },
 
-        removeMarker: function(marker, removeLayer) {
-            if (removeLayer) {
+        removeMarker: function (marker, removeFromMap) {
+            if (removeFromMap) {
                 if (marker.group) {
                     marker.group.removeLayer(marker);
                 } else if (this._drawnItems) {
@@ -643,8 +629,8 @@ if (L != undefined) {
         },
 
 
-        removePolygon: function(polygon, removeLayer) {
-            if (removeLayer) {
+        removePolygon: function (polygon, removeFromMap) {
+            if (removeFromMap) {
                 if (polygon.group) {
                     polygon.group.removeLayer(polygon);
                 } else if (this._drawnItems) {
@@ -653,20 +639,20 @@ if (L != undefined) {
                     this._map.removeLayer(polygon);
                 }
             }
-            this.fire('remove:polygon', {
-                layer: polygon
-                //layerConfig: this._configuration.layers.drawnPolygons.polygons[`${polygon._id}`]
-            });
+
             this._polygons.splice(this._polygons.indexOf(polygon), 1);
             if (polygon.group) {
                 delete polygon.group._configuration.polygons[polygon._id];
             } else {
                 delete this._configuration.layers.drawnPolygons.polygons[polygon._id];
             }
+            this.fire('remove:polygon', {
+                layer: polygon
+            });
 
         },
 
-        addDrawnMarkers: function(layerConfig) {
+        addDrawnMarkers: function (layerConfig) {
             if (Array.isArray(layerConfig.markers)) {
                 layerConfig.markers.map((pol) => {
                     this.addMarker(pol);
@@ -678,13 +664,12 @@ if (L != undefined) {
             }
 
             this.fire('add:drawnmarkers', {
-                layer: null,
-                layerConfig: layerConfig
+                configuration: layerConfig
             });
 
         },
 
-        addDrawnPolygons: function(layerConfig) {
+        addDrawnPolygons: function (layerConfig) {
             if (Array.isArray(layerConfig.polygons)) {
                 layerConfig.polygons.map((pol) => {
                     pol.options.fillOpacity = 0.3;
@@ -698,13 +683,12 @@ if (L != undefined) {
             }
 
             this.fire('add:drawnpolygons', {
-                layer: null,
-                layerConfig: layerConfig
+                configuration: layerConfig
             });
 
         },
 
-        addPolygons: function(layerConfig) {
+        addPolygons: function (layerConfig) {
             let group = L.layerGroup();
             group._configuration = layerConfig;
             if (Array.isArray(layerConfig.polygons)) {
@@ -725,31 +709,33 @@ if (L != undefined) {
             }
             this.fire('add:polygons', {
                 layer: group,
-                layerConfig: layerConfig
+                configuration: layerConfig
             });
         },
 
-        addPointsLayer: function(layer) {
+        addPointsLayer: function (layer) {
             if (layer.pointsUrlTemplate) {
                 this._pointsLayers.push(layer);
-
                 layer.color = layer.color || this.getDrawingColor();
-
-
                 layer.easyToDraw = layer.easyToDraw || false;
+
+                let points = new pointsLayer(layer);
                 if (!layer.easyToDraw) {
                     return;
                 }
                 // drawing part
                 let markers = L.markerClusterGroup();
+                markers._configuration = layer;
                 layer.typeid = this._pointsLayersD.length;
-                this._pointsLayersD.push(markers);
-
                 markers.bindTooltip(layer.name);
                 if (this._layerControl) {
                     this._layerControl.addOverlay(markers, layer.name);
                 }
-                let points = new pointsLayer(layer);
+                this._pointsLayersD.push(markers);
+                this.fire('add:pointslayermarkers', {
+                    layer: markers,
+                    configuration: layer
+                })
                 let scale = points.configuration.size / this.getSize();
                 points.count({
                     maxTiles: 10,
@@ -766,17 +752,27 @@ if (L != undefined) {
                         //console.log(err);
                     }
                 });
+
+                this.fire('add:pointslayer', {
+                    layer: points,
+                    configuration: layer
+                });
             }
 
         },
 
-        addPixelsLayer: function(layer) {
+        addPixelsLayer: function (layer) {
             if (layer.pixelsUrlTemplate) {
                 this._pixelsLayers.push(layer);
                 if (!layer.easyToDraw) {
                     return;
                 }
-                // drawing part
+                // drawing part not implemented
+
+                this.fire('add:pixelslayer', {
+                    layer: null,
+                    configuration: layer
+                });
 
             }
 
@@ -787,12 +783,12 @@ if (L != undefined) {
         },
 
 
-        getBaseLayer: function() {
+        getBaseLayer: function () {
             return this._activeBaseLayer || this._tilesLayers[0];
 
         },
 
-        addGuideLayer: function(layerConfig) {
+        addGuideLayer: function (layerConfig) {
             if (!this.getBaseLayer()) return;
             layerConfig.name = layerConfig.name || 'Guide';
             let guideLayer = L.featureGroup();
@@ -855,17 +851,16 @@ if (L != undefined) {
             this._layerControl.addOverlay(guideLayer, layerConfig.name);
             this.fire('add:guidelayer', {
                 layer: guideLayer,
-                layerConfig: layerConfig,
-                manager: this
+                configuration: layerConfig
             });
 
         },
 
-        addGridLayer: function(layerConfig) {
+        addGridLayer: function (layerConfig) {
 
         },
 
-        addImageLayer: function(layerConfig) {
+        addImageLayer: function (layerConfig) {
             if (layerConfig.imageUrl) {
                 let options = layerConfig.options || {
                     opacity: layerConfig.opacity || 1,
@@ -918,11 +913,10 @@ if (L != undefined) {
         },
 
 
-        addTilesLayer: function(layerConfig) {
+        addTilesLayer: function (layerConfig) {
             //create layer
             if (layerConfig.tilesUrlTemplate) {
-                let options = {};
-                Util.merge(options, layerConfig);
+                let options = Object.assign({}, layerConfig);
                 if (Array.isArray(options.tileSize)) {
                     options.tileSize = L.point(options.tileSize[0], options.tileSize[1]);
                 }
@@ -935,7 +929,6 @@ if (L != undefined) {
                 layer._configuration = layerConfig;
                 layer._configuration.typeid = this._tilesLayers.length;
                 this._tilesLayers.push(layer);
-
 
                 if (this._layerControl) {
                     if (options.baseLayer) {
@@ -960,18 +953,18 @@ if (L != undefined) {
                         this._layerControl.addOverlay(layer, options.name);
                     }
                 } else {
-                    this._map.addLayer(layer);
+                    //this._map.addLayer(layer);
                 }
                 this._map.setView(options.view || [-100, 100], 0);
                 this.fire('add:tileslayer', {
                     layer: layer,
-                    layerConfig: layerConfig
+                    configuration: layerConfig
                 });
 
             }
         },
 
-        tUP: function() {
+        tUP: function () {
             if (!this._activeBaseLayer) return;
             if (!this._activeBaseLayer.options.customKeys) return;
             if (this._activeBaseLayer.options.t >= 0 && this._activeBaseLayer.options.customKeys.t) {
@@ -988,7 +981,7 @@ if (L != undefined) {
             }
         },
 
-        tDOWN: function() {
+        tDOWN: function () {
             if (!this._activeBaseLayer) return;
             if (!this._activeBaseLayer.options.customKeys) return;
             if (this._activeBaseLayer.options.t >= 0 && this._activeBaseLayer.options.customKeys.t) {
@@ -1007,8 +1000,8 @@ if (L != undefined) {
 
     });
 
-    L.mapManager = function(map, configuration) {
-        return (new L.MapManager(map, configuration));
+    L.mapManager = function (map, options, configuration) {
+        return (new L.MapManager(map, options, configuration));
     }
 
 

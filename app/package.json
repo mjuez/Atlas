@@ -40,8 +40,6 @@
     "json2csv": "^3.7.2",
     "leaflet": "1.0.2",
     "leaflet-draw": "^0.4.1",
-    "leaflet-easybutton": "*",
-    "leaflet-geometryutil": "^0.8.0",
     "leaflet-snap": "0.0.4",
     "leaflet.markercluster": "^1.0.0",
     "marked": "^0.3.6",

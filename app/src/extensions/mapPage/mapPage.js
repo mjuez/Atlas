@@ -1041,7 +1041,7 @@ class mapPage extends GuiExtension {
     addLayer(conf) {
         conf = MapIO.parseLayerConfig(conf);
         let key = conf.name || conf.alias || conf.id || conf.type;
-        this.mapManager._configuration.layers[key] = conf;
+        this.mapManager.getConfiguration().layers[key] = conf;
         this.mapManager.reload();
     }
 

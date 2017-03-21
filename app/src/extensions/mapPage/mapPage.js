@@ -38,6 +38,7 @@ const json2csv = require('json2csv');
 const fs = require('fs');
 const mapManager = require('./_modules/MapManager.js');
 const MapIO = require('./_modules/MapIO.js');
+const LayersWidget = require('./_modules/LayersWidget.js');
 const leaflet = require('leaflet');
 const {
     ipcRenderer
@@ -54,6 +55,8 @@ const {
     app
 } = require('electron').remote;
 const Input = require('Input');
+const FlexLayout = require('FlexLayout');
+
 let taskManager = require('TaskManager');
 let gui = require('Gui');
 
@@ -77,11 +80,21 @@ class mapPage extends GuiExtension {
             groupId: "mapPage"
         });
         //add the sidebars
+        this.sidebartest = new Sidebar(this.element);
+        let flexLayout = new FlexLayout(this.sidebartest.element, FlexLayout.Type.VERTICAL, 60);
+
+        this.layersContainer = new LayersWidget();
+        flexLayout.appendToLastContainer(this.layersContainer.element);
+        this.sidebartest.show();
+
         this.sidebar = new Sidebar(this.element);
         this.sidebar.addList();
         this.sidebar.list.addSearch({
             placeholder: 'Search maps'
         });
+
+        flexLayout.appendToFirstContainer(this.sidebar.list.element);
+
         this.sidebar.element.ondragover = (ev) => {
             ev.dataTransfer.dropEffect = "none";
             for (let f of ev.dataTransfer.files) {
@@ -542,7 +555,7 @@ class mapPage extends GuiExtension {
         });
 
         this.mapManager.on('reload', () => {
-
+          this.layersContainer.reload();
         });
 
         //when a polygon is added create region element in the sidebarRegions and relative actions,

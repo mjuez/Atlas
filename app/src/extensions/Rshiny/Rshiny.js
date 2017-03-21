@@ -34,8 +34,6 @@ const Input = parent.require('Input');
 const TreeList = parent.require('TreeList').TreeList;
 const GuiExtension = parent.require('GuiExtension');
 const path = require('path');
-const FileSelector = parent.require('FileSelector');
-const FolderSelector = parent.require('FolderSelector');
 const Grid = parent.require('Grid');
 const ToggleElement = parent.require('ToggleElement');
 const {

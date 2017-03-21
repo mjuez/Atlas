@@ -29,21 +29,12 @@ const Workspace = require('Workspace');
 const Sidebar = require('Sidebar');
 const GuiExtension = require('GuiExtension');
 const ListGroup = require('ListGroup');
-const NavGroup = require('NavGroup');
 const TabGroup = require('TabGroup');
 const ButtonsContainer = require('ButtonsContainer');
-const {
-    TreeList,
-    TreeListInput
-} = require('TreeList');
 const ToggleElement = require('ToggleElement');
 const Util = require('Util');
 const ConvertTiff = require('tiff-to-png');
 const json2csv = require('json2csv');
-const {
-    fork,
-    exec
-} = require('child_process');
 const fs = require('fs');
 const mapManager = require('./_modules/MapManager.js');
 const MapIO = require('./_modules/MapIO.js');
@@ -57,7 +48,6 @@ const {
     Menu,
     MenuItem
 } = require('electron').remote;
-
 const {
     globalShortcut
 } = require('electron').remote;
@@ -65,9 +55,7 @@ const {
     app
 } = require('electron').remote;
 const Input = require('Input');
-
 let taskManager = require('TaskManager');
-
 let gui = require('Gui');
 
 
@@ -79,10 +67,6 @@ class mapPage extends GuiExtension {
         this.selectedRegions = [];
         this.maps = {};
         this.indx = 0;
-        this.options = {
-            drawControls: true,
-            layerControl: true
-        };
     }
 
     activate() {
@@ -90,11 +74,7 @@ class mapPage extends GuiExtension {
             id: 'mapPageToggleButton',
             buttonsContainer: gui.header.actionsContainer,
             icon: "fa fa-map",
-            groupId: "mapPage",
-            action: () => {
-                this.mapPane.show();
-                this.devPane.hide();
-            }
+            groupId: "mapPage"
         });
         //add the sidebars
         this.sidebar = new Sidebar(this.element);
@@ -123,11 +103,8 @@ class mapPage extends GuiExtension {
                 }
             }
         };
-
         this.sidebar.show();
-
         this.mapPane = new SplitPane(Util.div());
-
         this.mapPane.top.ondragover = (ev) => {
             ev.dataTransfer.dropEffect = "none";
             for (let f of ev.dataTransfer.files) {
@@ -147,38 +124,28 @@ class mapPage extends GuiExtension {
                 }
             }
         };
-        this.mapPane.show();
         this.appendChild(this.mapPane);
-
+        this.mapPane.show();
         let mapContainer = this.mapPane.top;
         mapContainer.id = 'map';
-
         let editContainer = this.mapPane.bottom;
         globalShortcut.register('CmdOrCtrl+Up', () => {
             this.mapManager.tUP();
         });
-
         globalShortcut.register('CmdOrCtrl+Down', () => {
             this.mapManager.tDOWN();
         });
-
         globalShortcut.register('F1', () => {
             this.mapManager.center();
         });
-
-        this.devPane = new ToggleElement(Util.div(null, 'pane padded'));
-        this.devPane.hide();
-        this.appendChild(this.devPane);
-
         this.sidebarRegions = new Sidebar(this.element);
         this.sidebarRegions.show();
         this.sidebarRegionsTabGroup = new TabGroup(this.sidebarRegions);
-
         this.sidebarRegionsTabGroup.addItem({
             id: `regions`,
             name: `Regions`
         });
-
+        
         this.sidebarRegionsTabGroup.addItem({
             id: `markers`,
             name: `Markers`
@@ -266,12 +233,10 @@ class mapPage extends GuiExtension {
             });
             gui.workspace.addSpace(this, this.maps, true); //overwriting
         }
-
         gui.mapManager = this.mapManager
         super.activate();
 
     } //end activate
-
 
     makeMenu() {
         let mapMenu = new Menu();
@@ -292,7 +257,7 @@ class mapPage extends GuiExtension {
                     size: 100,
                     tileSize: 10
                 });
-                this.switchMap(this.mapManager._configuration);
+                this.mapManager.reload();
             }
         }));
         layer.append(new MenuItem({
@@ -304,7 +269,7 @@ class mapPage extends GuiExtension {
                     tileSize: 256,
                     tilesUrlTemplate: ''
                 });
-                this.switchMap(this.mapManager._configuration);
+                this.mapManager.reload();
             }
         }));
         region.append(new MenuItem({
@@ -365,16 +330,6 @@ class mapPage extends GuiExtension {
                 });
             }
         }));
-        // mapMenu.append(new MenuItem({
-        //     label: 'Load map from url',
-        //     type: 'normal',
-        //     click: () => {
-        //         MapIO.loadMapfromUrl((conf) => {
-        //             this.addNewMap(conf);
-        //             this.show();
-        //         });
-        //     }
-        // }));
         mapMenu.append(new MenuItem({
             label: 'Crate map',
             type: 'normal',
@@ -387,8 +342,6 @@ class mapPage extends GuiExtension {
             label: 'Edit map',
             accelerator: 'CmdOrCtrl + L',
             click: () => {
-                this.mapPane.show();
-                this.devPane.hide();
                 this.fillEditor();
                 this.mapPane.toggleBottom();
                 this.show();
@@ -439,7 +392,6 @@ class mapPage extends GuiExtension {
             accelerator: 'CmdOrCtrl + M',
             click: () => {
                 this.mapPane.show();
-                this.devPane.hide();
                 this.show();
             }
         }));
@@ -455,12 +407,10 @@ class mapPage extends GuiExtension {
         this.sidebar.remove();
         this.sidebarRegions.remove();
         this.element.removeChild(this.mapPane.element);
-        this.element.removeChild(this.devPane.element);
         gui.removeSubmenu(this.menu); //compulsory
         this.removeToggleButton('mapPageToggleButton'); //this is compulsory to leave the interface clean
         super.deactivate(); //we will also call the super class deactivate method
     }
-
 
     cleanMaps() {
         this.mapManager.clean();
@@ -480,71 +430,6 @@ class mapPage extends GuiExtension {
         this.sidebarRegions.list.clean();
         this.sidebarRegions.markers.clean();
     }
-
-
-    showConfiguration(configuration, show) {
-        let pane = this.devPane.element;
-        Util.empty(pane, pane.firstChild);
-        let tree = new TreeListInput(pane, configuration);
-        let raw = document.createElement('TEXTAREA');
-        raw.className = 'form-control'
-        raw.rows = '3'
-        raw.readOnly = true;
-        raw.innerHTML = JSON.stringify(configuration, null, 2);
-        raw.style.display = 'none';
-        let strong = document.createElement('STRONG');
-        strong.className = 'toolbar-actions';
-        strong.innerHTML = 'Raw configuration '
-        let btnC = new ButtonsContainer(strong);
-        btnC.addButton({
-            id: 'editRaw',
-            icon: 'fa fa-pencil',
-            groupId: 'buttons',
-            toggle: true,
-            action: {
-                active: () => {
-                    raw.readOnly = false;
-                    raw.style.display = 'block';
-                    tree.hide();
-                },
-                deactive: () => {
-                    raw.readOnly = true;
-                    raw.style.display = 'none';
-                    tree.show();
-                }
-            }
-        });
-        let cont = document.createElement('DIV');
-        cont.className = 'form-group';
-        let sub = new ButtonsContainer(document.createElement('DIV'));
-        sub.element.className = 'form-actions';
-        sub.addButton({
-            text: 'Save',
-            className: 'btn btn-form btn-default',
-            action: () => {
-                this.saveConfiguration(tree.getObject());
-            }
-        });
-        sub.addButton({
-            text: 'Cancel',
-            className: 'btn btn-form btn-default',
-            action: () => {
-                this.devPane.hide();
-                this.mapPane.show();
-                Util.empty(pane, pane.firstChild);
-            }
-        });
-        cont.appendChild(strong);
-        cont.appendChild(raw);
-        pane.appendChild(cont);
-        pane.appendChild(sub.element);
-        if (show) {
-            this.mapPane.hide();
-            this.devPane.show();
-            this.show();
-        }
-    }
-
 
     loadMap(path, cl) {
         MapIO.loadMap(path, (conf) => {
@@ -566,10 +451,6 @@ class mapPage extends GuiExtension {
         }
     }
 
-    initRegionActions(configuration, force) {
-        if (configuration === this.mapManager._configuration && !force) return;
-
-    }
 
     fillEditor() {
         let cont = this.mapPane.bottom;
@@ -577,29 +458,9 @@ class mapPage extends GuiExtension {
         this.mapEditor.editor(cont);
     }
 
-    switchMap(configuration, force) {
-        if (configuration) {
-            this.selectedRegions.map((pol) => {
-                pol.setStyle({
-                    fillOpacity: 0.3
-                });
-            });
-            this.selectedRegions = [];
-            this.initRegionActions(configuration, force);
-            this.showConfiguration(configuration);
-            this.mapManager.setConfiguration(configuration, force);
-            this.fillEditor();
-            this.sidebarRegions.show();
-        } else {
-            this.switchMap(this.mapManager._configuration);
-        }
-    }
-
-
     addNewMap(configuration) {
         this.indx++;
         configuration.id = this.indx;
-        this.initRegionActions(configuration);
         try {
             this.mapManager.setConfiguration(configuration);
         } catch (e) {
@@ -641,8 +502,6 @@ class mapPage extends GuiExtension {
             label: 'Edit map',
             type: 'normal',
             click: () => {
-                this.mapPane.show();
-                this.devPane.hide();
                 this.mapPane.toggleBottom();
             }
         }));
@@ -668,26 +527,6 @@ class mapPage extends GuiExtension {
 
             }
         }));
-        ctn.append(new MenuItem({
-            label: 'Dev view',
-            type: 'normal',
-            click: () => {
-                dialog.showMessageBox({
-                    title: 'show map configuration?',
-                    type: 'warning',
-                    buttons: ['No', "Yes"],
-                    message: `The map configuration object should be modified only if you know what you are doing`,
-                    detail: 'tips: you can go back to map view with CmdOrCtrl + M',
-                    noLink: true
-                }, (id) => {
-                    if (id > 0) {
-                        this.mapPane.hide();
-                        this.devPane.show();
-                    }
-                });
-
-            }
-        }));
 
         let title = document.createElement('STRONG');
         title.innerHTML = configuration.name;
@@ -706,20 +545,16 @@ class mapPage extends GuiExtension {
             },
             onclick: {
                 active: () => {
-                    this.switchMap(this.maps[configuration.id]);
+                    this.mapManager.setConfiguration(configuration);
                 },
-                deactive: () => {
-                    //  this.sidebarRegions.hide();
-                }
+                deactive: () => {}
             }
         });
 
         this.maps[configuration.id] = configuration;
         configuration.new = false;
-        //this.switchMap(configuration, true);
         this.sidebar.list.activeJustOne(configuration.id);
         this.mapPane.show();
-        this.devPane.hide();
     }
 
 
@@ -729,6 +564,12 @@ class mapPage extends GuiExtension {
         this.mapManager.on('clean', () => {
             this.sidebarRegions.list.clean();
             this.sidebarRegions.markers.clean();
+            this.selectedRegions = [];
+
+        });
+
+        this.mapManager.on('reload', ()=>{
+          this.fillEditor();
         });
 
         //when a polygon is added create region element in the sidebarRegions and relative actions,
@@ -821,35 +662,34 @@ class mapPage extends GuiExtension {
 
                 }
             }));
-                context.append(new MenuItem({
-                    label: 'Create polygons layer from selected',
-                    click: () => {
-
-                        if (this.selectedRegions.length == 0) {
-                            return;
-                        }
-                        dialog.showMessageBox({
-                          type: 'question',
-                          buttons: ['Cancel', 'Create'],
-                          defaultId: 0,
-                          title: 'Create polygons layer',
-                          message: `Do you want to create a new polygon layers from the selected regions: ${this.selectedRegions}`,
-                          noLink: true
-                        }, (id)=>{
-                         if (id>0){
-                           let conf= {
-                               name: `Polygons${this.mapManager.getIndex()}`,
-                               type: 'polygons',
-                               polygons: this.selectedRegions.map((pol) => {
-                                   return Object.assign({},pol._configuration);
-                               })
-                           };
-                           this.addLayer(conf);
-                           this.selectedRegions = [];
-                         }
-                        });
+            context.append(new MenuItem({
+                label: 'Create polygons layer from selected',
+                click: () => {
+                    if (this.selectedRegions.length == 0) {
+                        return;
                     }
-                }));
+                    dialog.showMessageBox({
+                        type: 'question',
+                        buttons: ['Cancel', 'Create'],
+                        defaultId: 0,
+                        title: 'Create polygons layer',
+                        message: `Do you want to create a new polygon layers from the selected regions: ${this.selectedRegions}`,
+                        noLink: true
+                    }, (id) => {
+                        if (id > 0) {
+                            let conf = {
+                                name: `Polygons${this.mapManager.getIndex()}`,
+                                type: 'polygons',
+                                polygons: this.selectedRegions.map((pol) => {
+                                    return Object.assign({}, pol._configuration);
+                                })
+                            };
+                            this.addLayer(conf);
+                            this.selectedRegions = [];
+                        }
+                    });
+                }
+            }));
             context.append(new MenuItem({
                 label: 'Export statistics',
                 click: () => {
@@ -882,7 +722,6 @@ class mapPage extends GuiExtension {
                             fillOpacity: 0.8
                         });
                         gui.notify(`${layerConfig.name} selected, (${this.selectedRegions.length} tot)`);
-                        //gui.notify(`${layerConfig.name} => ${Util.stringify(layerConfig.stats) || ' '} _`); //region stats in footbar
                     },
                     deactive: () => {
                         this.selectedRegions.splice(this.selectedRegions.indexOf(layer), 1);
@@ -1047,7 +886,6 @@ class mapPage extends GuiExtension {
         if (typeof configuration.id === 'undefined') return;
         try {
             configuration = MapIO.buildConfiguration(configuration);
-            this.initRegionActions(configuration, true);
         } catch (e) {
             // otherwise means that the mapManager is unable to load the map
             console.log(e);
@@ -1057,9 +895,7 @@ class mapPage extends GuiExtension {
         this.sidebar.list.setTitle(configuration.id, configuration.name);
         this.maps[configuration.id] = configuration;
         if (hard) {
-            this.switchMap(configuration, true);
-            this.mapPane.show();
-            this.devPane.hide();
+            this.mapManager.setConfiguration(configuration);
         }
     }
 
@@ -1245,8 +1081,6 @@ class mapPage extends GuiExtension {
             gui.notify(`${path} started conversion`);
             converter.convertArray([path], MapIO.basePath(null, path));
         }
-        this.showConfiguration(this.mapManager._configuration);
-        //this.switchMap(this.mapManager._configuration);
     }
 
 

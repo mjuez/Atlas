@@ -117,7 +117,7 @@ class mapPage extends GuiExtension {
                 }
             }
         };
-        this.sidebar.show();
+        //this.sidebar.show();
         this.mapPane = new SplitPane(Util.div());
         this.mapPane.top.ondragover = (ev) => {
             ev.dataTransfer.dropEffect = "none";

@@ -38,7 +38,6 @@ const json2csv = require('json2csv');
 const fs = require('fs');
 const mapManager = require('./_modules/MapManager.js');
 const MapIO = require('./_modules/MapIO.js');
-const MapEditor = require('./_modules/MapEditor.js');
 const leaflet = require('leaflet');
 const {
     ipcRenderer
@@ -194,17 +193,7 @@ class mapPage extends GuiExtension {
                 popup: true
             }
         });
-        this.mapEditor = new MapEditor(this.mapManager);
-        this.mapEditor.on('soft_change', () => {
-            this.updateMap();
-        });
-        this.mapEditor.on('change', () => {
-            this.updateMap();
-            this.mapManager.reload(true);
-        });
-        this.mapEditor.on('hard_change', () => {
-            this.updateMap(true);
-        });
+
         this.regionAnalyzer = new RegionAnalyzer(this.mapManager, gui);
         this.listenMapManager();
         this.makeMenu();
@@ -339,19 +328,18 @@ class mapPage extends GuiExtension {
                 this.show();
             }
         }));
-        mapMenu.append(new MenuItem({
-            label: 'Edit map',
-            accelerator: 'CmdOrCtrl + L',
-            click: () => {
-                this.fillEditor();
-                this.mapPane.toggleBottom();
-                this.show();
-            }
-        }));
+        // mapMenu.append(new MenuItem({
+        //     label: 'Edit map',
+        //     accelerator: 'CmdOrCtrl + L',
+        //     click: () => {
+        //         this.mapPane.toggleBottom();
+        //         this.show();
+        //     }
+        // }));
         mapMenu.append(new MenuItem({
             label: 'Reload map',
             click: () => {
-                this.updateMap(true);
+                this.mapManager.reload();
                 this.show();
             }
         }));
@@ -392,7 +380,6 @@ class mapPage extends GuiExtension {
             type: 'normal',
             accelerator: 'CmdOrCtrl + M',
             click: () => {
-                this.mapPane.show();
                 this.show();
             }
         }));
@@ -444,21 +431,6 @@ class mapPage extends GuiExtension {
     }
 
 
-    saveConfiguration(configuration) {
-        if (configuration.new) {
-            this.addNewMap(configuration);
-        } else {
-            this.updateMap();
-        }
-    }
-
-
-    fillEditor() {
-        let cont = this.mapPane.bottom;
-        Util.empty(cont, cont.firstChild);
-        this.mapEditor.editor(cont);
-    }
-
     addNewMap(configuration) {
         this.indx++;
         configuration.id = this.indx;
@@ -499,13 +471,13 @@ class mapPage extends GuiExtension {
                 });
             }
         }));
-        ctn.append(new MenuItem({
-            label: 'Edit map',
-            type: 'normal',
-            click: () => {
-                this.mapPane.toggleBottom();
-            }
-        }));
+        // ctn.append(new MenuItem({
+        //     label: 'Edit map',
+        //     type: 'normal',
+        //     click: () => {
+        //         this.mapPane.toggleBottom();
+        //     }
+        // }));
         ctn.append(new MenuItem({
             label: 'Delete',
             type: 'normal',
@@ -570,7 +542,7 @@ class mapPage extends GuiExtension {
         });
 
         this.mapManager.on('reload', () => {
-            this.fillEditor();
+
         });
 
         //when a polygon is added create region element in the sidebarRegions and relative actions,
@@ -879,24 +851,6 @@ class mapPage extends GuiExtension {
         modal.addBody(grid.element);
         modal.addFooter(footer);
         modal.show();
-    }
-
-    updateMap(hard) {
-        let configuration = this.mapManager._configuration;
-        if (typeof configuration.id === 'undefined') return;
-        try {
-            configuration = MapIO.buildConfiguration(configuration);
-        } catch (e) {
-            // otherwise means that the mapManager is unable to load the map
-            console.log(e);
-            return;
-        }
-        this.sidebar.list.setKey(configuration.id, configuration.authors);
-        this.sidebar.list.setTitle(configuration.id, configuration.name);
-        this.maps[configuration.id] = configuration;
-        if (hard) {
-            this.mapManager.setConfiguration(configuration);
-        }
     }
 
     deleteMarkerCheck(marker) {

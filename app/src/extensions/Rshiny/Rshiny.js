@@ -20,30 +20,31 @@
 
 "use strict";
 
+const parent = module.parent;
 const {
     spawn,
     ChildProcess
 } = require('child_process');
-const SplitPane = require('SplitPane');
-const Util = require('Util');
-const TaskManager = require('TaskManager');
-const Task = require('Task');
-const ButtonsContainer = require('ButtonsContainer');
-const Input = require('Input');
-const TreeList = require('TreeList').TreeList;
-const GuiExtension = require('GuiExtension');
+const SplitPane = parent.require('SplitPane');
+const Util = parent.require('Util');
+const TaskManager = parent.require('TaskManager');
+const Task = parent.require('Task');
+const ButtonsContainer = parent.require('ButtonsContainer');
+const Input = parent.require('Input');
+const TreeList = parent.require('TreeList').TreeList;
+const GuiExtension = parent.require('GuiExtension');
 const path = require('path');
-const FileSelector = require('FileSelector');
-const FolderSelector = require('FolderSelector');
-const Grid = require('Grid');
-const ToggleElement = require('ToggleElement');
+const FileSelector = parent.require('FileSelector');
+const FolderSelector = parent.require('FolderSelector');
+const Grid = parent.require('Grid');
+const ToggleElement = parent.require('ToggleElement');
 const {
     dialog,
     Menu,
     MenuItem
-} = require('electron').remote;
-const Modal = require('Modal');
-let gui = require('Gui');
+} = parent.require('electron').remote;
+const Modal = parent.require('Modal');
+let gui = parent.require('Gui');
 
 
 

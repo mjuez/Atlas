@@ -219,7 +219,7 @@ class mapPage extends GuiExtension {
             layerControl: true,
             region: {
                 tooltip: true,
-                popup: true
+                popup: false
             },
             marker: {
                 tooltip: true,

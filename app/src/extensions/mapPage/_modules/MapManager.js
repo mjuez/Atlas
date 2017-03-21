@@ -18,6 +18,7 @@
 
  */
 const Util = require('Util');
+const http = require('http');
 const leafelt = require('leaflet');
 const leafeltEasyButton = require('leaflet-easybutton');
 const leafletMarkerCluster = require('leaflet.markercluster');
@@ -79,6 +80,9 @@ if (L != undefined) {
         },
 
         parse: function(configuration) {
+            if (typeof configuration === 'string'){
+                configuration = JSON.parse(configuration);
+            }
             configuration.type = configuration.type || 'undefined';
             if (configuration.type.includes("map")) {
                 return configuration;

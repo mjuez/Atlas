@@ -272,7 +272,6 @@ if (L != undefined) {
             return Math.max(temp[0], temp[1]);
         },
 
-
         getSizes: function() {
             let size = [256, 256];
             if (this._activeBaseLayer) {
@@ -321,8 +320,6 @@ if (L != undefined) {
             }
         },
 
-
-
         getLayers: function(types) {
             if (Array.isArray(types)) {
                 return types.map((t) => {
@@ -366,8 +363,6 @@ if (L != undefined) {
             }
 
         },
-
-
 
         addLayer: function(layer) {
             switch (layer.type) {
@@ -416,7 +411,6 @@ if (L != undefined) {
                 this._layerControl.addOverlay(this._drawnItems, "Drawn Regions");
             }
         },
-
 
         addDrawControl() {
             if (!(this._drawnItems instanceof L.FeatureGroup)) {
@@ -496,7 +490,6 @@ if (L != undefined) {
             });
             this._map.addControl(this._layerControl);
         },
-
 
         addPolygon: function(layer, addToConfiguration, group) {
             let lyjson = {};
@@ -641,7 +634,6 @@ if (L != undefined) {
             });
         },
 
-
         removePolygon: function(polygon, removeFromMap) {
             if (removeFromMap) {
                 if (polygon.group) {
@@ -662,7 +654,6 @@ if (L != undefined) {
             this.fire('remove:polygon', {
                 layer: polygon
             });
-
         },
 
         addDrawnMarkers: function(layerConfig) {
@@ -679,7 +670,6 @@ if (L != undefined) {
             this.fire('add:drawnmarkers', {
                 configuration: layerConfig
             });
-
         },
 
         addDrawnPolygons: function(layerConfig) {
@@ -793,7 +783,6 @@ if (L != undefined) {
         center() {
             this._map.setView([0, 0], 0);
         },
-
 
         getBaseLayer: function() {
             return this._activeBaseLayer || this._tilesLayers[0];

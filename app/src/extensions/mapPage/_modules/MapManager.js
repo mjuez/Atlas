@@ -80,7 +80,7 @@ if (L != undefined) {
         },
 
         parse: function(configuration) {
-            if (typeof configuration === 'string'){
+            if (typeof configuration === 'string') {
                 configuration = JSON.parse(configuration);
             }
             configuration.type = configuration.type || 'undefined';
@@ -96,6 +96,9 @@ if (L != undefined) {
             if (configuration === this._configuration && !force) return;
             try {
                 this._configuration = this.parse(configuration);
+                this.fire('set:configuration', {
+                    configuration: configuration
+                });
                 this.reload();
             } catch (e) {
                 throw e;
@@ -215,10 +218,16 @@ if (L != undefined) {
 
         setMaxZoom: function(zoom) {
             this._map.setMaxZoom(zoom);
+            this.fire('set:maxZoom', {
+                maxZoom: zoom
+            });
         },
 
         setMinZoom: function(zoom) {
             this._map.setMinZoom(zoom);
+            this.fire('set:minZoom', {
+                minZoom: zoom
+            });
         },
 
         getUnitCal: function() {

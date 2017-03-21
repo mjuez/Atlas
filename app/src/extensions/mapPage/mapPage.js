@@ -207,7 +207,7 @@ class mapPage extends GuiExtension {
                 popup: true
             }
         });
-
+        this.layersContainer.setMapManager(this.mapManager);
         this.regionAnalyzer = new RegionAnalyzer(this.mapManager, gui);
         this.listenMapManager();
         this.makeMenu();

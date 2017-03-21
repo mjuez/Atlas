@@ -37,26 +37,51 @@ class LayersWidget {
         this.mapManager = mapManager;
         this.mapManager.on('reload', () => {
             this.list.clean();
+            this.baseLayer = null;
+            this.baseLayers = [];
+            this.overlayLayers = [];
         });
 
         this.mapManager.on('add:tileslayer', (e) => {
             let details = Util.div('tools will be here');
-            
+
             let configuration = e.configuration;
             let layer = e.layer;
 
-            if(configuration.baseLayer){
+            let actions = document.createElement('i');
+
+            if (configuration.baseLayer) {
                 this.baseLayers.push(layer);
-                if(!this.baseLayer){
+                if (!this.baseLayer) {
                     this.baseLayer = layer;
+                    actions.className = 'fa fa-eye fa-lg';
+                    this.mapManager._map.addLayer(this.baseLayer);
+                } else {
+                    actions.className = 'fa fa-eye-slash fa-lg';
                 }
-                this.mapManager._map.addLayer(this.baseLayer);  
+            } else {
+                actions.className = 'fa fa-eye-slash fa-lg';
             }
+
+            actions.onclick = (e) => {
+                e.stopPropagation();
+                this.mapManager._map.removeLayer(this.baseLayer);
+                if (actions.classList.contains('fa-eye-slash')) {
+                    actions.classList.remove('fa-eye-slash');
+                    actions.classList.add('fa-eye');
+                    this.baseLayer = layer;
+                    this.mapManager._map.addLayer(layer);
+                } else {
+                    actions.classList.remove('fa-eye');
+                    actions.classList.add('fa-eye-slash');
+                }
+            };
 
             this.list.addItem({
                 title: configuration.name,
                 subtitle: configuration.authors,
                 body: details,
+                actions: actions,
                 key: configuration.name,
                 toggle: {
                     justOne: true,
@@ -64,9 +89,7 @@ class LayersWidget {
                 },
                 onclick: {
                     active: () => {
-                        this.mapManager._map.removeLayer(this.baseLayer);
-                        this.baseLayer = layer;
-                        this.mapManager._map.addLayer(layer);
+
                     },
 
                     deactive: () => {

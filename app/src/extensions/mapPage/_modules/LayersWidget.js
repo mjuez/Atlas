@@ -49,8 +49,8 @@ class LayersWidget {
                 this.baseLayers.push(layer);
                 if(!this.baseLayer){
                     this.baseLayer = layer;
-                    this.mapManager._map.addLayer(layer);
                 }
+                this.mapManager._map.addLayer(this.baseLayer);  
             }
 
             this.list.addItem({

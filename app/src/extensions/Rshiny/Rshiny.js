@@ -46,8 +46,6 @@ let gui = parent.require('Gui');
 
 
 
-
-
 class Rshiny extends GuiExtension {
 
     constructor() {

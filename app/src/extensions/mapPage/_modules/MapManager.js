@@ -107,8 +107,9 @@ if (L != undefined) {
         getConfiguration: function() {
             return this._configuration;
         },
-        setOptions: function(options) {
 
+
+        setOptions: function(options) {
             if (!options) return;
             Object.assign(this._options, options);
             this.reload();
@@ -216,8 +217,6 @@ if (L != undefined) {
             }
         },
 
-        <<
-        << << < HEAD
         setMaxZoom: function(zoom) {
             this._map.setMaxZoom(zoom);
             this.fire('set:maxZoom', {

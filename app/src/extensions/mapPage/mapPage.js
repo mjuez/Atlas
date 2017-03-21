@@ -93,6 +93,7 @@ class mapPage extends GuiExtension {
             placeholder: 'Search maps'
         });
 
+
         flexLayout.appendToFirstContainer(this.sidebar.list.element);
 
         this.sidebar.element.ondragover = (ev) => {

@@ -278,7 +278,6 @@ div.input-label {
 
 .simple {
     background-color: inherit;
-    width: auto;
     max-width: 100pt;
     box-shadow: none;
     border-color: inherit;
@@ -509,7 +508,14 @@ img.imageicon {
     overflow: auto;
     border-color: #b7b7b7;
     border-width: thin;
-    border-style: solid;;
+    border-style: solid;
+}
+
+.list-group-item.active{
+    color: #414142;
+    background-color: transparent;
+    background-image: linear-gradient(to right, #116cd6, #116cd6 7px, transparent 7px , transparent);
+    padding-left: 15px;
 }
 
 .flex-layout {

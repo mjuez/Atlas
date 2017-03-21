@@ -64,6 +64,7 @@ class mapPage extends GuiExtension {
     constructor() {
         super(); //always
         this.icon = 'fa fa-map fa-2x';
+        this._colors = ['blue', 'red', 'pink', 'orange', 'yellow', 'green', 'purple', 'black', 'white'];
         this.selectedRegions = [];
         this.maps = {};
         this.indx = 0;
@@ -145,7 +146,7 @@ class mapPage extends GuiExtension {
             id: `regions`,
             name: `Regions`
         });
-        
+
         this.sidebarRegionsTabGroup.addItem({
             id: `markers`,
             name: `Markers`
@@ -568,8 +569,8 @@ class mapPage extends GuiExtension {
 
         });
 
-        this.mapManager.on('reload', ()=>{
-          this.fillEditor();
+        this.mapManager.on('reload', () => {
+            this.fillEditor();
         });
 
         //when a polygon is added create region element in the sidebarRegions and relative actions,
@@ -594,8 +595,6 @@ class mapPage extends GuiExtension {
             });
             let inpC = document.createElement('INPUT');
             let inp = document.createElement('INPUT');
-            inpC.type = 'color';
-            inpC.style.display = 'none';
 
             inp.type = 'text';
             inp.className = 'list-input';
@@ -607,29 +606,36 @@ class mapPage extends GuiExtension {
                 inp.readOnly = true;
             }
             inp.onblur = () => {
-                inp.value = layerConfig.name;
                 inp.readOnly = true;
-            }
-            inp.ondblclick = (event) => {
-                event.stopPropagation();
-                inp.readOnly = false;
-            }
-            inpC.onchange = () => {
-                inpC.style.display = 'none';
-                layer.setStyle({
-                    fillColor: inpC.value,
-                    color: inpC.value
-                });
-            }
-            inpC.oninput = () => {
-                layer.setStyle({
-                    fillColor: inpC.value,
-                    color: inpC.value
-                });
             }
 
             let context = new Menu();
             if (!layer.group) {
+                context.append(new MenuItem({
+                    label: 'Rename',
+                    click: () => {
+                        inp.readOnly = false;
+                    }
+                }));
+                let color = new Menu();
+                this._colors.map((col) => {
+                    color.append(new MenuItem({
+                        label: col,
+                        click: () => {
+                            layer.setStyle({
+                                color: col,
+                                fillColor: col
+                            });
+                            layer._configuration.options.color = col;
+                            layer._configuration.options.fillColor = col;
+                        }
+                    }));
+                });
+                context.append(new MenuItem({
+                    label: 'Color',
+                    type: 'submenu',
+                    submenu: color
+                }));
                 context.append(new MenuItem({
                     label: 'Delete',
                     click: () => {
@@ -638,14 +644,6 @@ class mapPage extends GuiExtension {
                         }
                         this.deleteRegionsCheck(this.selectedRegions);
                         this.selectedRegions = [];
-                    }
-                }));
-                context.append(new MenuItem({
-                    label: 'Color',
-                    click: () => {
-                        inpC.style.display = 'inline';
-                        inpC.focus();
-                        inpC.click();
                     }
                 }));
             }
@@ -662,34 +660,34 @@ class mapPage extends GuiExtension {
 
                 }
             }));
-            context.append(new MenuItem({
-                label: 'Create polygons layer from selected',
-                click: () => {
-                    if (this.selectedRegions.length == 0) {
-                        return;
-                    }
-                    dialog.showMessageBox({
-                        type: 'question',
-                        buttons: ['Cancel', 'Create'],
-                        defaultId: 0,
-                        title: 'Create polygons layer',
-                        message: `Do you want to create a new polygon layers from the selected regions: ${this.selectedRegions}`,
-                        noLink: true
-                    }, (id) => {
-                        if (id > 0) {
-                            let conf = {
-                                name: `Polygons${this.mapManager.getIndex()}`,
-                                type: 'polygons',
-                                polygons: this.selectedRegions.map((pol) => {
-                                    return Object.assign({}, pol._configuration);
-                                })
-                            };
-                            this.addLayer(conf);
-                            this.selectedRegions = [];
-                        }
-                    });
-                }
-            }));
+            // context.append(new MenuItem({
+            //     label: 'Create polygons layer from selected',
+            //     click: () => {
+            //         if (this.selectedRegions.length == 0) {
+            //             return;
+            //         }
+            //         dialog.showMessageBox({
+            //             type: 'question',
+            //             buttons: ['Cancel', 'Create'],
+            //             defaultId: 0,
+            //             title: 'Create polygons layer',
+            //             message: `Do you want to create a new polygon layers from the selected regions: ${this.selectedRegions}`,
+            //             noLink: true
+            //         }, (id) => {
+            //             if (id > 0) {
+            //                 let conf = {
+            //                     name: `Polygons${this.mapManager.getIndex()}`,
+            //                     type: 'polygons',
+            //                     polygons: this.selectedRegions.map((pol) => {
+            //                         return Object.assign({}, pol._configuration);
+            //                     })
+            //                 };
+            //                 this.addLayer(conf);
+            //                 this.selectedRegions = [];
+            //             }
+            //         });
+            //     }
+            // }));
             context.append(new MenuItem({
                 label: 'Export statistics',
                 click: () => {
@@ -705,10 +703,12 @@ class mapPage extends GuiExtension {
             inp.size = layerConfig.name.length + 1;
             let c = document.createElement('STRONG');
             c.appendChild(inp);
-            c.appendChild(inpC);
             c.oncontextmenu = (event) => {
                 context.popup();
             }
+            layer.on('contextmenu',()=>{
+              context.popup();
+            })
             this.sidebarRegions.addItem({
                 id: layerConfig.id,
                 title: c,

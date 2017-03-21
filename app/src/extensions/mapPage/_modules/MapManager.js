@@ -572,7 +572,9 @@ if (L != undefined) {
                     lyjson.latLng ||
                     lyjson.point ||
                     lyjson.coordinate ||
-                    lyjson.coord || [lyjson.lat || lyjson.y, lyjson.lang || lyjson.x]);
+                    lyjson.coord || [lyjson.lat || lyjson.y, lyjson.lang || lyjson.x], {
+                    //  icon: L.divIcon({className:'fa fa-map fa-2x'})
+                    });
             } else { //assume the layer is already a L.marker
                 lyjson = layer.configuration || {
                     latlng: layer.getLatLng(),

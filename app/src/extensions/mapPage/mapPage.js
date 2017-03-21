@@ -207,9 +207,9 @@ class mapPage extends GuiExtension {
                 popup: true
             }
         });
-        this.layersContainer.setMapManager(this.mapManager);
         this.regionAnalyzer = new RegionAnalyzer(this.mapManager, gui);
         this.listenMapManager();
+        this.layersContainer.setMapManager(this.mapManager);
         this.makeMenu();
         gui.workspace.addSpace(this, this.maps, false); //without overwriting
         //saving to workspace and retriving loaded worspace
@@ -556,7 +556,6 @@ class mapPage extends GuiExtension {
         });
 
         this.mapManager.on('reload', () => {
-          this.layersContainer.reload();
         });
 
         //when a polygon is added create region element in the sidebarRegions and relative actions,

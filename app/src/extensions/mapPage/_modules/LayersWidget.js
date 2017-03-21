@@ -35,13 +35,13 @@ class LayersWidget {
 
     setMapManager(mapManager) {
         this.mapManager = mapManager;
-        this.mapManager.on('reload', () => {
+        this.mapManager.on('clean', () => {
             this.list.clean();
         });
 
         this.mapManager.on('add:tileslayer', (e) => {
             let details = Util.div('tools will be here');
-            
+
             let configuration = e.configuration;
             let layer = e.layer;
 

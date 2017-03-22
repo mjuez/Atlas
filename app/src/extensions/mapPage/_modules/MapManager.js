@@ -743,6 +743,7 @@ if (L != undefined) {
                 points.count({
                     maxTiles: 10,
                     cl: (point) => {
+                        if (point.some(x => isNaN(x))) return;
                         point = [-point[1] / scale, point[0] / scale];
                         let mk = L.circleMarker(point, {
                             color: layer.color || this.getDrawingColor(),

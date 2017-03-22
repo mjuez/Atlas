@@ -513,11 +513,10 @@ class mapPage extends GuiExtension {
             key: `${configuration.name} ${configuration.date} ${configuration.authors}`,
             body: body,
             icon: ic,
-            toggle: {
-                justOne: true
-            },
+            toggle: true,
             onclick: {
                 active: () => {
+                    this.sidebar.list.deactiveAll();
                     this.mapManager.setConfiguration(configuration);
                 },
                 deactive: () => {}
@@ -526,7 +525,8 @@ class mapPage extends GuiExtension {
 
         this.maps[configuration.id] = configuration;
         configuration.new = false;
-        this.sidebar.list.activeJustOne(configuration.id);
+        this.sidebar.list.deactiveAll();
+        this.sidebar.list.activeItem(configuration.id);
         this.mapPane.show();
     }
 
@@ -759,11 +759,10 @@ class mapPage extends GuiExtension {
                 id: layerConfig.id,
                 title: title,
                 key: layerConfig.name,
-                toggle: {
-                    justOne: true
-                },
+                toggle: true,
                 onclick: {
                     active: () => {
+                        this.sidebarRegions.markers.deactiveAll();
                         this.mapManager._map.setView(layer.getLatLng());
                         layer.openPopup();
                     },
@@ -774,7 +773,8 @@ class mapPage extends GuiExtension {
             });
 
             layer.on('click', () => {
-                this.sidebarRegions.markers.activeJustOne(layerConfig.id);
+                this.sidebarRegions.markers.deactiveAll();
+                this.sidebarRegions.markers.activeItem(layerConfig.id);
                 this.mapManager._map.setView(layer.getLatLng());
             });
 

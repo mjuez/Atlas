@@ -403,7 +403,31 @@ if (L != undefined) {
             }
         },
 
-        addDrawnItems() {
+
+        removeLayer: function(layer) {
+            let configuration;
+            let leafletlayer;
+            if (typeof layer.addTo === 'function') {
+                leafletlayer = layer;
+                configuration = layer._configuration;
+            } else if ((typeof layer.name === 'string') && (typeof layer.type === 'string')) {
+                if (layer.typeid) {
+                    leafletlayer = this.getLayers(layer.type)[layer.typeid];
+                }
+                configuration = layer;
+            }
+            delete this._configuration[configuration.name];
+            if (leafletlayer) {
+                this._map.removeLayer(leafletlayer);
+            }
+            this.fire('remove:layer', {
+                layer: leafletlayer,
+                configuration: configuration
+            });
+        },
+
+
+        addDrawnItems: function() {
             this._drawnItems = new L.FeatureGroup(); //where items are stored
             this._map.addLayer(this._drawnItems);
             if (this._layerControl) {
@@ -411,7 +435,7 @@ if (L != undefined) {
             }
         },
 
-        addDrawControl() {
+        addDrawControl: function() {
             if (!(this._drawnItems instanceof L.FeatureGroup)) {
                 this.addDrawnItems();
             }
@@ -572,7 +596,7 @@ if (L != undefined) {
                     lyjson.point ||
                     lyjson.coordinate ||
                     lyjson.coord || [lyjson.lat || lyjson.y, lyjson.lang || lyjson.x], {
-                    //  icon: L.divIcon({className:'fa fa-map fa-2x'})
+                        //  icon: L.divIcon({className:'fa fa-map fa-2x'})
                     });
             } else { //assume the layer is already a L.marker
                 lyjson = layer.configuration || {
@@ -722,8 +746,11 @@ if (L != undefined) {
                 this._pointsLayers.push(layer);
                 layer.color = layer.color || this.getDrawingColor();
                 layer.easyToDraw = layer.easyToDraw || false;
-
                 let points = new pointsLayer(layer);
+                this.fire('add:pointslayer', {
+                    layer: points,
+                    configuration: layer
+                });
                 if (!layer.easyToDraw) {
                     return;
                 }
@@ -757,10 +784,7 @@ if (L != undefined) {
                     }
                 });
 
-                this.fire('add:pointslayer', {
-                    layer: points,
-                    configuration: layer
-                });
+
             }
 
         },
@@ -768,15 +792,17 @@ if (L != undefined) {
         addPixelsLayer: function(layer) {
             if (layer.pixelsUrlTemplate) {
                 this._pixelsLayers.push(layer);
-                if (!layer.easyToDraw) {
-                    return;
-                }
-                // drawing part not implemented
+
 
                 this.fire('add:pixelslayer', {
                     layer: null,
                     configuration: layer
                 });
+
+                if (!layer.easyToDraw) {
+                    return;
+                }
+                // drawing part not implemented
 
             }
 

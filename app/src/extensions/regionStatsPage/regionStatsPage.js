@@ -67,7 +67,8 @@ class regionStatsPage extends GuiExtension {
         this.loadWorkspaceData();
         this.cleanPane();
         this.showRegionsStats(gui.extensionsManager.extensions.mapPage.mapManager._configuration);
-        this.sidebar.list.activeJustOne(gui.extensionsManager.extensions.mapPage.mapManager._configuration.id);
+        this.sidebar.list.deactiveAll();
+        this.sidebar.list.activeItem(gui.extensionsManager.extensions.mapPage.mapManager._configuration.id);
     }
 
     addSidebar() {
@@ -100,10 +101,11 @@ class regionStatsPage extends GuiExtension {
             id: `${map.id}`,
             title: map.name,
             key: map.authors,
-            toggle: {justOne:true}, //just one item is activable at the same time
+            toggle: true, //just one item is activable at the same time
             onclick: {
                 active: () => {
-                  gui.extensionsManager.extensions.mapPage.switchMap(map);
+                  this.sidebar.list.deactiveAll();
+                  gui.mapManager.setConfiguration(map);
                   this.cleanPane(); // clean the pane to avoid more than one table to be displayed
                   this.showRegionsStats(map);
                 },

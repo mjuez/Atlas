@@ -3,6 +3,7 @@
 const Util = require('Util');
 const ListGroup = require('ListGroup');
 const Grid = require('Grid');
+const Input = require('Input');
 
 class LayersWidget {
 
@@ -45,31 +46,68 @@ class LayersWidget {
             let configuration = e.configuration;
             let layer = e.layer;
 
-            if(configuration.baseLayer){
+            if (configuration.baseLayer) {
                 this.baseLayers.push(layer);
-                if(!this.baseLayer){
+                if (!this.baseLayer) {
                     this.baseLayer = layer;
                     this.mapManager._map.addLayer(layer);
                 }
             }
 
             this.list.addItem({
+                id: configuration.name,
                 title: configuration.name,
                 subtitle: configuration.authors,
                 body: details,
-                key: configuration.name,
+                key: `${configuration.name} ${configuration.authors}`,
                 toggle: {
-                    justOne: true,
-                    expand: true
+                  expand: true
                 },
                 onclick: {
                     active: () => {
                         this.mapManager._map.removeLayer(this.baseLayer);
                         this.baseLayer = layer;
                         this.mapManager._map.addLayer(layer);
-                    },
+                    }
+                }
+            });
 
+            layer.on('remove', () => {
+                this.list.deactiveItem(configuration.name);
+            });
+        });
+
+
+        this.mapManager.on('add:pointslayermarkers', (e) => {
+            let details = Util.div('tools will be here');
+
+            let configuration = e.configuration;
+            let layer = e.layer;
+
+            let title = Input.input({
+                label: '',
+                placeholder: 'name',
+                className: 'list-input',
+                value: configuration.name,
+                oninput: () => {
+                    configuration.name = title.value;
+                }
+            });
+            title.readOnly = true;
+
+            this.list.addItem({
+                title: title,
+                body: details,
+                key: `${configuration.name} ${configuration.authors}`,
+                toggle: {
+                    expand: true
+                },
+                onclick: {
+                    active: () => {
+
+                    },
                     deactive: () => {
+
                     }
                 }
             });

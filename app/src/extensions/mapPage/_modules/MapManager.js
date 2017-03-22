@@ -403,7 +403,7 @@ if (L != undefined) {
             }
         },
 
-
+        //the leafletlayer
         removeLayer: function(layer) {
             let configuration;
             let leafletlayer;
@@ -411,7 +411,7 @@ if (L != undefined) {
                 leafletlayer = layer;
                 configuration = layer._configuration;
             } else if ((typeof layer.name === 'string') && (typeof layer.type === 'string')) {
-                if (layer.typeid) {
+                if (layer.typeid >=0) {
                     leafletlayer = this.getLayers(layer.type)[layer.typeid];
                 }
                 configuration = layer;
@@ -420,6 +420,7 @@ if (L != undefined) {
             if (leafletlayer) {
                 this._map.removeLayer(leafletlayer);
             }
+
             this.fire('remove:layer', {
                 layer: leafletlayer,
                 configuration: configuration

@@ -63,7 +63,7 @@ class regionStatsPage extends GuiExtension {
         super.show();
         this.cleanPane();
         this.sidebar.list.clean();
-        this.sidebar.markers.clean();
+        //this.sidebar.markers.clean();
         this.loadWorkspaceData();
         this.cleanPane();
         this.showRegionsStats(gui.extensionsManager.extensions.mapPage.mapManager._configuration);
@@ -103,8 +103,9 @@ class regionStatsPage extends GuiExtension {
             toggle: {justOne:true}, //just one item is activable at the same time
             onclick: {
                 active: () => {
+                  gui.extensionsManager.extensions.mapPage.switchMap(map);
                   this.cleanPane(); // clean the pane to avoid more than one table to be displayed
-                    this.showRegionsStats(map);
+                  this.showRegionsStats(map);
                 },
                 deactive: () => {
                     this.cleanPane();
@@ -115,7 +116,6 @@ class regionStatsPage extends GuiExtension {
 
     showRegionsStats(map) {
         let polygons = gui.extensionsManager.extensions.mapPage.mapManager.getLayers('polygons');
-        if (!map.layers) return;
         if (polygons.length > 0) {
             var table = new Table();
             Object.keys(polygons).map((key) => {

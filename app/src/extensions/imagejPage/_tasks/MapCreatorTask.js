@@ -38,7 +38,7 @@ class MapCreatorTask extends Task {
     constructor(details, isMap, isFolder) {
         let name = "ImageJ MapCreator";
         super(name, details);
-        this.imageJExtension = gui.extensionsManager.extensions.imagej;
+        this.imageJExtension = gui.extensions.imagej;
         this.macro = "MapCreator";
         this.isMap = isMap;
         this.isFolder = isFolder;
@@ -104,7 +104,7 @@ class MapCreatorTask extends Task {
         if (this.isMap) {
             this.customAction["caption"] = "Load map to workspace";
             this.customAction["onclick"] = () => {
-              gui.extensionsManager.extensions.mapPage.loadMap(this.jsonFile);
+              gui.extensions.mapPage.loadMap(this.jsonFile);
             };
         } else {
             this.customAction["caption"] = "Add layer to a map in workspace";

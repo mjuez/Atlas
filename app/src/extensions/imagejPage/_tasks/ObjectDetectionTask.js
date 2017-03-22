@@ -39,7 +39,7 @@ class ObjectDetectionTask extends Task {
     constructor(details, mode) {
         let name = "ImageJ Object Detector";
         super(name, details);
-        this.imageJExtension = gui.extensionsManager.extensions.imagej;
+        this.imageJExtension = gui.extensions.imagej;
         this.macro = "ObjectDetector";
         this.mode = mode;
         this.jsonFile = null;

@@ -42,10 +42,9 @@ class CropTask extends Task {
     constructor(details) {
         let name = "ImageJ Image Cropping";
         super(name, details);
-        this.imageJExtension = gui.extensionsManager.extensions.imagej;
+        this.imageJExtension = gui.extensions.imagej;
         this.macro = "croppingBigSTiched";
         this.childProcess = null;
-
     }
 
     run(runPath) {

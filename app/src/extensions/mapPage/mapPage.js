@@ -527,11 +527,10 @@ class mapPage extends GuiExtension {
             key: `${configuration.name} ${configuration.date} ${configuration.authors}`,
             body: body,
             icon: ic,
-            toggle: {
-                justOne: true
-            },
+            toggle: true,
             onclick: {
                 active: () => {
+                    this.sidebar.list.deactiveAll();
                     this.mapManager.setConfiguration(configuration);
                 },
                 deactive: () => {}
@@ -773,11 +772,10 @@ class mapPage extends GuiExtension {
                 id: layerConfig.id,
                 title: title,
                 key: layerConfig.name,
-                toggle: {
-                    justOne: true
-                },
+                toggle: true,
                 onclick: {
                     active: () => {
+                        this.sidebarRegions.markers.deactiveAll();
                         this.mapManager._map.setView(layer.getLatLng());
                         layer.openPopup();
                     },

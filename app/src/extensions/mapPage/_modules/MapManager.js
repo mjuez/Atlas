@@ -127,7 +127,6 @@ if (L != undefined) {
         },
 
         clean: function() {
-
             if (this._map) {
                 this._map.eachLayer((layer) => {
                     this._map.removeLayer(layer);
@@ -167,7 +166,6 @@ if (L != undefined) {
             if (!this._map) {
                 return;
             } else {
-                this.fire('reload');
                 this.clean();
                 if (this._options.layerControl) {
                     this.addLayerControl();
@@ -322,7 +320,6 @@ if (L != undefined) {
         },
 
         getLayers: function(types) {
-
             if (Array.isArray(types)) {
                 return types.map((t) => {
                     return this.getLayers(t);
@@ -367,7 +364,6 @@ if (L != undefined) {
         },
 
         addLayer: function(layer) {
-
             switch (layer.type) {
                 case 'tilesLayer':
                     this.addTilesLayer(layer);
@@ -576,7 +572,7 @@ if (L != undefined) {
                     lyjson.point ||
                     lyjson.coordinate ||
                     lyjson.coord || [lyjson.lat || lyjson.y, lyjson.lang || lyjson.x], {
-                        //  icon: L.divIcon({className:'fa fa-map fa-2x'})
+                    //  icon: L.divIcon({className:'fa fa-map fa-2x'})
                     });
             } else { //assume the layer is already a L.marker
                 lyjson = layer.configuration || {
@@ -733,7 +729,6 @@ if (L != undefined) {
                 }
                 // drawing part
                 let markers = L.markerClusterGroup();
-                markers._configuration = layer;
                 layer.typeid = this._pointsLayersD.length;
                 markers.bindTooltip(layer.name);
                 if (this._layerControl) {
@@ -748,6 +743,7 @@ if (L != undefined) {
                 points.count({
                     maxTiles: 10,
                     cl: (point) => {
+                        if (point.some(x => isNaN(x))) return;
                         point = [-point[1] / scale, point[0] / scale];
                         let mk = L.circleMarker(point, {
                             color: layer.color || this.getDrawingColor(),
@@ -960,7 +956,7 @@ if (L != undefined) {
                         this._layerControl.addOverlay(layer, options.name);
                     }
                 } else {
-                    //this._map.addLayer(layer);
+                    this._map.addLayer(layer);
                 }
                 this._map.setView(options.view || [-100, 100], 0);
                 this.fire('add:tileslayer', {

@@ -2,19 +2,55 @@
 
 const Util = require('Util');
 const ListGroup = require('ListGroup');
+const TabGroup = require('TabGroup');
 const Grid = require('Grid');
 const {
     Menu,
     MenuItem
 } = require('electron').remote;
 const Input = require('Input');
+const ToggleElement = require('ToggleElement');
 
 class LayersWidget {
 
     constructor() {
         this.element = Util.div(null, 'layers-widget');
         this.content = Util.div(null, 'content');
-        this.list = new ListGroup(this.content);
+
+        this.tabs = new TabGroup(this.content);
+        this.baselist = new ListGroup(this.content);
+        this.overlaylist = new ListGroup(this.content);
+        this.datalist = new ListGroup(this.content);
+        this.overlaylist.hide();
+        this.datalist.hide();
+        this.tabs.addItem({
+            name: 'Base',
+            id: 'base'
+        });
+        this.tabs.addItem({
+            name: 'Overlay',
+            id: 'overlay'
+        });
+        this.tabs.addItem({
+            name: 'Data',
+            id: 'data'
+        });
+        this.tabs.addClickListener('base', () => {
+            this.baselist.show();
+            this.overlaylist.hide();
+            this.datalist.hide();
+        });
+        this.tabs.addClickListener('overlay', () => {
+            this.baselist.hide();
+            this.overlaylist.show();
+            this.datalist.hide();
+        });
+        this.tabs.addClickListener('data', () => {
+            this.baselist.hide();
+            this.datalist.show();
+            this.overlaylist.hide();
+        });
+
         let topBar = Util.div(null, 'top-bar');
         let outerGrid = new Grid(2, 1);
         let title = document.createElement('SPAN');
@@ -40,7 +76,9 @@ class LayersWidget {
     setMapManager(mapManager) {
         this.mapManager = mapManager;
         this.mapManager.on('clean', () => {
-            this.list.clean();
+            this.baselist.clean();
+            this.overlaylist.clean();
+            this.datalist.clean();
             this.baseLayer = null;
             this.baseLayers = {};
             this.overlayLayers = {};
@@ -50,7 +88,8 @@ class LayersWidget {
             let configuration = e.configuration;
             let layer = e.layer;
 
-            let tools = this.createToolbox(layer, true, false, false);          
+            let tools = this.createToolbox(layer, true, false, false);
+            tools.hide();
 
             if (configuration.baseLayer) {
                 this.addBaseLayer(layer);
@@ -80,16 +119,21 @@ class LayersWidget {
             });
             customMenuItems.push(baseLayerMenuItem);
 
-            this._addToList(layer, customMenuItems, tools);
+            if (configuration.baseLayer) {
+                this._addToList(layer, customMenuItems, tools, this.baselist);
+            } else {
+                this._addToList(layer, customMenuItems, tools, this.overlaylist);
+            }
         });
 
         this.mapManager.on('remove:layer', (e) => {
             if (e.configuration.baseLayer) {
-                this.removeBaseLayer(e.configuration.id);
-            } else {
                 this.removeOverlayLayer(e.configuration.id);
+                this.overlaylist.removeItem(e.configuration.id);
+            } else {
+                this.removeBaseLayer(e.configuration.id);
+                this.baselist.removeItem(e.configuration.id);
             }
-            this.list.removeItem(e.configuration.id);
         });
     }
 
@@ -186,13 +230,16 @@ class LayersWidget {
         }
     }
 
-    _addToList(layer, customMenuItems, tools) {
+    _addToList(layer, customMenuItems, tools, list) {
         let txtTitle = Input.input({
             value: layer._configuration.name,
             className: 'list-input',
             readOnly: true,
             onblur: () => {
                 txtTitle.readOnly = true;
+            },
+            onchange: () => {
+                layer._configuration.name = txtTitle.value;
             }
         });
 
@@ -222,23 +269,52 @@ class LayersWidget {
             btnVisibility = this.overlayLayers[layer._configuration.id].btnVisibility;
         }
 
-        this.list.addItem({
+        list.addItem({
             id: layer._configuration.id,
             title: txtTitle,
-            subtitle: layer._configuration.authors,
-            body: tools,
-            contextMenu: context,
+            active: (this.baseLayer === layer),
+            details: tools,
+            oncontextmenu: () => {
+                context.popup();
+            },
             actions: btnVisibility,
             key: layer._configuration.name,
-            toggle: {
-                justOne: true,
-                expand: true
+            toggle: true,
+            onclick: {
+                active: (item, e) => {
+                    if (e.ctrlKey) {
+                        tools.toggle();
+                        return;
+                    }
+                    if (layer._configuration.baseLayer) {
+                        this.mapManager._map.removeLayer(this.baseLayer);
+                        this.baseLayer = layer;
+                    }
+                    this.mapManager._map.addLayer(layer);
+                },
+                deactive: (item, e) => {
+                    if (e.ctrlKey) {
+                        tools.toggle();
+                        item.element.classList.add('active');
+                        return;
+                    } else {
+                        if (!layer._configuration.baseLayer) {
+                            this.mapManager._map.removeLayer(layer);
+                        } else {
+                            item.element.classList.add('active');
+                        }
+                    }
+                }
             }
+        });
+
+        layer.on('remove', () => {
+            list.deactiveItem(layer._configuration.id);
         });
     }
 
     createToolbox(layer, hasOpacityControl, hasColorControl, hasRadiusControl) {
-        let toolbox = Util.div(null, 'table-container toolbox');
+        let toolbox = new ToggleElement(Util.div(null, 'table-container toolbox'));
         let configuration = layer._configuration;
 
         if (hasColorControl) {

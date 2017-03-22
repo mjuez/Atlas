@@ -526,10 +526,6 @@ img.imageicon {
     width: 100%;
 }
 
-.toolbox {
-    padding-right: 10px;
-}
-
 .toolbox input[type="range"]{
     -webkit-appearance: none;
     width: 100%;

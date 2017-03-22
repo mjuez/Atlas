@@ -160,7 +160,6 @@ if (L != undefined) {
             if (!this._map) {
                 return;
             } else {
-                this.fire('reload');
                 this.clean();
                 if (this._options.layerControl) {
                     this.addLayerControl();
@@ -183,6 +182,7 @@ if (L != undefined) {
                     }
                 }
                 this._map.fitWorld();
+                this.fire('reload');
             }
         },
 

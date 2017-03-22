@@ -35,7 +35,7 @@ class LayersWidget {
 
     setMapManager(mapManager) {
         this.mapManager = mapManager;
-        this.mapManager.on('reload', () => {
+        this.mapManager.on('clean', () => {
             this.list.clean();
             this.baseLayer = null;
             this.baseLayers = [];

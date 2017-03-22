@@ -3,12 +3,6 @@
 const Util = require('Util');
 const ListGroup = require('ListGroup');
 const Grid = require('Grid');
-const Input = require('Input');
-const ToggleElement = require('ToggleElement');
-const {
-    Menu,
-    MenuItem
-} = require('electron').remote;
 
 class LayersWidget {
 
@@ -43,107 +37,39 @@ class LayersWidget {
         this.mapManager = mapManager;
         this.mapManager.on('clean', () => {
             this.list.clean();
-            this.baseLayer = null;
-            this.baseLayers = [];
-            this.overlayLayers = [];
         });
 
         this.mapManager.on('add:tileslayer', (e) => {
             let details = Util.div('tools will be here');
+
             let configuration = e.configuration;
             let layer = e.layer;
-            if (configuration.baseLayer) {
-                if (!this.baseLayer) {
+
+            if(configuration.baseLayer){
+                this.baseLayers.push(layer);
+                if(!this.baseLayer){
                     this.baseLayer = layer;
-                    this.mapManager._map.addLayer(this.baseLayer);
+                    this.mapManager._map.addLayer(layer);
                 }
             }
 
-            let menu = Menu.buildFromTemplate([{
-                label: 'delete',
-                click: () => {
-
-                }
-            }, {
-                label: 'rename',
-                click: () => {
-
-                }
-            }, {
-                label: 'details',
-                click: () => {
-                    this.list.forEach((it) => {
-                        if (it.details) {
-                            it.details.hide();
-                        }
-                    });
-                    this.list.items[configuration.name].details.show();
-                }
-            }]);
-
             this.list.addItem({
-                id: configuration.name,
                 title: configuration.name,
                 subtitle: configuration.authors,
-                details: details,
-                active: (this.baseLayer === layer),
-                key: `${configuration.name} ${configuration.authors}`,
-                oncontextmenu: () => {
-                    menu.popup();
-                },
-                toggle: true,
-                onclick: {
-                    active: () => {
-                        if (configuration.baseLayer) {
-                            this.mapManager._map.removeLayer(this.baseLayer);
-                            this.baseLayer = layer;
-                        }
-                        this.mapManager._map.addLayer(layer);
-                    },
-                    deactive: () => {
-                        if (!configuration.baseLayer) {
-                            this.mapManager._map.removeLayer(layer);
-                        }
-                    }
-                }
-            });
-
-            layer.on('remove', () => {
-                this.list.deactiveItem(configuration.name);
-            });
-        });
-
-
-        this.mapManager.on('add:pointslayermarkers', (e) => {
-            let details = Util.div('tools will be here');
-
-            let configuration = e.configuration;
-            let layer = e.layer;
-
-            let title = Input.input({
-                label: '',
-                placeholder: 'name',
-                className: 'list-input',
-                value: configuration.name,
-                oninput: () => {
-                    configuration.name = title.value;
-                }
-            });
-            title.readOnly = true;
-
-            this.list.addItem({
-                title: title,
                 body: details,
-                key: `${configuration.name} ${configuration.authors}`,
+                key: configuration.name,
                 toggle: {
+                    justOne: true,
                     expand: true
                 },
                 onclick: {
                     active: () => {
-
+                        this.mapManager._map.removeLayer(this.baseLayer);
+                        this.baseLayer = layer;
+                        this.mapManager._map.addLayer(layer);
                     },
-                    deactive: () => {
 
+                    deactive: () => {
                     }
                 }
             });

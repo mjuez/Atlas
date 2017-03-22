@@ -4,11 +4,6 @@ const Util = require('Util');
 const ListGroup = require('ListGroup');
 const Grid = require('Grid');
 const Input = require('Input');
-const ToggleElement = require('ToggleElement');
-const {
-    Menu,
-    MenuItem
-} = require('electron').remote;
 
 class LayersWidget {
 
@@ -43,67 +38,36 @@ class LayersWidget {
         this.mapManager = mapManager;
         this.mapManager.on('clean', () => {
             this.list.clean();
-            this.baseLayer = null;
-            this.baseLayers = [];
-            this.overlayLayers = [];
         });
 
         this.mapManager.on('add:tileslayer', (e) => {
             let details = Util.div('tools will be here');
+
             let configuration = e.configuration;
             let layer = e.layer;
+
             if (configuration.baseLayer) {
+                this.baseLayers.push(layer);
                 if (!this.baseLayer) {
                     this.baseLayer = layer;
-                    this.mapManager._map.addLayer(this.baseLayer);
+                    this.mapManager._map.addLayer(layer);
                 }
             }
-
-            let menu = Menu.buildFromTemplate([{
-                label: 'delete',
-                click: () => {
-
-                }
-            }, {
-                label: 'rename',
-                click: () => {
-
-                }
-            }, {
-                label: 'details',
-                click: () => {
-                    this.list.forEach((it) => {
-                        if (it.details) {
-                            it.details.hide();
-                        }
-                    });
-                    this.list.items[configuration.name].details.show();
-                }
-            }]);
 
             this.list.addItem({
                 id: configuration.name,
                 title: configuration.name,
                 subtitle: configuration.authors,
-                details: details,
-                active: (this.baseLayer === layer),
+                body: details,
                 key: `${configuration.name} ${configuration.authors}`,
-                oncontextmenu: () => {
-                    menu.popup();
+                toggle: {
+                  expand: true
                 },
-                toggle: true,
                 onclick: {
                     active: () => {
-                        if (configuration.baseLayer) {
-                            this.mapManager._map.removeLayer(this.baseLayer);
-                            this.baseLayer = layer;
-                        }
+                        this.mapManager._map.removeLayer(this.baseLayer);
+                        this.baseLayer = layer;
                         this.mapManager._map.addLayer(layer);
-                    },
-                    deactive: () => {
-                        if (!configuration.baseLayer) {
-                            this.mapManager._map.removeLayer(layer);
-                        }
                     }
                 }
             });

@@ -4,11 +4,6 @@ const Util = require('Util');
 const ListGroup = require('ListGroup');
 const Grid = require('Grid');
 const Input = require('Input');
-const ToggleElement = require('ToggleElement');
-const {
-    Menu,
-    MenuItem
-} = require('electron').remote;
 
 class LayersWidget {
 
@@ -50,60 +45,62 @@ class LayersWidget {
 
         this.mapManager.on('add:tileslayer', (e) => {
             let details = Util.div('tools will be here');
+
             let configuration = e.configuration;
             let layer = e.layer;
+
+<<<<<<< HEAD
+=======
+            let actions = document.createElement('i');
+
+>>>>>>> mjuez/tov0.1.4
             if (configuration.baseLayer) {
+                this.baseLayers.push(layer);
                 if (!this.baseLayer) {
                     this.baseLayer = layer;
+                    actions.className = 'fa fa-eye fa-lg';
                     this.mapManager._map.addLayer(this.baseLayer);
+                } else {
+                    actions.className = 'fa fa-eye-slash fa-lg';
                 }
+            } else {
+                actions.className = 'fa fa-eye-slash fa-lg';
             }
 
-            let menu = Menu.buildFromTemplate([{
-                label: 'delete',
-                click: () => {
-
+            actions.onclick = (e) => {
+                e.stopPropagation();
+                this.mapManager._map.removeLayer(this.baseLayer);
+                if (actions.classList.contains('fa-eye-slash')) {
+                    actions.classList.remove('fa-eye-slash');
+                    actions.classList.add('fa-eye');
+                    this.baseLayer = layer;
+                    this.mapManager._map.addLayer(layer);
+                } else {
+                    actions.classList.remove('fa-eye');
+                    actions.classList.add('fa-eye-slash');
                 }
-            }, {
-                label: 'rename',
-                click: () => {
-
-                }
-            }, {
-                label: 'details',
-                click: () => {
-                    this.list.forEach((it) => {
-                        if (it.details) {
-                            it.details.hide();
-                        }
-                    });
-                    this.list.items[configuration.name].details.show();
-                }
-            }]);
+            };
 
             this.list.addItem({
                 id: configuration.name,
                 title: configuration.name,
                 subtitle: configuration.authors,
-                details: details,
-                active: (this.baseLayer === layer),
+                body: details,
+<<<<<<< HEAD
                 key: `${configuration.name} ${configuration.authors}`,
-                oncontextmenu: () => {
-                    menu.popup();
+=======
+                actions: actions,
+                key: configuration.name,
+>>>>>>> mjuez/tov0.1.4
+                toggle: {
+                  expand: true
                 },
-                toggle: true,
                 onclick: {
                     active: () => {
-                        if (configuration.baseLayer) {
-                            this.mapManager._map.removeLayer(this.baseLayer);
-                            this.baseLayer = layer;
-                        }
+<<<<<<< HEAD
+                        this.mapManager._map.removeLayer(this.baseLayer);
+                        this.baseLayer = layer;
                         this.mapManager._map.addLayer(layer);
-                    },
-                    deactive: () => {
-                        if (!configuration.baseLayer) {
-                            this.mapManager._map.removeLayer(layer);
-                        }
                     }
                 }
             });
@@ -119,6 +116,10 @@ class LayersWidget {
 
             let configuration = e.configuration;
             let layer = e.layer;
+=======
+
+                    },
+>>>>>>> mjuez/tov0.1.4
 
             let title = Input.input({
                 label: '',

@@ -38,6 +38,9 @@ class LayersWidget {
         this.mapManager = mapManager;
         this.mapManager.on('clean', () => {
             this.list.clean();
+            this.baseLayer = null;
+            this.baseLayers = [];
+            this.overlayLayers = [];
         });
 
         this.mapManager.on('add:tileslayer', (e) => {
@@ -46,13 +49,34 @@ class LayersWidget {
             let configuration = e.configuration;
             let layer = e.layer;
 
+           let actions = document.createElement('i');
+
             if (configuration.baseLayer) {
                 this.baseLayers.push(layer);
                 if (!this.baseLayer) {
                     this.baseLayer = layer;
-                    this.mapManager._map.addLayer(layer);
+                    actions.className = 'fa fa-eye fa-lg';
+                    this.mapManager._map.addLayer(this.baseLayer);
+                } else {
+                    actions.className = 'fa fa-eye-slash fa-lg';
                 }
+            } else {
+                actions.className = 'fa fa-eye-slash fa-lg';
             }
+
+            actions.onclick = (e) => {
+                e.stopPropagation();
+                this.mapManager._map.removeLayer(this.baseLayer);
+                if (actions.classList.contains('fa-eye-slash')) {
+                    actions.classList.remove('fa-eye-slash');
+                    actions.classList.add('fa-eye');
+                    this.baseLayer = layer;
+                    this.mapManager._map.addLayer(layer);
+                } else {
+                    actions.classList.remove('fa-eye');
+                    actions.classList.add('fa-eye-slash');
+                }
+            };
 
             this.list.addItem({
                 id: configuration.name,
@@ -60,6 +84,7 @@ class LayersWidget {
                 subtitle: configuration.authors,
                 body: details,
                 key: `${configuration.name} ${configuration.authors}`,
+                actions: actions,
                 toggle: {
                   expand: true
                 },

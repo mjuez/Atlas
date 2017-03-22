@@ -21,7 +21,7 @@ const Util = require('Util');
 const http = require('http');
 const leafelt = require('leaflet');
 const leafletMarkerCluster = require('leaflet.markercluster');
-//const geometryUtil = require('leaflet-geometryutil');
+const geometryUtil = require('leaflet-geometryutil');
 const leafletDraw = require('leaflet-draw');
 const snap = require(`leaflet-snap`);
 const pointsLayer = require(`./pointsLayer`);
@@ -406,25 +406,33 @@ if (L != undefined) {
         //the leafletlayer
         removeLayer: function(layer) {
             let configuration;
-            let leafletlayer;
+            let llayer;
             if (typeof layer.addTo === 'function') {
-                leafletlayer = layer;
+                llayer = layer;
                 configuration = layer._configuration;
             } else if ((typeof layer.name === 'string') && (typeof layer.type === 'string')) {
                 if (layer.typeid >=0) {
-                    leafletlayer = this.getLayers(layer.type)[layer.typeid];
+                    llayer = this.getLayers(layer.type)[layer.typeid];
                 }
                 configuration = layer;
             }
-            delete this._configuration[configuration.name];
-            if (leafletlayer) {
-                this._map.removeLayer(leafletlayer);
+            let layers = this.getLayers(configuration.type);
+            layers.splice(layers.indexOf(llayer));
+            //delete this._configuration.layers[configuration.name];
+            if (llayer) {
+                this._map.removeLayer(llayer);
             }
 
             this.fire('remove:layer', {
-                layer: leafletlayer,
+                layer: llayer,
                 configuration: configuration
             });
+        },
+
+
+        reloadLayer: function(layer){
+          this.removeLayer(layer);
+          this.addLayer(layer);
         },
 
 

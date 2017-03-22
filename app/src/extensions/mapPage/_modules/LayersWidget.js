@@ -24,15 +24,15 @@ class LayersWidget {
         this.overlaylist.hide();
         this.datalist.hide();
         this.tabs.addItem({
-            name: 'base',
+            name: '<span class="fa fa-map" title="base layers"></span>',
             id: 'base'
         });
         this.tabs.addItem({
-            name: 'overlay',
+            name: '<i class="fa fa-map-marker"></i><i class="fa fa-map-o"></i>',
             id: 'overlay'
         });
         this.tabs.addItem({
-            name: 'data',
+            name: '<span class="fa fa-database" title="data"></span>',
             id: 'data'
         });
         this.tabs.addClickListener('base', () => {
@@ -50,12 +50,12 @@ class LayersWidget {
             this.datalist.show();
             this.overlaylist.hide();
         });
-        let topBar = Util.div(null, 'top-bar');
-        let outerGrid = new Grid(2, 1);
-        let title = document.createElement('SPAN');
-        title.className = 'title';
-        title.innerHTML = 'Layers';
-        outerGrid.addElement(title, 0, 0);
+        //let outerGrid = new Grid(2, 1);
+        //let topBar = Util.div(null, 'top-bar');
+        //let title = document.createElement('SPAN');
+        //title.className = 'title';
+        //title.innerHTML = 'Layers';
+        //outerGrid.addElement(title, 0, 0);
         /*let innerGrid = new Grid(2,3);
         let colorTitle = Util.div('Color:');
         let radiusTitle = Util.div('Radius:');
@@ -64,8 +64,8 @@ class LayersWidget {
         innerGrid.addElement(radiusTitle,0,1);
         innerGrid.addElement(opacityTitle,0,2);
         outerGrid.addElement(innerGrid.element,1,0);*/
-        topBar.appendChild(outerGrid.element);
-        this.element.appendChild(topBar);
+        //topBar.appendChild(outerGrid.element);
+        //this.element.appendChild(topBar);
         this.element.appendChild(this.content);
         this.baseLayer = null;
         this.baseLayers = [];
@@ -84,17 +84,33 @@ class LayersWidget {
         });
 
         this.mapManager.on('add:tileslayer', (e) => {
-            let details = new ToggleElement(Util.div('tools will be here'));
-            details.hide();
             let configuration = e.configuration;
             let layer = e.layer;
+            let details = new ToggleElement();
+            details.hide();
+            details.element.onclick = (e) => {
+                e.stopPropagation()
+            }
+            Input.input({
+                parent: details,
+                label: 'opacity',
+                type: 'range',
+                min: 0,
+                max: 1,
+                step: 0.1,
+                value: configuration.opacity || 1,
+                onchange: (inp) => {
+                    layer.setOpacity(inp.value);
+                    configuration.opacity = inp.value;
+                }
+            });
+
             if (configuration.baseLayer) {
                 if (!this.baseLayer) {
                     this.baseLayer = layer;
                     this.mapManager._map.addLayer(this.baseLayer);
                 }
             }
-
             let title = Input.input({
                 label: '',
                 placeholder: 'name',
@@ -103,10 +119,12 @@ class LayersWidget {
                 onchange: () => {
                     configuration.name = title.value;
                     title.readOnly = true;
+                },
+                onblur: () => {
+                    title.readOnly = true;
                 }
             });
             title.readOnly = true;
-
             let menu = Menu.buildFromTemplate([{
                 label: 'delete',
                 click: () => {
@@ -124,11 +142,8 @@ class LayersWidget {
                     details.show();
                 }
             }]);
-
-
-
             let opt = {
-                id: configuration.name,
+                id: configuration.id,
                 title: title,
                 details: details,
                 active: (this.baseLayer === layer),
@@ -140,10 +155,6 @@ class LayersWidget {
                 toggle: true,
                 onclick: {
                     active: (item, e) => {
-                        if (e.ctrlKey) {
-                            details.toggle();
-                            return;
-                        }
                         if (configuration.baseLayer) {
                             this.mapManager._map.removeLayer(this.baseLayer);
                             this.baseLayer = layer;
@@ -151,16 +162,10 @@ class LayersWidget {
                         this.mapManager._map.addLayer(layer);
                     },
                     deactive: (item, e) => {
-                        if (e.ctrlKey) {
-                            details.toggle();
-                            item.element.classList.add('active');
-                            return;
+                        if (!configuration.baseLayer) {
+                            this.mapManager._map.removeLayer(layer);
                         } else {
-                            if (!configuration.baseLayer) {
-                                this.mapManager._map.removeLayer(layer);
-                            } else {
-                                item.element.classList.add('active');
-                            }
+                            item.element.classList.add('active');
                         }
                     }
                 }
@@ -169,42 +174,82 @@ class LayersWidget {
             if (configuration.baseLayer) {
                 this.baselist.addItem(opt);
                 layer.on('remove', () => {
-                    this.baselist.deactiveItem(configuration.name);
+                    this.baselist.deactiveItem(configuration.id);
                 });
             } else {
                 this.overlaylist.addItem(opt);
                 layer.on('remove', () => {
-                    this.overlaylist.deactiveItem(configuration.name);
+                    this.overlaylist.deactiveItem(configuration.id);
                 });
             }
-
-
-
         });
 
 
         this.mapManager.on('add:pointslayermarkers', (e) => {
-            let details = Util.div('tools will be here');
+            let details = new ToggleElement();
+            details.hide();
+            details.element.onclick = (e) => {
+                e.stopPropagation()
+            }
 
             let configuration = e.configuration;
             let layer = e.layer;
+
+            Input.input({
+                parent: details,
+                label: '',
+                value: configuration.color,
+                type: 'color',
+                className: 'simple form-control',
+                oninput: (inp) => {
+                    layer.eachLayer((l) => {
+                        configuration.color = inp.value;
+                        configuration.fillColor = inp.value;
+                        l.setStyle({
+                            color: inp.value
+                        });
+                    });
+                }
+            });
+
 
             let title = Input.input({
                 label: '',
                 placeholder: 'name',
                 className: 'list-input',
                 value: configuration.name,
-                oninput: () => {
+                onchange: () => {
                     configuration.name = title.value;
+                    title.readOnly = true;
+                },
+                onblur: () => {
+                    title.readOnly = true;
                 }
             });
             title.readOnly = true;
 
+            let menu = Menu.buildFromTemplate([{
+                    label: 'delete',
+                    click: () => {
+
+                    }
+                },
+                {
+                    label: 'edit',
+                    click: () => {
+                        details.toggle();
+                    }
+                }
+            ]);
+
             this.overlaylist.addItem({
                 title: title,
-                body: details,
+                details: details,
                 key: `${configuration.name} ${configuration.authors}`,
                 toggle: true,
+                oncontextmenu: (item, e) => {
+                    menu.popup();
+                },
                 onclick: {
                     active: () => {
                         this.mapManager._map.addLayer(layer);
@@ -217,33 +262,82 @@ class LayersWidget {
         });
 
         this.mapManager.on('add:guidelayer', (e) => {
-            let details = Util.div('tools will be here');
-
+            let details = new ToggleElement();
+            details.hide();
             let configuration = e.configuration;
             let layer = e.layer;
+            details.element.onclick = (e) => {
+                e.stopPropagation()
+            }
+            Input.input({
+                parent: details,
+                label: 'grid size',
+                className: 'form-control simple',
+                type: 'number',
+                value: configuration.size,
+                min: 1,
+                onchange: (inp) => {
+                    configuration.size = Number(inp.value);
+                    //this.mapManager.reload();
+                }
+            });
 
+            Input.input({
+                parent: details,
+                label: 'cell size',
+                className: 'form-control simple',
+                type: 'number',
+                value: configuration.tileSize,
+                min: 1,
+                onchange: (inp) => {
+                    configuration.tileSize = Number(inp.value);
+                    //this.mapManager.reload();
+                }
+            });
             let title = Input.input({
                 label: '',
                 placeholder: 'name',
                 className: 'list-input',
                 value: configuration.name,
-                oninput: () => {
+                onchange: () => {
                     configuration.name = title.value;
+                    title.readOnly = true;
+                },
+                onblur: () => {
+                    title.readOnly = true;
                 }
             });
             title.readOnly = true;
 
+
+            let menu = Menu.buildFromTemplate([{
+                    label: 'delete',
+                    click: () => {
+
+                    }
+                },
+                {
+                    label: 'edit',
+                    click: () => {
+                        details.toggle();
+                    }
+                }
+            ]);
+
             this.overlaylist.addItem({
                 title: title,
-                body: details,
+                details: details,
                 key: `${configuration.name} ${configuration.authors}`,
-                toggle: false,
+                toggle: true,
+                oncontextmenu: () => {
+                    menu.popup();
+                },
                 onclick: {
                     active: () => {
-                      this.mapManager._map.addLayer(layer);
+                        this.mapManager._map.addLayer(layer);
                     },
                     deactive: () => {
-                      this.mapManager._map.removeLayer(layer);
+                        this.mapManager._map.removeLayer(layer);
                     }
                 }
             });
@@ -269,7 +363,7 @@ class LayersWidget {
 
             this.datalist.addItem({
                 title: title,
-                body: details,
+                details: details,
                 key: `${configuration.name} ${configuration.authors}`,
                 toggle: false,
                 active: true,

@@ -40,7 +40,7 @@ class HolesDetectionTask extends Task {
     constructor(details, mode) {
         let name = "ImageJ Holes Detection";
         super(name, details);
-        this.imageJExtension = gui.extensionsManager.extensions.imagej;
+        this.imageJExtension = gui.extensions.imagej;
         this.macro = "HolesDetector";
         this.mode = mode;
         this.jsonFile = null;

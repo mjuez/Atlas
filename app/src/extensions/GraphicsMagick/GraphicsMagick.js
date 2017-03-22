@@ -31,7 +31,6 @@ const TreeList = require('TreeList').TreeList;
 const GuiExtension = require('GuiExtension');
 const gm = require('gm');
 const path = require('path');
-const FileSelector = require('FileSelector');
 const FolderSelector = require('FolderSelector');
 const Grid = require('Grid');
 const ToggleElement = require('ToggleElement');

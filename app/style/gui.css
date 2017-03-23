@@ -526,7 +526,8 @@ img.imageicon {
 }
 
 .toolbox {
-    padding-right: 10px;
+    padding: 5px 10px 0 0;
+    margin-bottom: -5px;
 }
 
 .toolbox input[type="range"]{
@@ -561,23 +562,12 @@ img.imageicon {
     margin-top: -4px;
 }
 
-.table-container .cell,
-.list-group-item .main .left,
-.list-group-item .main .center,
-.list-group-item .main .right{
+.table-container .cell{
     display: table-cell;
     vertical-align: middle;
 }
 
-
-.list-group-item .details.expandable{
-    border-top: 1px solid #ddd;
-    margin-top: 5px;
-    padding-top: 10px;
-    padding-left: 17px;
-}
-
-.list-group-item .main .center{
+.table-container .cell.full-width{
     width: 100%;
 }
 

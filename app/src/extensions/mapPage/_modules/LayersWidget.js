@@ -9,6 +9,7 @@ const {
     MenuItem
 } = require('electron').remote;
 const Input = require('Input');
+const ToggleElement = require('ToggleElement');
 
 class LayersWidget {
 
@@ -111,7 +112,7 @@ class LayersWidget {
             let configuration = e.configuration;
             let layer = e.layer;
 
-            let tools = this.createToolbox(layer, false, true, true);
+            let tools = this.createToolbox(configuration, false, true, true);
 
             let customMenuItems = [];
 
@@ -158,6 +159,24 @@ class LayersWidget {
             }
         });
 
+        let titleTable = Util.div(null,'table-container');
+        let txtTitleContainer = Util.div(null, 'cell full-width');
+        txtTitleContainer.appendChild(txtTitle);
+        let btnToolsContainer = Util.div(null, 'cell');
+        let btnTools = document.createElement('button');
+        btnTools.className = 'btn btn-default';
+        btnTools.onclick = (e) => {
+            e.stopPropagation();
+            tools.toggle();
+        }
+        let iconTools = document.createElement('span');
+        iconTools.className = 'icon icon-tools';
+        btnTools.appendChild(iconTools);
+        btnToolsContainer.appendChild(btnTools);
+        
+        titleTable.appendChild(txtTitleContainer);
+        titleTable.appendChild(btnToolsContainer);
+
         let context = new Menu();
         context.append(new MenuItem({
             label: 'Rename',
@@ -181,7 +200,7 @@ class LayersWidget {
         });
         list.addItem({
             id: configuration.id,
-            title: txtTitle,
+            title: titleTable,
             details: tools,
             active: (this.baseLayer === layer) || (list === this.datalist) || (this.mapManager._map.hasLayer(layer)),
             oncontextmenu: () => {
@@ -218,8 +237,9 @@ class LayersWidget {
     }
 
     createToolbox(layer, hasOpacityControl, hasColorControl, hasRadiusControl) {
-        let toolbox = Util.div(null, 'table-container toolbox');
-        toolbox.onclick = (e) => e.stopPropagation();
+        let toolbox = new ToggleElement(Util.div(null, 'table-container toolbox'));
+        toolbox.hide();
+        toolbox.element.onclick = (e) => e.stopPropagation();
         let configuration = layer._configuration;
 
         if (hasColorControl) {

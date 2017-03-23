@@ -18,6 +18,8 @@ class LayersWidget {
         this.content = Util.div(null, 'content');
         this.tabs = new TabGroup(this.content);
         this.baselist = new ListGroup(this.content);
+        this.tileslist = new ListGroup(this.content);
+        this.tileslist.element.classList.add('tiles-list');
         this.overlaylist = new ListGroup(this.content);
         this.datalist = new ListGroup(this.content);
         this.overlaylist.hide();
@@ -36,16 +38,19 @@ class LayersWidget {
         });
         this.tabs.addClickListener('base', () => {
             this.baselist.show();
+            this.tileslist.show();
             this.overlaylist.hide();
             this.datalist.hide();
         });
         this.tabs.addClickListener('overlay', () => {
             this.baselist.hide();
+            this.tileslist.hide();
             this.overlaylist.show();
             this.datalist.hide();
         });
         this.tabs.addClickListener('data', () => {
             this.baselist.hide();
+            this.tileslist.hide();
             this.datalist.show();
             this.overlaylist.hide();
         });
@@ -60,6 +65,7 @@ class LayersWidget {
 
         this.mapManager.on('clean', () => {
             this.baselist.clean();
+            this.tileslist.clean();
             this.overlaylist.clean();
             this.datalist.clean();
             this.baseLayer = null;
@@ -74,7 +80,7 @@ class LayersWidget {
             if (configuration.baseLayer) {
                 list = this.baselist;
             } else {
-                list = this.overlaylist;
+                list = this.tileslist;
             }
 
             let tools = this.createToolbox(layer, true, false, false);
@@ -111,9 +117,9 @@ class LayersWidget {
         this.mapManager.on('add:pointslayermarkers', (e) => {
             let configuration = e.configuration;
             let layer = e.layer;
+            layer._configuration = configuration;
 
-            let tools = this.createToolbox(configuration, false, true, true);
-
+            let tools = this.createToolbox(layer, false, true, true);
             let customMenuItems = [];
 
             this._addToList(layer, customMenuItems, tools, configuration, this.overlaylist);
@@ -124,12 +130,13 @@ class LayersWidget {
                 this.baselist.removeItem(e.configuration.id);
             } else if (e.configuration.type === 'pointsLayer' || e.configuration.type === 'pixelsLayer') {
                 this.datalist.removeItem(e.configuration.id);
+            } else if (e.configuration.type === 'tilesLayer') {
+                this.tileslist.removeItem(e.configuration.id);
             } else {
                 this.overlaylist.removeItem(e.configuration.id);
             }
         });
     }
-
 
     /**
      * Removes a layer from a list of layers.
@@ -159,7 +166,7 @@ class LayersWidget {
             }
         });
 
-        let titleTable = Util.div(null,'table-container');
+        let titleTable = Util.div(null, 'table-container');
         let txtTitleContainer = Util.div(null, 'cell full-width');
         txtTitleContainer.appendChild(txtTitle);
         let btnToolsContainer = Util.div(null, 'cell');
@@ -173,7 +180,7 @@ class LayersWidget {
         iconTools.className = 'icon icon-tools';
         btnTools.appendChild(iconTools);
         btnToolsContainer.appendChild(btnTools);
-        
+
         titleTable.appendChild(txtTitleContainer);
         titleTable.appendChild(btnToolsContainer);
 
@@ -245,31 +252,56 @@ class LayersWidget {
         if (hasColorControl) {
             let colorCell = Util.div(null, 'cell');
 
+            let colorPickerContainer = Util.div(null, 'color-picker-wrapper');
+            colorPickerContainer.style.backgroundColor = configuration.color || '#ed8414';
+
             let input = Input.input({
                 label: '',
-                className: 'form-control',
-                parent: colorCell,
+                className: '',
+                value: configuration.color || '#ed8414',
+                parent: colorPickerContainer,
                 type: 'color',
                 placeholder: 'color',
                 oninput: (inp) => {
 
+                },
+                onchange: (inp) => {
+                    colorPickerContainer.style.backgroundColor = inp.value;
+                    configuration.color = inp.value;
+                    configuration.fillColor = inp.value;
+                    layer.eachLayer((l) => {
+                        l.setStyle({
+                            fillColor: inp.value,
+                            color: inp.value
+                        });
+                    });
                 }
             });
+
+            colorCell.appendChild(colorPickerContainer);
 
             toolbox.appendChild(colorCell);
         }
 
         if (hasRadiusControl) {
-            let radiusCell = Util.div(null, 'cell');
+            let radiusCell = Util.div(null, 'cell full-width');
 
-            let input = Input.input({
-                label: '',
-                className: 'form-control',
+            let input = Input.selectInput({
+                label: 'Radius: ',
+                className: '',
                 parent: radiusCell,
-                type: 'color',
-                placeholder: 'color',
+                placeholder: 'Radius',
+                choices: [
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+                ],
+                value: configuration.weight || 3,
                 oninput: (inp) => {
-
+                    configuration.weight = inp.value;
+                    layer.eachLayer((l) => {
+                        l.setStyle({
+                            weight: inp.value
+                        });
+                    });
                 }
             });
 

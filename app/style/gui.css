@@ -510,6 +510,10 @@ img.imageicon {
     border-style: solid;
 }
 
+.list-group.tiles-list {
+    border-top: 1px solid #989698;
+}
+
 .list-group-item.active {
     color: #414142;
     background-color: transparent;
@@ -562,6 +566,17 @@ img.imageicon {
     margin-top: -4px;
 }
 
+.toolbox .input-label {
+    font-weight: normal;
+}
+
+.toolbox select {
+    padding: 0;
+    border: 1px solid #dddddd;
+    background-color: #efefef;
+    margin-left: 5px;
+}
+
 .table-container .cell{
     display: table-cell;
     vertical-align: middle;
@@ -569,6 +584,27 @@ img.imageicon {
 
 .table-container .cell.full-width{
     width: 100%;
+}
+
+.color-picker-wrapper {
+    display: inline-block;
+    font-size: 0;
+    border: 1px solid #dddddd;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.color-picker-wrapper .input-label {
+    margin: 0;
+}
+
+.color-picker-wrapper input[type="color"]{
+    width: 20px;
+    height: 20px;
+    opacity: 0;
+    border: none;
+    margin: 0;
+    padding: 0;
 }
 
 .list-group-item .main .left i {

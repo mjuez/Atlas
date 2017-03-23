@@ -35,6 +35,7 @@ if (L != undefined) {
 
         _map: null,
         _indx: 0,
+        _layerindx: 0,
         _configuration: {},
         _tilesLayers: [],
         _pointsLayers: [],
@@ -176,6 +177,7 @@ if (L != undefined) {
                 }
                 this.setMapOptions();
                 this._indx = 0;
+                this._layerindx = 0;
                 if (this._configuration.layers) {
                     if (this._configuration.layers instanceof Array) {
                         this._configuration.layers.map((layer, index) => {
@@ -364,6 +366,8 @@ if (L != undefined) {
         },
 
         addLayer: function(layer) {
+            layer.id = this._layerindx;
+            this._layerindx++;
             switch (layer.type) {
                 case 'tilesLayer':
                     this.addTilesLayer(layer);
@@ -411,7 +415,7 @@ if (L != undefined) {
                 llayer = layer;
                 configuration = layer._configuration;
             } else if ((typeof layer.name === 'string') && (typeof layer.type === 'string')) {
-                if (layer.typeid >=0) {
+                if (layer.typeid >= 0) {
                     llayer = this.getLayers(layer.type)[layer.typeid];
                 }
                 configuration = layer;
@@ -430,9 +434,9 @@ if (L != undefined) {
         },
 
 
-        reloadLayer: function(layer){
-          this.removeLayer(layer);
-          this.addLayer(layer);
+        reloadLayer: function(layer) {
+            this.removeLayer(layer);
+            this.addLayer(layer);
         },
 
 

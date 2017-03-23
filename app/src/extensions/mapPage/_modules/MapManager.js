@@ -18,10 +18,10 @@
 
  */
 const Util = require('Util');
+const http = require('http');
 const leafelt = require('leaflet');
-const leafeltEasyButton = require('leaflet-easybutton');
 const leafletMarkerCluster = require('leaflet.markercluster');
-const geometryUtil = require('leaflet-geometryutil');
+//const geometryUtil = require('leaflet-geometryutil');
 const leafletDraw = require('leaflet-draw');
 const snap = require(`leaflet-snap`);
 const pointsLayer = require(`./pointsLayer`);
@@ -79,6 +79,9 @@ if (L != undefined) {
         },
 
         parse: function(configuration) {
+            if (typeof configuration === 'string') {
+                configuration = JSON.parse(configuration);
+            }
             configuration.type = configuration.type || 'undefined';
             if (configuration.type.includes("map")) {
                 return configuration;
@@ -92,6 +95,9 @@ if (L != undefined) {
             if (configuration === this._configuration && !force) return;
             try {
                 this._configuration = this.parse(configuration);
+                this.fire('set:configuration', {
+                    configuration: configuration
+                });
                 this.reload();
             } catch (e) {
                 throw e;
@@ -211,10 +217,16 @@ if (L != undefined) {
 
         setMaxZoom: function(zoom) {
             this._map.setMaxZoom(zoom);
+            this.fire('set:maxZoom', {
+                maxZoom: zoom
+            });
         },
 
         setMinZoom: function(zoom) {
             this._map.setMinZoom(zoom);
+            this.fire('set:minZoom', {
+                minZoom: zoom
+            });
         },
 
         getUnitCal: function() {
@@ -258,7 +270,6 @@ if (L != undefined) {
             let temp = this.getSizesCal();
             return Math.max(temp[0], temp[1]);
         },
-
 
         getSizes: function() {
             let size = [256, 256];
@@ -308,8 +319,6 @@ if (L != undefined) {
             }
         },
 
-
-
         getLayers: function(types) {
             if (Array.isArray(types)) {
                 return types.map((t) => {
@@ -354,8 +363,6 @@ if (L != undefined) {
 
         },
 
-
-
         addLayer: function(layer) {
             switch (layer.type) {
                 case 'tilesLayer':
@@ -396,7 +403,32 @@ if (L != undefined) {
             }
         },
 
-        addDrawnItems() {
+        //the leafletlayer
+        removeLayer: function(layer) {
+            let configuration;
+            let leafletlayer;
+            if (typeof layer.addTo === 'function') {
+                leafletlayer = layer;
+                configuration = layer._configuration;
+            } else if ((typeof layer.name === 'string') && (typeof layer.type === 'string')) {
+                if (layer.typeid >=0) {
+                    leafletlayer = this.getLayers(layer.type)[layer.typeid];
+                }
+                configuration = layer;
+            }
+            delete this._configuration[configuration.name];
+            if (leafletlayer) {
+                this._map.removeLayer(leafletlayer);
+            }
+
+            this.fire('remove:layer', {
+                layer: leafletlayer,
+                configuration: configuration
+            });
+        },
+
+
+        addDrawnItems: function() {
             this._drawnItems = new L.FeatureGroup(); //where items are stored
             this._map.addLayer(this._drawnItems);
             if (this._layerControl) {
@@ -404,8 +436,7 @@ if (L != undefined) {
             }
         },
 
-
-        addDrawControl() {
+        addDrawControl: function() {
             if (!(this._drawnItems instanceof L.FeatureGroup)) {
                 this.addDrawnItems();
             }
@@ -483,7 +514,6 @@ if (L != undefined) {
             });
             this._map.addControl(this._layerControl);
         },
-
 
         addPolygon: function(layer, addToConfiguration, group) {
             let lyjson = {};
@@ -566,7 +596,9 @@ if (L != undefined) {
                     lyjson.latLng ||
                     lyjson.point ||
                     lyjson.coordinate ||
-                    lyjson.coord || [lyjson.lat || lyjson.y, lyjson.lang || lyjson.x]);
+                    lyjson.coord || [lyjson.lat || lyjson.y, lyjson.lang || lyjson.x], {
+                        //  icon: L.divIcon({className:'fa fa-map fa-2x'})
+                    });
             } else { //assume the layer is already a L.marker
                 lyjson = layer.configuration || {
                     latlng: layer.getLatLng(),
@@ -628,7 +660,6 @@ if (L != undefined) {
             });
         },
 
-
         removePolygon: function(polygon, removeFromMap) {
             if (removeFromMap) {
                 if (polygon.group) {
@@ -649,7 +680,6 @@ if (L != undefined) {
             this.fire('remove:polygon', {
                 layer: polygon
             });
-
         },
 
         addDrawnMarkers: function(layerConfig) {
@@ -666,7 +696,6 @@ if (L != undefined) {
             this.fire('add:drawnmarkers', {
                 configuration: layerConfig
             });
-
         },
 
         addDrawnPolygons: function(layerConfig) {
@@ -718,8 +747,11 @@ if (L != undefined) {
                 this._pointsLayers.push(layer);
                 layer.color = layer.color || this.getDrawingColor();
                 layer.easyToDraw = layer.easyToDraw || false;
-
                 let points = new pointsLayer(layer);
+                this.fire('add:pointslayer', {
+                    layer: points,
+                    configuration: layer
+                });
                 if (!layer.easyToDraw) {
                     return;
                 }
@@ -739,6 +771,7 @@ if (L != undefined) {
                 points.count({
                     maxTiles: 10,
                     cl: (point) => {
+                        if (point.some(x => isNaN(x))) return;
                         point = [-point[1] / scale, point[0] / scale];
                         let mk = L.circleMarker(point, {
                             color: layer.color || this.getDrawingColor(),
@@ -752,10 +785,7 @@ if (L != undefined) {
                     }
                 });
 
-                this.fire('add:pointslayer', {
-                    layer: points,
-                    configuration: layer
-                });
+
             }
 
         },
@@ -763,15 +793,17 @@ if (L != undefined) {
         addPixelsLayer: function(layer) {
             if (layer.pixelsUrlTemplate) {
                 this._pixelsLayers.push(layer);
-                if (!layer.easyToDraw) {
-                    return;
-                }
-                // drawing part not implemented
+
 
                 this.fire('add:pixelslayer', {
                     layer: null,
                     configuration: layer
                 });
+
+                if (!layer.easyToDraw) {
+                    return;
+                }
+                // drawing part not implemented
 
             }
 
@@ -780,7 +812,6 @@ if (L != undefined) {
         center() {
             this._map.setView([0, 0], 0);
         },
-
 
         getBaseLayer: function() {
             return this._activeBaseLayer || this._tilesLayers[0];

@@ -1,7 +1,7 @@
 {
     "pages":[ {
         "id": "about",
-        "title": "About",
+        "title": "mapManager",
         "file": "about.md",
         "icon": "icon icon-home"
     },
@@ -21,8 +21,8 @@
       "title": "API reference"
     },
     {
-      "id": "gui",
-      "title": "gui",
+      "id": "Gui",
+      "title": "Gui",
       "file": "gui.md",
       "icon": "icon icon-code"
     },
@@ -39,7 +39,7 @@
       "icon": "icon icon-code"
     },
   {
-    "id": "mapManager",
+    "id": "mapmanager",
     "title": "mapManager",
     "file": "mapManager.md",
     "icon": "icon icon-code"

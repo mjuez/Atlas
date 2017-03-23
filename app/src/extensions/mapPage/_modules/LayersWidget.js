@@ -115,7 +115,6 @@ class LayersWidget {
 
             let customMenuItems = [];
 
-
             this._addToList(layer, customMenuItems, tools, configuration, this.overlaylist);
         });
 
@@ -224,11 +223,37 @@ class LayersWidget {
         let configuration = layer._configuration;
 
         if (hasColorControl) {
+            let colorCell = Util.div(null, 'cell');
 
+            let input = Input.input({
+                label: '',
+                className: 'form-control',
+                parent: colorCell,
+                type: 'color',
+                placeholder: 'color',
+                oninput: (inp) => {
+
+                }
+            });
+
+            toolbox.appendChild(colorCell);
         }
 
         if (hasRadiusControl) {
+            let radiusCell = Util.div(null, 'cell');
 
+            let input = Input.input({
+                label: '',
+                className: 'form-control',
+                parent: radiusCell,
+                type: 'color',
+                placeholder: 'color',
+                oninput: (inp) => {
+
+                }
+            });
+
+            toolbox.appendChild(radiusCell);
         }
 
         if (hasOpacityControl) {

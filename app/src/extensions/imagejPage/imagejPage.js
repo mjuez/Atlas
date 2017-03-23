@@ -218,7 +218,7 @@ class imagej extends GuiExtension {
         let toolsMenu = new Menu();
 
         toolsMenu.append(new MenuItem({
-            label: 'Crop image',
+            label: 'Create mosaic',
             type: 'normal',
             click: () => {
                 this.cropImage();

@@ -1,29 +1,26 @@
 @keyframes fadein {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .app {
-  /* Disable text selection, or your app will feel like a web page */
-  -webkit-user-select: none;
-  -webkit-app-region: drag;
-
-  /* Cover the whole window */
-  height: 100%;
-
-
-  /* Smoother startup */
-  animation: fadein 0.5s;
+    /* Disable text selection, or your app will feel like a web page */
+    -webkit-user-select: none;
+    -webkit-app-region: drag;
+    /* Cover the whole window */
+    height: 100%;
+    /* Smoother startup */
+    animation: fadein 0.5s;
 }
 
 .box {
-  border-style: solid;
-  border-color: black;
-  border-width: medium;
+    border-style: solid;
+    border-color: black;
+    border-width: medium;
 }
 
 .sidebar.animated {
@@ -278,11 +275,12 @@ div.input-label {
 }
 
 .simple {
+    font-weight: bold;
     background-color: inherit;
     max-width: 100pt;
     box-shadow: none;
     border-color: inherit;
-    border-width: 0px;
+    border-width: 2px;
     border: none;
     vertical-align: middle;
 }
@@ -512,18 +510,23 @@ img.imageicon {
     border-style: solid;
 }
 
-.list-group-item.active{
+.list-group-item.active {
     color: #414142;
     background-color: transparent;
-    background-image: linear-gradient(to right, #116cd6, #116cd6 7px, transparent 7px , transparent);
+    background-image: linear-gradient(to right, #116cd6, #116cd6 7px, transparent 7px, transparent);
     padding-left: 15px;
 }
+
 
 .list-group-item .main,
 .table-container{
     display: table;
     box-sizing: border-box;
     width: 100%;
+}
+
+.toolbox {
+    padding-right: 10px;
 }
 
 .toolbox input[type="range"]{
@@ -566,6 +569,7 @@ img.imageicon {
     vertical-align: middle;
 }
 
+
 .list-group-item .details.expandable{
     border-top: 1px solid #ddd;
     margin-top: 5px;
@@ -577,7 +581,7 @@ img.imageicon {
     width: 100%;
 }
 
-.list-group-item .main .left i{
+.list-group-item .main .left i {
     margin-right: 10px;
 }
 
@@ -685,7 +689,7 @@ img.imageicon {
     box-sizing: border-box;
     left: 0;
     right: 0;
-    top: 25px;
+    top: 0;
     bottom: 0;
     overflow-y: auto;
 }

@@ -70,6 +70,12 @@ class LayersWidget {
         this.mapManager.on('add:tileslayer', (e) => {
             let configuration = e.configuration;
             let layer = e.layer;
+            let list;
+            if (configuration.baseLayer) {
+                list = this.baselist;
+            } else {
+                list = this.overlaylist;
+            }
 
             let tools = this.createToolbox(layer, true, false, false);
 
@@ -100,7 +106,19 @@ class LayersWidget {
             });
             customMenuItems.push(baseLayerMenuItem);
 
-            this._addToList(layer, customMenuItems, tools, configuration);
+            this._addToList(layer, customMenuItems, tools, configuration, list);
+        });
+
+        this.mapManager.on('add:pointslayermarkers', (e) => {
+            let configuration = e.configuration;
+            let layer = e.layer;
+
+            let tools = this.createToolbox(layer,false, true, true);
+
+            let customMenuItems = [];
+
+
+            this._addToList(layer, customMenuItems, tools, configuration, this.overlaylist);
         });
 
         this.mapManager.on('remove:layer', (e) => {
@@ -130,15 +148,8 @@ class LayersWidget {
         }
     }
 
-    _addToList(layer, customMenuItems, tools, configuration) {
-        let list;
-        if (configuration.baseLayer) {
-            list = this.baselist;
-        } else if (configuration.type === 'pointsLayer' || configuration.type === 'pixelsLayer') {
-            list = this.datalist;
-        } else {
-            list = this.overlaylist;
-        }
+    _addToList(layer, customMenuItems, tools, configuration, list) {
+
         let txtTitle = Input.input({
             value: configuration.name,
             className: 'list-input',
@@ -194,7 +205,7 @@ class LayersWidget {
                     }
                 }
             },
-            key: layer._configuration.name,
+            key: configuration.name,
             toggle: true
         });
 
@@ -210,6 +221,7 @@ class LayersWidget {
 
     createToolbox(layer, hasOpacityControl, hasColorControl, hasRadiusControl) {
         let toolbox = Util.div(null, 'table-container toolbox');
+        toolbox.onclick = (e) => e.stopPropagation();
         let configuration = layer._configuration;
 
         if (hasColorControl) {

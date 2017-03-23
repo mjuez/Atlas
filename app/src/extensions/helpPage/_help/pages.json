@@ -1,8 +1,8 @@
 {
     "pages":[ {
-        "id": "home",
-        "title": "mapManager",
-        "file": "home.md",
+        "id": "about",
+        "title": "About",
+        "file": "about.md",
         "icon": "icon icon-home"
     },
     {
@@ -20,10 +20,28 @@
     {
       "title": "API reference"
     },
+    {
+      "id": "gui",
+      "title": "gui",
+      "file": "gui.md",
+      "icon": "icon icon-code"
+    },
+    {
+      "id": "GuiExtension",
+      "title": "GuiExtension",
+      "file": "GuiExtension.md",
+      "icon": "icon icon-code"
+    },
+    {
+      "id": "ToggleElement",
+      "title": "ToggleElement",
+      "file": "ToggleElement.md",
+      "icon": "icon icon-code"
+    },
   {
-    "id": "mapmanager-api",
+    "id": "mapManager",
     "title": "mapManager",
-    "file": "mapManager_api.md",
+    "file": "mapManager.md",
     "icon": "icon icon-code"
     }]
 }

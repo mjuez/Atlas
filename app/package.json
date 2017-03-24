@@ -31,6 +31,8 @@
     "electron": "^1.4.10"
   },
   "dependencies": {
-    "electrongui": "github:gherardovarando/electrongui"
+    "electron-is-dev": "^0.1.2",
+    "electrongui": "github:gherardovarando/electrongui",
+    "helpextension": "github:gherardovarando/HelpExtension"
   }
 }

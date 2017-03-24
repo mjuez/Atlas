@@ -33,6 +33,7 @@
   "dependencies": {
     "electron-is-dev": "^0.1.2",
     "electrongui": "github:gherardovarando/electrongui",
-    "helpextension": "github:gherardovarando/HelpExtension"
+    "helpextension": "github:gherardovarando/HelpExtension",
+    "mapextension": "github:gherardovarando/mapExtension"
   }
 }

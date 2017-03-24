@@ -515,32 +515,79 @@ class mapPage extends GuiExtension {
             }
         }));
 
+        let activeBaseLayerConf = this.mapManager._activeBaseLayer._configuration;
+
+        let tools = new Grid(2,2);
+        tools.element.onclick = (e) => e.stopPropagation();
+        let numMaxZoom = Input.input({
+            type: "number",
+            id: `numMaxZoom_${configuration.id}`,
+            value: activeBaseLayerConf.maxZoom || 0,
+            min: "0",
+            onchange: () => {
+                this.mapManager.setMaxZoom(Number(numMaxZoom.value));
+            }
+        });
+        let lblMaxZoom = document.createElement("label");
+        lblMaxZoom.htmlFor = `numMaxZoom_${configuration.id}`;
+        lblMaxZoom.innerHTML = "Max. zoom: ";
+        tools.addElement(lblMaxZoom, 0, 0);
+        tools.addElement(numMaxZoom, 0, 1);
+        let numMinZoom = Input.input({
+            type: "number",
+            id: `numMinZoom_${configuration.id}`,
+            value: activeBaseLayerConf.minZoom || 0,
+            min: "0",
+            oninput: () => {
+                this.mapManager.setMinZoom(Number(numMinZoom.value));
+            }
+        });
+        let lblMinZoom = document.createElement("label");
+        lblMinZoom.htmlFor = `numMinZoom_${configuration.id}`;
+        lblMinZoom.innerHTML = "Min. zoom: ";
+        tools.addElement(lblMinZoom, 1, 0);
+        tools.addElement(numMinZoom, 1, 1);
+
         let title = document.createElement('STRONG');
+        title.innerHTML = configuration.name;
+
+        /*let title = document.createElement('STRONG');
         title.innerHTML = configuration.name;
         title.oncontextmenu = () => {
             ctn.popup();
-        }
+        }*/
 
         this.sidebar.addItem({
             id: `${configuration.id}`,
             title: title,
             key: `${configuration.name} ${configuration.date} ${configuration.authors}`,
-            body: body,
+            details: tools,
             icon: ic,
             toggle: true,
+            oncontextmenu: () => {
+                ctn.popup();
+            },
             onclick: {
                 active: () => {
                     this.sidebar.list.deactiveAll();
+                    this.sidebar.list.hideAllDetails();
+                    this.sidebar.list.showDetails(configuration.id);
                     this.mapManager.setConfiguration(configuration);
+                    //this.mapManager.reload();
                 },
-                deactive: () => {}
+                deactive: () => {
+                    this.sidebar.list.hideAllDetails();
+                    //this.mapManager.clean();
+                }
             }
         });
 
         this.maps[configuration.id] = configuration;
         configuration.new = false;
         this.sidebar.list.deactiveAll();
+        this.sidebar.list.hideAllDetails();
         this.sidebar.list.activeItem(configuration.id);
+        this.sidebar.list.showDetails(configuration.id);
         this.mapPane.show();
     }
 
@@ -691,8 +738,8 @@ class mapPage extends GuiExtension {
             c.oncontextmenu = (event) => {
                 context.popup();
             }
-            layer.on('contextmenu',()=>{
-              context.popup();
+            layer.on('contextmenu', () => {
+                context.popup();
             })
             this.sidebarRegions.addItem({
                 id: layerConfig.id,

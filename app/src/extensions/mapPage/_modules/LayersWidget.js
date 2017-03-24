@@ -10,6 +10,8 @@ const {
 } = require('electron').remote;
 const Input = require('Input');
 const ToggleElement = require('ToggleElement');
+const Modal = require('Modal');
+const ButtonsContainer = require('ButtonsContainer');
 
 class LayersWidget {
 
@@ -56,8 +58,9 @@ class LayersWidget {
         });
         this.element.appendChild(this.content);
         this.baseLayer = null;
-        this.baseLayers = {};
-        this.overlayLayers = {};
+
+        // Temporal patch
+        this.pointsMarkers = {};
     }
 
     setMapManager(mapManager) {
@@ -69,8 +72,7 @@ class LayersWidget {
             this.overlaylist.clean();
             this.datalist.clean();
             this.baseLayer = null;
-            this.baseLayers = {};
-            this.overlayLayers = {};
+            this.pointsMarkers = {};
         });
 
         this.mapManager.on('add:tileslayer', (e) => {
@@ -92,10 +94,90 @@ class LayersWidget {
                 }
             }
             let customMenuItems = [];
+
+            let deleteMenuItem = new MenuItem({
+                label: 'Delete',
+                click: () => {
+                    if (this.baseLayer === layer) {
+                        return;
+                    }
+                    this.mapManager.removeLayer(layer);
+                }
+            });
+            customMenuItems.push(deleteMenuItem);
+            customMenuItems.push(new MenuItem({ type: 'separator' }));
+
             let calibrationSettingsMenuItem = new MenuItem({
                 label: 'Calibration settings',
                 click: () => {
+                    var modal = new Modal({
+                        title: "Calibration settings",
+                        height: "auto"
+                    });
 
+                    let grid = new Grid(3, 2);
+
+                    let numCalibratedSize = Input.input({
+                        type: "number",
+                        id: "numCalibratedSize",
+                        value: configuration.sizeCal || 0,
+                        min: "0"
+                    });
+                    let lblCalibratedSize = document.createElement("LABEL");
+                    lblCalibratedSize.htmlFor = "numCalibratedSize";
+                    lblCalibratedSize.innerHTML = "Calibrated size: ";
+                    grid.addElement(lblCalibratedSize, 0, 0);
+                    grid.addElement(numCalibratedSize, 0, 1);
+
+                    let numCalibratedDepth = Input.input({
+                        type: "number",
+                        id: "numCalibratedDepth",
+                        value: configuration.depthCal || 0,
+                        min: "0"
+                    });
+                    let lblCalibratedDepth = document.createElement("LABEL");
+                    lblCalibratedDepth.htmlFor = "numCalibratedDepth";
+                    lblCalibratedDepth.innerHTML = "Calibrated depth: ";
+                    grid.addElement(lblCalibratedDepth, 1, 0);
+                    grid.addElement(numCalibratedDepth, 1, 1);
+
+                    let txtCalibrationUnit = Input.input({
+                        type: "text",
+                        id: "txtCalibrationUnit",
+                        value: configuration.unitCal || "u"
+                    });
+                    let lblCalibrationUnit = document.createElement("LABEL");
+                    lblCalibrationUnit.htmlFor = "txtCalibrationUnit";
+                    lblCalibrationUnit.innerHTML = "Calibration unit: ";
+                    grid.addElement(lblCalibrationUnit, 2, 0);
+                    grid.addElement(txtCalibrationUnit, 2, 1);
+
+                    let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
+                    buttonsContainer.addButton({
+                        id: "CancelSettings00",
+                        text: "Cancel",
+                        action: () => {
+                            modal.destroy();
+                        },
+                        className: "btn-default"
+                    });
+                    buttonsContainer.addButton({
+                        id: "SaveSettings00",
+                        text: "Save",
+                        action: () => {
+                            configuration.sizeCal = Number(numCalibratedSize.value);
+                            configuration.depthCal = Number(numCalibratedDepth.value);
+                            configuration.unitCal = txtCalibrationUnit.value;
+                            modal.destroy();
+                        },
+                        className: "btn-default"
+                    });
+                    let footer = document.createElement('DIV');
+                    footer.appendChild(buttonsContainer.element);
+
+                    modal.addBody(grid.element);
+                    modal.addFooter(footer);
+                    modal.show();
                 }
             });
             customMenuItems.push(calibrationSettingsMenuItem);
@@ -111,6 +193,7 @@ class LayersWidget {
                 }
             });
             customMenuItems.push(baseLayerMenuItem);
+
             this._addToList(layer, customMenuItems, tools, configuration, list);
         });
 
@@ -121,14 +204,52 @@ class LayersWidget {
 
             let tools = this.createToolbox(layer, false, true, true);
             let customMenuItems = [];
+            let deleteMenuItem = new MenuItem({
+                label: 'Delete',
+                click: () => {
+                    configuration.easyToDraw = false;
+                    this.mapManager.reloadLayer(configuration);
+                }
+            });
+            customMenuItems.push(deleteMenuItem);
+            this.pointsMarkers[configuration.id] = layer;
 
             this._addToList(layer, customMenuItems, tools, configuration, this.overlaylist);
+        });
+
+        this.mapManager.on('add:pointslayer', (e) => {
+            let layer = e.layer;
+            let configuration = e.configuration;
+
+            let customMenuItems = [];
+            let deleteMenuItem = new MenuItem({
+                label: 'Delete',
+                click: () => {
+                    this.mapManager.removeLayer(configuration);
+                }
+            });
+            customMenuItems.push(deleteMenuItem);
+            customMenuItems.push(new MenuItem({ type: 'separator' }));
+
+            let easyToDrawMenuItem = new MenuItem({
+                label: 'Easy to draw',
+                type: 'checkbox',
+                checked: configuration.easyToDraw,
+                click: () => {
+                    configuration.easyToDraw = easyToDrawMenuItem.checked;
+                    this.mapManager.reloadLayer(configuration);
+                }
+            });
+            customMenuItems.push(easyToDrawMenuItem);
+
+            this._addToList(e.layer, customMenuItems, null, e.configuration, this.datalist);
         });
 
         this.mapManager.on('remove:layer', (e) => {
             if (e.configuration.baseLayer) {
                 this.baselist.removeItem(e.configuration.id);
             } else if (e.configuration.type === 'pointsLayer' || e.configuration.type === 'pixelsLayer') {
+                this._removePointsLayerMarkers(e.configuration.id);
                 this.datalist.removeItem(e.configuration.id);
             } else if (e.configuration.type === 'tilesLayer') {
                 this.tileslist.removeItem(e.configuration.id);
@@ -139,17 +260,14 @@ class LayersWidget {
     }
 
     /**
-     * Removes a layer from a list of layers.
-     * @param {number} idLayer id of the layer to remove.
-     * @param {Object} layers Object that contains a list of layers.
+     * This method is a temporal patch for removing drawn points layers.
+     * @param {number} id 
      */
-    _removeLayer(idLayer, layers) {
-        if (layers[idLayer]) {
-            let layer = layers[idLayer];
-            if (this.mapManager._map.hasLayer(layer)) {
-                this.mapManager._map.removeLayer(layer);
-            }
-            delete layers[idLayer];
+    _removePointsLayerMarkers(id) {
+        if (this.pointsMarkers[id]) {
+            this.mapManager._map.removeLayer(this.pointsMarkers[id]);
+            delete this.pointsMarkers[id];
+            this.overlaylist.removeItem(id);
         }
     }
 
@@ -169,36 +287,27 @@ class LayersWidget {
         let titleTable = Util.div(null, 'table-container');
         let txtTitleContainer = Util.div(null, 'cell full-width');
         txtTitleContainer.appendChild(txtTitle);
-        let btnToolsContainer = Util.div(null, 'cell');
-        let btnTools = document.createElement('button');
-        btnTools.className = 'btn btn-default';
-        btnTools.onclick = (e) => {
-            e.stopPropagation();
-            tools.toggle();
-        }
-        let iconTools = document.createElement('span');
-        iconTools.className = 'icon icon-tools';
-        btnTools.appendChild(iconTools);
-        btnToolsContainer.appendChild(btnTools);
-
         titleTable.appendChild(txtTitleContainer);
-        titleTable.appendChild(btnToolsContainer);
+        if (tools) {
+            let btnToolsContainer = Util.div(null, 'cell');
+            let btnTools = document.createElement('button');
+            btnTools.className = 'btn btn-default';
+            btnTools.onclick = (e) => {
+                e.stopPropagation();
+                tools.toggle();
+            }
+            let iconTools = document.createElement('span');
+            iconTools.className = 'icon icon-tools';
+            btnTools.appendChild(iconTools);
+            btnToolsContainer.appendChild(btnTools);
+            titleTable.appendChild(btnToolsContainer);
+        }
 
         let context = new Menu();
         context.append(new MenuItem({
             label: 'Rename',
             click: () => {
                 txtTitle.readOnly = false;
-            }
-        }));
-
-        context.append(new MenuItem({
-            label: 'Delete',
-            click: () => {
-                if (this.baseLayer === layer) {
-                    return;
-                }
-                this.mapManager.removeLayer(layer);
             }
         }));
 
@@ -230,7 +339,7 @@ class LayersWidget {
                 }
             },
             key: configuration.name,
-            toggle: true
+            toggle: list != this.datalist
         });
 
 

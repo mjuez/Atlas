@@ -31,22 +31,6 @@
     "electron": "^1.4.10"
   },
   "dependencies": {
-    "babyparse": "^0.4.6",
-    "dateformat": "^2.0.0",
-    "electron-is-dev": "^0.1.2",
-    "electron-json-storage": "^2.1.0",
-    "gm": "^1.23.0",
-    "image-size": "^0.5.0",
-    "json2csv": "^3.7.2",
-    "leaflet": "1.0.2",
-    "leaflet-draw": "^0.4.1",
-    "leaflet-geometryutil": "^0.8.0",
-    "leaflet-snap": "0.0.4",
-    "leaflet.markercluster": "^1.0.0",
-    "marked": "^0.3.6",
-    "papaparse": "^4.1.4",
-    "sanitize-filename": "^1.6.1",
-    "three": "^0.84.0",
-    "tiff-to-png": "^1.0.5"
+    "electrongui": "github:gherardovarando/electrongui"
   }
 }

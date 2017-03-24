@@ -80,21 +80,28 @@ class mapPage extends GuiExtension {
             groupId: "mapPage"
         });
         //add the sidebars
-        this.sidebartest = new Sidebar(this.element);
-        let flexLayout = new FlexLayout(this.sidebartest.element, FlexLayout.Type.VERTICAL, 60);
+        this.sidebar = new Sidebar(this.element);
+        let flexLayout = new FlexLayout(this.sidebar.element, FlexLayout.Type.VERTICAL, 60);
 
         this.layersContainer = new LayersWidget();
         flexLayout.appendToLastContainer(this.layersContainer.element);
-        this.sidebartest.show();
+        this.sidebar.show();
 
-        this.sidebar = new Sidebar(this.element);
+        let mapsListContainer = Util.div(null);
+        this.mapsList = new ListGroup(mapsListContainer);
+        this.mapsList.addSearch({
+            placeholder: 'Search maps'
+        });
+
+        flexLayout.appendToFirstContainer(this.mapsList.element);
+
+        /*this.sidebar = new Sidebar(this.element);
         this.sidebar.addList();
         this.sidebar.list.addSearch({
             placeholder: 'Search maps'
         });
 
-
-        flexLayout.appendToFirstContainer(this.sidebar.list.element);
+        flexLayout.appendToFirstContainer(this.sidebar.list.element);*/
 
         this.sidebar.element.ondragover = (ev) => {
             ev.dataTransfer.dropEffect = "none";
@@ -421,14 +428,14 @@ class mapPage extends GuiExtension {
                 let map = this.maps[id];
                 if (!this.active) return;
                 if (!map) return;
-                this.sidebar.list.removeItem(`${map.id}`);
+                this.mapsList.removeItem(`${map.id}`);
                 this.maps = {};
                 this.mapManager.setConfiguration({
                     type: 'map'
                 });
             });
         }
-        this.sidebar.list.clean();
+        this.mapsList.clean();
         this.sidebarRegions.list.clean();
         this.sidebarRegions.markers.clean();
     }
@@ -507,7 +514,7 @@ class mapPage extends GuiExtension {
                         if (configuration == this.mapManager._configuration) {
                             this.mapManager.clean();
                         }
-                        this.sidebar.list.removeItem(`${configuration.id}`);
+                        this.mapsList.removeItem(`${configuration.id}`);
                         delete this.maps[configuration.id];
                     }
                 });
@@ -557,7 +564,7 @@ class mapPage extends GuiExtension {
             ctn.popup();
         }*/
 
-        this.sidebar.addItem({
+        this.mapsList.addItem({
             id: `${configuration.id}`,
             title: title,
             key: `${configuration.name} ${configuration.date} ${configuration.authors}`,
@@ -569,14 +576,14 @@ class mapPage extends GuiExtension {
             },
             onclick: {
                 active: () => {
-                    this.sidebar.list.deactiveAll();
-                    this.sidebar.list.hideAllDetails();
-                    this.sidebar.list.showDetails(configuration.id);
+                    this.mapsList.deactiveAll();
+                    this.mapsList.hideAllDetails();
+                    this.mapsList.showDetails(configuration.id);
                     this.mapManager.setConfiguration(configuration);
                     //this.mapManager.reload();
                 },
                 deactive: () => {
-                    this.sidebar.list.hideAllDetails();
+                    this.mapsList.hideAllDetails();
                     //this.mapManager.clean();
                 }
             }
@@ -584,10 +591,10 @@ class mapPage extends GuiExtension {
 
         this.maps[configuration.id] = configuration;
         configuration.new = false;
-        this.sidebar.list.deactiveAll();
-        this.sidebar.list.hideAllDetails();
-        this.sidebar.list.activeItem(configuration.id);
-        this.sidebar.list.showDetails(configuration.id);
+        this.mapsList.deactiveAll();
+        this.mapsList.hideAllDetails();
+        this.mapsList.activeItem(configuration.id);
+        this.mapsList.showDetails(configuration.id);
         this.mapPane.show();
     }
 

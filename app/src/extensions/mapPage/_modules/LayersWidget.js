@@ -1,3 +1,21 @@
+/**
+ * @author : Mario Juez (mjuez@fi.upm.es)
+ *
+ * @license: GPL v3
+ *     This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 'use strict'
 
 const Util = require('Util');
@@ -13,8 +31,16 @@ const ToggleElement = require('ToggleElement');
 const Modal = require('Modal');
 const ButtonsContainer = require('ButtonsContainer');
 
+/**
+ * Creates a widget containing a list of map layers
+ * and provides custom tools to modify their properties
+ * (opacity, color, radius...)
+ */
 class LayersWidget {
 
+    /**
+     * Class constructor.
+     */
     constructor() {
         this.element = Util.div(null, 'layers-widget');
         this.content = Util.div(null, 'content');
@@ -63,6 +89,10 @@ class LayersWidget {
         this.pointsMarkers = {};
     }
 
+    /**
+     * Sets the map manager and listens to its events.
+     * @param {MapManager} mapManager The map manager.
+     */
     setMapManager(mapManager) {
         this.mapManager = mapManager;
 
@@ -287,6 +317,15 @@ class LayersWidget {
         }
     }
 
+    /**
+     * Adds a layer/configuration into a ListGroup
+     * A custom list item is created and inserted to the list. 
+     * @param {Object} layer leaflet layer.
+     * @param {Array<MenuItem>} customMenuItems a list of menu items.
+     * @param {ToggleElement} tools specific tools for that layer.
+     * @param {Object} configuration json layer configuration.
+     * @param {ListGroup} list target ListGroup.
+     */
     _addToList(layer, customMenuItems, tools, configuration, list) {
         let txtTitle = Input.input({
             value: configuration.name,
@@ -296,7 +335,7 @@ class LayersWidget {
                 txtTitle.readOnly = true;
             },
             onchange: () => {
-                layer._configuration.name = txtTitle.value;
+                configuration.name = txtTitle.value;
             }
         });
 
@@ -366,6 +405,13 @@ class LayersWidget {
         }
     }
 
+    /**
+     * 
+     * @param {Object} layer 
+     * @param {boolean} hasOpacityControl 
+     * @param {boolean} hasColorControl 
+     * @param {boolean} hasRadiusControl 
+     */
     createToolbox(layer, hasOpacityControl, hasColorControl, hasRadiusControl) {
         let toolbox = new ToggleElement(Util.div(null, 'table-container toolbox'));
         toolbox.hide();

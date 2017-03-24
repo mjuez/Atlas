@@ -242,7 +242,23 @@ class LayersWidget {
             });
             customMenuItems.push(easyToDrawMenuItem);
 
-            this._addToList(e.layer, customMenuItems, null, e.configuration, this.datalist);
+            this._addToList(layer, customMenuItems, null, configuration, this.datalist);
+        });
+
+        this.mapManager.on('add:pixelslayer', (e) => {
+            let layer = e.layer;
+            let configuration = e.configuration;
+
+            let customMenuItems = [];
+            let deleteMenuItem = new MenuItem({
+                label: 'Delete',
+                click: () => {
+                    this.mapManager.removeLayer(configuration);
+                }
+            });
+            customMenuItems.push(deleteMenuItem);
+
+            this._addToList(configuration, customMenuItems, null, configuration, this.datalist);
         });
 
         this.mapManager.on('remove:layer', (e) => {
@@ -348,8 +364,6 @@ class LayersWidget {
                 list.deactiveItem(configuration.id);
             });
         }
-
-
     }
 
     createToolbox(layer, hasOpacityControl, hasColorControl, hasRadiusControl) {

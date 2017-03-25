@@ -6,7 +6,8 @@ const isDev = require('electron-is-dev');
 const {
     gui,
     Workspace,
-    ExtensionsManager
+    ExtensionsManager,
+    TasksViewer
 } = require(`electrongui`);
 const {
     Menu,
@@ -59,6 +60,8 @@ gui.addMenuItem(new MenuItem({
 gui.extensionsManager = new ExtensionsManager();
 gui.workspace = new Workspace();
 gui.HelpExtension = new HelpExtension();
+gui.TasksViewer = new TasksViewer();
+gui.TasksViewer.activate();
 gui.HelpExtension.activate();
 
 

@@ -43,9 +43,5 @@
       "iconUrl": "http://vps136.cesvima.upm.es/assets/atlas/icon.ico",
       "publisherName": "Computational Intelligence Group"
     }
-  },
-  "dependencies": {
-    "dateformat": "^2.0.0",
-    "gm": "^1.23.0"
   }
 }

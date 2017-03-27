@@ -59,10 +59,11 @@ gui.addMenuItem(new MenuItem({
 }));
 gui.extensionsManager = new ExtensionsManager();
 gui.workspace = new Workspace();
-gui.HelpExtension = new HelpExtension();
-gui.TasksViewer = new TasksViewer();
-gui.TasksViewer.activate();
-gui.HelpExtension.activate();
+gui.helpExtension = new HelpExtension();
+gui.tasksViewer = new TasksViewer();
+gui.helpExtension.activate();
+gui.tasksViewer.activate();
+
 
 
 gui.stopWaiting();

@@ -33,7 +33,7 @@ renderer.link = function(href, title, text) {
     if (!text) text = href;
     if (!title) title = href;
     if (href.includes("@")) {
-      return (href);
+        return (href);
         return (`<a href="mailto:${href}" title="${title}" target="_parent"> ${text} </a>`);
     }
     if (href.includes('http') | href.includes('www')) {
@@ -70,7 +70,7 @@ class helpPage extends GuiExtension {
 
         //add the help pages container
         let page = document.createElement('DIV');
-        page.className = 'pane padded';
+        page.className = 'pane padded markdown-body';
         this.page = new ToggleElement(page);
         this.page.hide();
 
@@ -166,6 +166,7 @@ class helpPage extends GuiExtension {
         options.icon = page.icon;
         options.id = page.id;
         options.title = page.title;
+        if (page.id){
         options.onclick = () => {
             this.displayPage(page);
             this.sidebar.nav.applyAll((it) => {
@@ -174,6 +175,10 @@ class helpPage extends GuiExtension {
             this.sidebar.nav.items[page.id].className = 'nav-group-item active';
         };
         this.sidebar.nav.addItem(options);
+      }else{
+        this.sidebar.nav.addTitle(options.title);
+      }
+
     }
 
     displayPage(pg) {

@@ -27,34 +27,31 @@ const Input = require('Input');
 const Grid = require('Grid');
 const FolderSelector = require('FolderSelector');
 const ButtonsContainer = require('ButtonsContainer');
-const MapIO = require('../extensions/mapPage/_modules/MapIO.js');
 const ChildProcess = require('child_process').ChildProcess;
 const {
     dialog
 } = require('electron').remote;
-
 let gui = require('Gui');
 
 
-class HolesDetectionTask extends Task {
+class ObjectDetectionTask extends Task {
 
     constructor(details, mode) {
-        let name = "ImageJ Holes Detection";
+        let name = "ImageJ Object Detector";
         super(name, details);
-        this.imageJExtension = gui.extensionsManager.extensions.imagej;
-        this.macro = "HolesDetector";
+        this.imageJExtension = gui.extensions.imagej;
+        this.macro = "ObjectDetector";
         this.mode = mode;
         this.jsonFile = null;
         this.childProcess = null;
-
     }
 
     run(runPath) {
         super.run();
         this.showModal((modal, params) => {
-            let args = `${this.mode}#${runPath}#${params.radius}#${params.threshold}#${params.path}`;
-            let layerType = `pixels`;
-            let tot = 0;
+            let args = `${this.mode}#${runPath}#${params.rmin}#${params.rmax}#${params.by}#${params.thrMethod}#${params.min}#${params.max}#${params.fraction}#${params.toll}#${params.path}`;
+            let layerType = `points`;
+            let tot=0;
             this.childProcess = this.imageJExtension.run(this.macro, args);
             this.childProcess.stdout.setEncoding('utf8');
             this.childProcess.stdout.on('data', (data) => {
@@ -75,12 +72,12 @@ class HolesDetectionTask extends Task {
                     let notification;
                     if (code == 0) {
                         Util.Layers.createJSONConfiguration(runPath, params.path, this.mode, layerType, (config) => {
-                            let jsonPath = `${params.path}${path.sep}holes_pixels${path.sep}${config.name}.json`;
+                            let jsonPath = `${params.path}${path.sep}points${path.sep}${config.name}.json`;
                             fs.writeFile(jsonPath, JSON.stringify(config, null, 2), (err) => {
                                 if (err) {
                                     notification = `Can't save JSON configuration file! Error: ${err}`;
                                 } else {
-                                    notification = `Holes detection task (${this.details}) completed`;
+                                    notification = `Object detection task (${this.details}) completed`;
                                     this.jsonFile = jsonPath;
                                 }
                                 resolve(notification);
@@ -88,12 +85,13 @@ class HolesDetectionTask extends Task {
                         });
                         this.success();
                     } else if (code == 1) {
-                        notification = `Holes detection task (${this.details}) failed.`;
+                        notification = `Object detection task (${this.details}) failed.`;
                         this.fail("Problems with JVM...");
-                    } else {
-                        notification = `Holes detection task (${this.details}) cancelled`;
                         resolve(notification);
+                    } else {
+                        notification = `Object detection task (${this.details}) cancelled`;
                         this.cancel();
+                        resolve(notification);
                     }
                 });
 
@@ -105,10 +103,10 @@ class HolesDetectionTask extends Task {
 
             this.childProcess.on('error', (err) => {
                 this.fail(err);
-                Util.notifyOS(`Holes detection exec error: ${err}`);
+                Util.notifyOS(`Object detection exec error: ${err}`);
             });
 
-            gui.notify(`Holes detection task started.`);
+            gui.notify(`Object detection task started.`);
             modal.destroy();
         });
     }
@@ -133,43 +131,136 @@ class HolesDetectionTask extends Task {
 
     showModal(next) {
         var modal = new Modal({
-            title: "Holes detection options",
+            title: "Object detection options",
             height: "auto"
         });
 
         let body = document.createElement("DIV");
-        let grid = new Grid(3, 2);
+        let grid = new Grid(9, 2);
 
-        let numRadius = Input.input({
+        let numRMin = Input.input({
             type: "number",
-            id: "numradius",
-            value: "10",
+            id: "numrmin",
+            value: "1",
+            min: "1",
+            max: "15"
+        });
+        let lblRMin = document.createElement("LABEL");
+        lblRMin.htmlFor = "numrmin";
+        lblRMin.innerHTML = "Minimum radius: ";
+        grid.addElement(lblRMin, 0, 0);
+        grid.addElement(numRMin, 0, 1);
+
+        let numRMax = Input.input({
+            type: "number",
+            id: "numrmax",
+            value: "5",
+            min: "1",
+            max: "15"
+        });
+        let lblRMax = document.createElement("LABEL");
+        lblRMax.htmlFor = "numrmax";
+        lblRMax.innerHTML = "Maximum radius: ";
+        grid.addElement(lblRMax, 1, 0);
+        grid.addElement(numRMax, 1, 1);
+
+        let numBy = Input.input({
+            type: "number",
+            id: "numby",
+            value: "1",
             min: "0"
         });
-        let lblRadius = document.createElement("LABEL");
-        lblRadius.htmlFor = "numradius";
-        lblRadius.innerHTML = "Radius of median filter: ";
-        grid.addElement(lblRadius, 0, 0);
-        grid.addElement(numRadius, 0, 1);
+        let lblBy = document.createElement("LABEL");
+        lblBy.htmlFor = "numby";
+        lblBy.innerHTML = "By: ";
+        grid.addElement(lblBy, 2, 0);
+        grid.addElement(numBy, 2, 1);
 
-        let numThreshold = Input.input({
+        let selThrMethod = Input.selectInput({
+            label: "Threshold method",
+            choices: [
+                "Default",
+                "Huang",
+                "Intermodes",
+                "IsoData",
+                "Li",
+                "MaxEntropy",
+                "Mean",
+                "MinError(I)",
+                "Minimum",
+                "Moments",
+                "Otsu",
+                "Percentile",
+                "RenyiEntropy",
+                "Shambhag",
+                "Triangle",
+                "Yen"
+            ],
+            className: "simple form-control",
+            value: "Moments"
+        });
+        let lblThrMethod = document.createElement("LABEL");
+        lblThrMethod.htmlFor = "selthrmethod";
+        lblThrMethod.innerHTML = "Threshold method: ";
+        grid.addElement(lblThrMethod, 3, 0);
+        grid.addElement(selThrMethod, 3, 1);
+
+        let numMin = Input.input({
             type: "number",
-            id: "numthreshold",
-            value: "250",
+            id: "nummin",
+            value: "1",
             min: "0"
         });
-        let lblThreshold = document.createElement("LABEL");
-        lblThreshold.htmlFor = "numthreshold";
-        lblThreshold.innerHTML = "Threshold: ";
-        grid.addElement(lblThreshold, 1, 0);
-        grid.addElement(numThreshold, 1, 1);
+        let lblMin = document.createElement("LABEL");
+        lblMin.htmlFor = "nummin";
+        lblMin.innerHTML = "Minimum: ";
+        grid.addElement(lblMin, 4, 0);
+        grid.addElement(numMin, 4, 1);
+
+        let numMax = Input.input({
+            type: "number",
+            id: "nummax",
+            value: "-1",
+            min: "-1"
+        });
+        let lblMax = document.createElement("LABEL");
+        lblMax.htmlFor = "nummax";
+        lblMax.innerHTML = "Maximum: ";
+        grid.addElement(lblMax, 5, 0);
+        grid.addElement(numMax, 5, 1);
+
+        let numFraction = Input.input({
+            type: "number",
+            id: "numfraction",
+            value: "0.500",
+            min: "0",
+            max: "1",
+            step: "0.001"
+        });
+        let lblFraction = document.createElement("LABEL");
+        lblFraction.htmlFor = "numfraction";
+        lblFraction.innerHTML = "Fraction: ";
+        grid.addElement(lblFraction, 6, 0);
+        grid.addElement(numFraction, 6, 1);
+
+        let numToll = Input.input({
+            type: "number",
+            id: "numtoll",
+            value: "0",
+            min: "0"
+        });
+        let lblToll = document.createElement("LABEL");
+        lblToll.htmlFor = "numtoll";
+        lblToll.innerHTML = "Tolerance: ";
+        grid.addElement(lblToll, 7, 0);
+        grid.addElement(numToll, 7, 1);
 
         let fldOutputFolder = new FolderSelector("fileoutputfolder");
         let lblOutputFolder = document.createElement("LABEL");
         lblOutputFolder.htmlFor = "fileoutputfolder";
         lblOutputFolder.innerHTML = "Output folder: ";
-        grid.addElement(lblOutputFolder, 2, 0);
-        grid.addElement(fldOutputFolder.element, 2, 1);
+        grid.addElement(lblOutputFolder, 8, 0);
+        grid.addElement(fldOutputFolder.element, 8, 1);
 
         let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
         buttonsContainer.addButton({
@@ -188,13 +279,19 @@ class HolesDetectionTask extends Task {
                 if (typeof next === 'function') {
                     if (fldOutputFolder.getFolderRoute()) {
                         let params = {
-                            radius: numRadius.value || "[]",
-                            threshold: numThreshold.value || "[]",
+                            rmin: numRMin.value || "[]",
+                            rmax: numRMax.value || "[]",
+                            by: numBy.value || "[]",
+                            thrMethod: selThrMethod.value,
+                            min: numMin.value || "[]",
+                            max: numMax.value || "[]",
+                            fraction: numFraction.value || "[]",
+                            toll: numToll.value || "[]",
                             path: fldOutputFolder.getFolderRoute()
                         }
                         next(modal, params);
                     } else {
-                        dialog.showErrorBox("Can't detect holes", "You must choose an output folder where results will be saved.");
+                        dialog.showErrorBox("Can't detect objects", "You must choose an output folder where results will be saved.");
                     }
                 }
             },
@@ -211,4 +308,4 @@ class HolesDetectionTask extends Task {
 
 }
 
-module.exports = HolesDetectionTask;
+module.exports = ObjectDetectionTask;

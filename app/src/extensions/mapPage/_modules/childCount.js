@@ -11,7 +11,7 @@ process.on('message', (m) => {
                 },
                 error: (e) => {
                     e.x = 'error'
-                    process.send(e);
+                    //process.send(e);
                 },
                 bunch: (s, t) => {
                     let step = {

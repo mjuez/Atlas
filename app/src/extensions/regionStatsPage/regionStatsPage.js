@@ -63,10 +63,12 @@ class regionStatsPage extends GuiExtension {
         super.show();
         this.cleanPane();
         this.sidebar.list.clean();
+        //this.sidebar.markers.clean();
         this.loadWorkspaceData();
         this.cleanPane();
         this.showRegionsStats(gui.extensionsManager.extensions.mapPage.mapManager._configuration);
-        this.sidebar.list.activeJustOne(gui.extensionsManager.extensions.mapPage.mapManager._configuration.id);
+        this.sidebar.list.deactiveAll();
+        this.sidebar.list.activeItem(gui.extensionsManager.extensions.mapPage.mapManager._configuration.id);
     }
 
     addSidebar() {
@@ -95,16 +97,17 @@ class regionStatsPage extends GuiExtension {
     }
 
     addMapToSidebar(map) {
-
         this.sidebar.addItem({
             id: `${map.id}`,
             title: map.name,
             key: map.authors,
-            toggle: {justOne:true}, //just one item is activable at the same time
+            toggle: true, //just one item is activable at the same time
             onclick: {
                 active: () => {
+                  this.sidebar.list.deactiveAll();
+                  gui.mapManager.setConfiguration(map);
                   this.cleanPane(); // clean the pane to avoid more than one table to be displayed
-                    this.showRegionsStats(map);
+                  this.showRegionsStats(map);
                 },
                 deactive: () => {
                     this.cleanPane();
@@ -114,17 +117,16 @@ class regionStatsPage extends GuiExtension {
     }
 
     showRegionsStats(map) {
-        if (!map.layers) return;
-        if (map.layers.drawnPolygons) {
-            var polygons = map.layers.drawnPolygons.polygons;
+        let polygons = gui.extensionsManager.extensions.mapPage.mapManager.getLayers('polygons');
+        if (polygons.length > 0) {
             var table = new Table();
             Object.keys(polygons).map((key) => {
-                if (polygons[key].stats) {
-                    let row = this.createRow(polygons[key].stats, polygons[key].name);
+                let pol = polygons[key]._configuration;
+                if (pol.stats) {
+                    let row = this.createRow(pol.stats, pol.name);
                     table.addRow(row);
                 }
             });
-
             if (table.tbody.hasChildNodes()) {
                 let exportContainer = document.createElement('DIV');
                 exportContainer.className = "padded";

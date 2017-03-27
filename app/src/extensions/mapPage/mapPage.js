@@ -20,30 +20,25 @@
 
 "use strict";
 
+const sizeOf = require('image-size');
+const SplitPane = require('SplitPane');
 const RegionAnalyzer = require('./_modules/RegionAnalyzer.js');
 const Modal = require('Modal');
+const Grid = require('Grid');
 const Workspace = require('Workspace');
 const Sidebar = require('Sidebar');
 const GuiExtension = require('GuiExtension');
 const ListGroup = require('ListGroup');
-const NavGroup = require('NavGroup');
+const TabGroup = require('TabGroup');
 const ButtonsContainer = require('ButtonsContainer');
-const {
-    TreeList,
-    TreeListInput
-} = require('TreeList');
 const ToggleElement = require('ToggleElement');
 const Util = require('Util');
 const ConvertTiff = require('tiff-to-png');
 const json2csv = require('json2csv');
-const {
-    fork,
-    exec
-} = require('child_process');
 const fs = require('fs');
 const mapManager = require('./_modules/MapManager.js');
 const MapIO = require('./_modules/MapIO.js');
-const MapEdit = require('./_modules/MapEdit.js');
+const LayersWidget = require('./_modules/LayersWidget.js');
 const leaflet = require('leaflet');
 const {
     ipcRenderer
@@ -53,14 +48,16 @@ const {
     Menu,
     MenuItem
 } = require('electron').remote;
-
 const {
     globalShortcut
 } = require('electron').remote;
 const {
     app
 } = require('electron').remote;
+const Input = require('Input');
+const FlexLayout = require('FlexLayout');
 
+let taskManager = require('TaskManager');
 let gui = require('Gui');
 
 
@@ -69,35 +66,43 @@ class mapPage extends GuiExtension {
     constructor() {
         super(); //always
         this.icon = 'fa fa-map fa-2x';
+        this._colors = ['blue', 'red', 'pink', 'orange', 'yellow', 'green', 'purple', 'black', 'white'];
         this.selectedRegions = [];
         this.maps = {};
         this.indx = 0;
-        this.options = {
-            drawControls: true,
-            layerControl: true
-        };
     }
 
     activate() {
-        super.activate();
         this.addToggleButton({
             id: 'mapPageToggleButton',
             buttonsContainer: gui.header.actionsContainer,
             icon: "fa fa-map",
-            groupId: "mapPage",
-            action: () => {
-                this.mapPane.show();
-                this.devPane.hide();
-            }
+            groupId: "mapPage"
         });
         //add the sidebars
         this.sidebar = new Sidebar(this.element);
+        let flexLayout = new FlexLayout(this.sidebar.element, FlexLayout.Type.VERTICAL, 60);
+
+        this.layersContainer = new LayersWidget();
+        flexLayout.appendToLastContainer(this.layersContainer.element);
+        this.sidebar.show();
+
+        let mapsListContainer = Util.div(null);
+        this.mapsList = new ListGroup(mapsListContainer);
+        this.mapsList.addSearch({
+            placeholder: 'Search maps'
+        });
+
+        flexLayout.appendToFirstContainer(this.mapsList.element);
+
+        /*this.sidebar = new Sidebar(this.element);
         this.sidebar.addList();
         this.sidebar.list.addSearch({
             placeholder: 'Search maps'
         });
-        this.sidebar.addList('layerList');
-        this.sidebar.layerList.hide();
+
+        flexLayout.appendToFirstContainer(this.sidebar.list.element);*/
+
         this.sidebar.element.ondragover = (ev) => {
             ev.dataTransfer.dropEffect = "none";
             for (let f of ev.dataTransfer.files) {
@@ -119,63 +124,73 @@ class mapPage extends GuiExtension {
                 }
             }
         };
-
-        this.sidebar.show();
-
-        this.mapPane = new ToggleElement(document.createElement('DIV'));
-        this.mapPane.element.className = 'pane';
-        this.mapPane.element.ondragover = (ev) => {
+        //this.sidebar.show();
+        this.mapPane = new SplitPane(Util.div());
+        this.mapPane.top.ondragover = (ev) => {
             ev.dataTransfer.dropEffect = "none";
             for (let f of ev.dataTransfer.files) {
-              let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)|(png)))$/i;
+                let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)|(png)|(tif)|(tiff)))$/i;
                 if (regx.test(f.name)) {
                     ev.dataTransfer.dropEffect = "link";
                     ev.preventDefault();
                 }
             }
         };
-        this.mapPane.element.ondrop = (ev) => {
+        this.mapPane.top.ondrop = (ev) => {
             ev.preventDefault();
             for (let f of ev.dataTransfer.files) {
-              let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)|(png)))$/i;
+                let regx = /(\.((json)|(layerconfig)|(jpg)|(gif)|(csv)|(jpg)|(png)|(tif)|(tiff)))$/i;
                 if (regx.test(f.name)) {
                     this.addLayerFile(f.path);
                 }
             }
         };
-
-        this.mapPane.on('show', () => {
-            ipcRenderer.send("mapViewTrick");
-        });
-        this.mapPane.hide();
-        this.element.appendChild(this.mapPane.element);
-
-        let mapContainer = document.createElement('DIV');
-        mapContainer.style['z-index'] = 0;
-        mapContainer.style.width = '100%';
-        mapContainer.style.height = '100%';
-        mapContainer.style.position = 'absolute';
+        this.appendChild(this.mapPane);
+        this.mapPane.show();
+        let mapContainer = this.mapPane.top;
         mapContainer.id = 'map';
-        this.mapPane.element.appendChild(mapContainer);
-
-        globalShortcut.unregisterAll();
-        globalShortcut.register('CommandOrControl+Up', () => {
+        let editContainer = this.mapPane.bottom;
+        globalShortcut.register('CmdOrCtrl+Up', () => {
             this.mapManager.tUP();
         });
-
-        globalShortcut.register('CommandOrControl+Down', () => {
+        globalShortcut.register('CmdOrCtrl+Down', () => {
             this.mapManager.tDOWN();
         });
-
-        this.devPane = new ToggleElement(document.createElement('DIV'));
-        this.devPane.element.className = 'pane padded';
-        this.devPane.hide();
-        this.element.appendChild(this.devPane.element);
-
+        globalShortcut.register('F1', () => {
+            this.mapManager.center();
+        });
         this.sidebarRegions = new Sidebar(this.element);
+        this.sidebarRegions.show();
+        this.sidebarRegionsTabGroup = new TabGroup(this.sidebarRegions);
+        this.sidebarRegionsTabGroup.addItem({
+            id: `regions`,
+            name: `Regions`
+        });
+
+        this.sidebarRegionsTabGroup.addItem({
+            id: `markers`,
+            name: `Markers`
+        });
+
         this.sidebarRegions.addList();
         this.sidebarRegions.list.addSearch({
             placeholder: 'Search regions'
+        });
+
+        this.sidebarRegions.addList(`markers`);
+        this.sidebarRegions.markers.hide();
+        this.sidebarRegions.markers.addSearch({
+            placeholder: 'Search markers'
+        });
+
+        this.sidebarRegionsTabGroup.addClickListener(`regions`, () => {
+            this.sidebarRegions.list.show();
+            this.sidebarRegions.markers.hide();
+        });
+
+        this.sidebarRegionsTabGroup.addClickListener(`markers`, () => {
+            this.sidebarRegions.markers.show();
+            this.sidebarRegions.list.hide();
         });
 
         let arg = {
@@ -187,14 +202,23 @@ class mapPage extends GuiExtension {
         }
         let map = L.map('map', arg);
         map.setView([-100, 100], 0);
-        this.mapManager = L.mapManager(map);
+        this.mapManager = L.mapManager(map, {
+            drawControl: true,
+            layerControl: true,
+            region: {
+                tooltip: true,
+                popup: false
+            },
+            marker: {
+                tooltip: true,
+                popup: true
+            }
+        });
         this.regionAnalyzer = new RegionAnalyzer(this.mapManager, gui);
         this.listenMapManager();
+        this.layersContainer.setMapManager(this.mapManager);
         this.makeMenu();
-
-
         gui.workspace.addSpace(this, this.maps, false); //without overwriting
-
         //saving to workspace and retriving loaded worspace
         if (gui.workspace instanceof Workspace) {
             gui.workspace.addSpace(this, this.maps);
@@ -204,7 +228,6 @@ class mapPage extends GuiExtension {
                 let maps = gui.workspace.spaces.mapPage || {};
                 let tot = Object.keys(maps).length;
                 Object.keys(maps).map((id, i) => {
-                    gui.footer.progressBar.setBar(100 * (i + 1) / tot);
                     this.addNewMap(MapIO.buildConfiguration(maps[id]));
                 });
                 gui.workspace.addSpace(this, this.maps, true); //overwriting
@@ -212,7 +235,7 @@ class mapPage extends GuiExtension {
             });
         }
 
-        //check if there is a mapPage space in the curretn workspace and retrive it
+        //check if there is a mapPage space in the current workspace and retrive it, this is useful on deactivate/activate of mapPage
         if (gui.workspace.spaces.mapPage) {
             this.cleanMaps();
             let maps = gui.workspace.spaces.mapPage;
@@ -221,10 +244,10 @@ class mapPage extends GuiExtension {
             });
             gui.workspace.addSpace(this, this.maps, true); //overwriting
         }
+        gui.mapManager = this.mapManager
+        super.activate();
 
     } //end activate
-
-
 
     makeMenu() {
         let mapMenu = new Menu();
@@ -245,7 +268,7 @@ class mapPage extends GuiExtension {
                     size: 100,
                     tileSize: 10
                 });
-                this.switchMap(this.mapManager._configuration);
+                this.mapManager.reload();
             }
         }));
         layer.append(new MenuItem({
@@ -257,18 +280,9 @@ class mapPage extends GuiExtension {
                     tileSize: 256,
                     tilesUrlTemplate: ''
                 });
-                this.switchMap(this.mapManager._configuration);
+                this.mapManager.reload();
             }
         }));
-        // layer.append(new MenuItem({
-        //     label: 'Edit layers',
-        //     accelerator: 'CmdOrCtrl + L',
-        //     click: () => {
-        //         MapEdit.editLayersModal(this.mapManager._configuration, (c) => {
-        //             this.updateMap(c);
-        //         });
-        //     }
-        // }));
         region.append(new MenuItem({
             label: 'Delete selected',
             type: 'normal',
@@ -323,6 +337,7 @@ class mapPage extends GuiExtension {
             click: () => {
                 MapIO.loadMapfromFile((conf) => {
                     this.addNewMap(conf);
+                    this.show();
                 });
             }
         }));
@@ -331,15 +346,22 @@ class mapPage extends GuiExtension {
             type: 'normal',
             click: () => {
                 this.createMap();
+                this.show();
             }
         }));
+        // mapMenu.append(new MenuItem({
+        //     label: 'Edit map',
+        //     accelerator: 'CmdOrCtrl + L',
+        //     click: () => {
+        //         this.mapPane.toggleBottom();
+        //         this.show();
+        //     }
+        // }));
         mapMenu.append(new MenuItem({
-            label: 'Edit map',
-            accelerator: 'CmdOrCtrl + L',
+            label: 'Reload map',
             click: () => {
-                MapEdit.modal(this.mapManager._configuration, (c) => {
-                    this.updateMap(c);
-                });
+                this.mapManager.reload();
+                this.show();
             }
         }));
         mapMenu.append(new MenuItem({
@@ -380,8 +402,6 @@ class mapPage extends GuiExtension {
             accelerator: 'CmdOrCtrl + M',
             click: () => {
                 this.show();
-                this.mapPane.show();
-                this.devPane.hide();
             }
         }));
         this.menu = new MenuItem({
@@ -396,12 +416,10 @@ class mapPage extends GuiExtension {
         this.sidebar.remove();
         this.sidebarRegions.remove();
         this.element.removeChild(this.mapPane.element);
-        this.element.removeChild(this.devPane.element);
-        gui.removeSubmenu(this.menu);
+        gui.removeSubmenu(this.menu); //compulsory
         this.removeToggleButton('mapPageToggleButton'); //this is compulsory to leave the interface clean
         super.deactivate(); //we will also call the super class deactivate method
     }
-
 
     cleanMaps() {
         this.mapManager.clean();
@@ -410,123 +428,33 @@ class mapPage extends GuiExtension {
                 let map = this.maps[id];
                 if (!this.active) return;
                 if (!map) return;
-                this.sidebar.list.removeItem(`${map.id}`);
+                this.mapsList.removeItem(`${map.id}`);
                 this.maps = {};
                 this.mapManager.setConfiguration({
                     type: 'map'
                 });
             });
         }
-        this.sidebar.list.clean();
-        this.sidebar.layerList.clean();
+        this.mapsList.clean();
         this.sidebarRegions.list.clean();
+        this.sidebarRegions.markers.clean();
     }
 
-
-    showConfiguration(configuration, show) {
-        let pane = this.devPane.element;
-        Util.empty(pane, pane.firstChild);
-        let tree = new TreeListInput(pane, configuration);
-        let raw = document.createElement('TEXTAREA');
-        raw.className = 'form-control'
-        raw.rows = '3'
-        raw.readOnly = true;
-        raw.innerHTML = JSON.stringify(configuration, null, 2);
-        raw.style.display = 'none';
-        let strong = document.createElement('STRONG');
-        strong.className = 'toolbar-actions';
-        strong.innerHTML = 'Raw configuration '
-        let btnC = new ButtonsContainer(strong);
-        btnC.addButton({
-            id: 'editRaw',
-            icon: 'fa fa-pencil',
-            groupId: 'buttons',
-            toggle: true,
-            action: {
-                active: () => {
-                    raw.readOnly = false;
-                    raw.style.display = 'block';
-                    tree.hide();
-                },
-                deactive: () => {
-                    raw.readOnly = true;
-                    raw.style.display = 'none';
-                    tree.show();
-                }
-            }
-        });
-        let cont = document.createElement('DIV');
-        cont.className = 'form-group';
-        let sub = new ButtonsContainer(document.createElement('DIV'));
-        sub.element.className = 'form-actions';
-        sub.addButton({
-            text: 'Save',
-            className: 'btn btn-form btn-default',
-            action: () => {
-                this.saveConfiguration(tree.getObject());
-            }
-        });
-        sub.addButton({
-            text: 'Cancel',
-            className: 'btn btn-form btn-default',
-            action: () => {
-                this.devPane.hide();
-                this.mapPane.show();
-                Util.empty(pane, pane.firstChild);
-            }
-        });
-        cont.appendChild(strong);
-        cont.appendChild(raw);
-        pane.appendChild(cont);
-        pane.appendChild(sub.element);
-        if (show) {
-            this.mapPane.hide();
-            this.devPane.show();
+    loadMap(path, cl) {
+        MapIO.loadMap(path, (conf) => {
+            this.addNewMap(conf);
+            gui.notify(`map ${conf.name} added to workspace`);
             this.show();
-        }
-    }
-
-
-    saveConfiguration(configuration) {
-        if (configuration.new) {
-            this.addNewMap(configuration);
-        } else {
-            this.updateMap(configuration);
-        }
-    }
-
-    initRegionActions(configuration, force) {
-        if (configuration === this.mapManager._configuration && !force) return;
-        this.sidebarRegions.list.clean();
-    }
-
-    switchMap(configuration, force) {
-        if (configuration) {
-            if ((configuration != this.mapManager._configuration) || force) {
-                this.sidebar.layerList.clean();
+            if (typeof cl === 'function') {
+                cl(conf);
             }
-            this.selectedRegions.map((pol) => {
-                pol.setStyle({
-                    fillOpacity: 0.3
-                });
-            });
-            this.selectedRegions = [];
-            this.initRegionActions(configuration, force);
-            this.showConfiguration(configuration);
-            this.mapManager.setConfiguration(configuration, force);
-            this.sidebarRegions.show();
-            this.sidebar.layerList.hide();
-            //this.sidebar.list.activeJustOne(configuration.id);
-        } else {
-            this.switchMap(this.mapManager._configuration);
-        }
+        });
     }
 
 
     addNewMap(configuration) {
         this.indx++;
         configuration.id = this.indx;
-        this.initRegionActions(configuration);
         try {
             this.mapManager.setConfiguration(configuration);
         } catch (e) {
@@ -553,17 +481,6 @@ class mapPage extends GuiExtension {
 
 
         let ctn = new Menu();
-        let edit = new Menu();
-        ctn.append(new MenuItem({
-            label: 'Toggle Layers View',
-            type: 'normal',
-            click: () => {
-                this.sidebar.layerList.toggle();
-            }
-        }));
-        ctn.append(new MenuItem({
-            type: 'separator'
-        }));
         ctn.append(new MenuItem({
             label: 'Export map',
             type: 'normal',
@@ -575,25 +492,14 @@ class mapPage extends GuiExtension {
                 });
             }
         }));
-        edit.append(new MenuItem({
-            label: 'Edit map',
-            type: 'normal',
-            click: () => {
-                MapEdit.modal(this.maps[configuration.id], (c) => {
-                    this.updateMap(c);
-                });
-            }
-        }));
-        // edit.append(new MenuItem({
-        //     label: 'Edit layers',
+        // ctn.append(new MenuItem({
+        //     label: 'Edit map',
         //     type: 'normal',
         //     click: () => {
-        //         MapEdit.editLayersModal(this.maps[configuration.id], (c) => {
-        //             this.updateMap(c);
-        //         });
+        //         this.mapPane.toggleBottom();
         //     }
         // }));
-        edit.append(new MenuItem({
+        ctn.append(new MenuItem({
             label: 'Delete',
             type: 'normal',
             click: () => {
@@ -608,86 +514,108 @@ class mapPage extends GuiExtension {
                         if (configuration == this.mapManager._configuration) {
                             this.mapManager.clean();
                         }
-                        this.sidebar.list.removeItem(`${configuration.id}`);
+                        this.mapsList.removeItem(`${configuration.id}`);
                         delete this.maps[configuration.id];
                     }
                 });
 
             }
         }));
-        ctn.append(new MenuItem({
-            label: 'Edit',
-            type: 'submenu',
-            submenu: edit
-        }));
-        ctn.append(new MenuItem({
-            label: 'Dev view',
-            type: 'normal',
-            click: () => {
-                dialog.showMessageBox({
-                    title: 'show map configuration?',
-                    type: 'warning',
-                    buttons: ['No', "Yes"],
-                    message: `The map configuration object should be modified only if you know what you are doing`,
-                    detail: 'tips: you can go back to map view with CmdOrCtrl + M',
-                    noLink: true
-                }, (id) => {
-                    if (id > 0) {
-                        this.mapPane.hide();
-                        this.devPane.show();
-                    }
-                });
 
+        let activeBaseLayerConf = this.mapManager._activeBaseLayer._configuration;
+
+        let tools = new Grid(2,2);
+        tools.element.onclick = (e) => e.stopPropagation();
+        let numMaxZoom = Input.input({
+            type: "number",
+            id: `numMaxZoom_${configuration.id}`,
+            value: activeBaseLayerConf.maxZoom || 0,
+            min: "0",
+            onchange: () => {
+                this.mapManager.setMaxZoom(Number(numMaxZoom.value));
             }
-        }));
+        });
+        let lblMaxZoom = document.createElement("label");
+        lblMaxZoom.htmlFor = `numMaxZoom_${configuration.id}`;
+        lblMaxZoom.innerHTML = "Max. zoom: ";
+        tools.addElement(lblMaxZoom, 0, 0);
+        tools.addElement(numMaxZoom, 0, 1);
+        let numMinZoom = Input.input({
+            type: "number",
+            id: `numMinZoom_${configuration.id}`,
+            value: activeBaseLayerConf.minZoom || 0,
+            min: "0",
+            oninput: () => {
+                this.mapManager.setMinZoom(Number(numMinZoom.value));
+            }
+        });
+        let lblMinZoom = document.createElement("label");
+        lblMinZoom.htmlFor = `numMinZoom_${configuration.id}`;
+        lblMinZoom.innerHTML = "Min. zoom: ";
+        tools.addElement(lblMinZoom, 1, 0);
+        tools.addElement(numMinZoom, 1, 1);
 
         let title = document.createElement('STRONG');
         title.innerHTML = configuration.name;
+
+        /*let title = document.createElement('STRONG');
+        title.innerHTML = configuration.name;
         title.oncontextmenu = () => {
             ctn.popup();
-        }
+        }*/
 
-        this.sidebar.addItem({
+        this.mapsList.addItem({
             id: `${configuration.id}`,
             title: title,
             key: `${configuration.name} ${configuration.date} ${configuration.authors}`,
-            body: body,
+            details: tools,
             icon: ic,
-            toggle: {
-                justOne: true
+            toggle: true,
+            oncontextmenu: () => {
+                ctn.popup();
             },
             onclick: {
                 active: () => {
-                    this.switchMap(this.maps[configuration.id]);
-                    //this.sidebar.list.search.disabled=true;
-                    //btnCont.show();
+                    this.mapsList.deactiveAll();
+                    this.mapsList.hideAllDetails();
+                    this.mapsList.showDetails(configuration.id);
+                    this.mapManager.setConfiguration(configuration);
+                    //this.mapManager.reload();
                 },
                 deactive: () => {
-                    this.sidebarRegions.hide();
-                    this.sidebar.layerList.hide();
-                    //this.sidebar.list.search.disabled=false;
-                    //btnCont.hide();
+                    this.mapsList.hideAllDetails();
+                    //this.mapManager.clean();
                 }
             }
         });
 
         this.maps[configuration.id] = configuration;
         configuration.new = false;
-        this.switchMap(configuration, true);
-        this.sidebar.list.activeJustOne(configuration.id);
+        this.mapsList.deactiveAll();
+        this.mapsList.hideAllDetails();
+        this.mapsList.activeItem(configuration.id);
+        this.mapsList.showDetails(configuration.id);
         this.mapPane.show();
-        this.devPane.hide();
     }
 
 
-
-
     listenMapManager() {
+
+        //when clean mapmanager clean interface
+        this.mapManager.on('clean', () => {
+            this.sidebarRegions.list.clean();
+            this.sidebarRegions.markers.clean();
+            this.selectedRegions = [];
+
+        });
+
+        this.mapManager.on('reload', () => {
+        });
+
         //when a polygon is added create region element in the sidebarRegions and relative actions,
         this.mapManager.on('add:polygon', (e) => {
             let layer = e.layer;
             let layerConfig = e.layer._configuration;
-
             layer.on('click', () => {
                 if (!this.sidebarRegions.list.items[layerConfig.id].element.className.includes('active')) {
                     this.sidebarRegions.list.items[layerConfig.id].element.className = 'list-group-item active';
@@ -706,58 +634,58 @@ class mapPage extends GuiExtension {
             });
             let inpC = document.createElement('INPUT');
             let inp = document.createElement('INPUT');
-            inpC.type = 'color';
-            inpC.style.display = 'none';
 
             inp.type = 'text';
             inp.className = 'list-input';
             inp.readOnly = true;
             inp.onchange = () => {
+                this.sidebarRegions.list.setKey(layerConfig.id, inp.value);
                 layerConfig.name = inp.value;
                 layer.setTooltipContent(inp.value);
                 inp.readOnly = true;
             }
             inp.onblur = () => {
-                inp.value = layerConfig.name;
                 inp.readOnly = true;
-            }
-            inp.ondblclick = (event) => {
-                event.stopPropagation();
-                inp.readOnly = false;
-            }
-            inpC.onchange = () => {
-                inpC.style.display = 'none';
-                layer.setStyle({
-                    fillColor: inpC.value,
-                    color: inpC.value
-                });
-            }
-            inpC.oninput = () => {
-                layer.setStyle({
-                    fillColor: inpC.value,
-                    color: inpC.value
-                });
             }
 
             let context = new Menu();
-            context.append(new MenuItem({
-                label: 'Delete',
-                click: () => {
-                    if (this.selectedRegions.length === 0) {
-                        this.selectedRegions.push(layer);
+            if (!layer.group) {
+                context.append(new MenuItem({
+                    label: 'Rename',
+                    click: () => {
+                        inp.readOnly = false;
                     }
-                    this.deleteRegionsCheck(this.selectedRegions);
-                    this.selectedRegions = [];
-                }
-            }));
-            context.append(new MenuItem({
-                label: 'Color',
-                click: () => {
-                    inpC.style.display = 'inline';
-                    inpC.focus();
-                    inpC.click();
-                }
-            }));
+                }));
+                let color = new Menu();
+                this._colors.map((col) => {
+                    color.append(new MenuItem({
+                        label: col,
+                        click: () => {
+                            layer.setStyle({
+                                color: col,
+                                fillColor: col
+                            });
+                            layer._configuration.options.color = col;
+                            layer._configuration.options.fillColor = col;
+                        }
+                    }));
+                });
+                context.append(new MenuItem({
+                    label: 'Color',
+                    type: 'submenu',
+                    submenu: color
+                }));
+                context.append(new MenuItem({
+                    label: 'Delete',
+                    click: () => {
+                        if (this.selectedRegions.length === 0) {
+                            this.selectedRegions.push(layer);
+                        }
+                        this.deleteRegionsCheck(this.selectedRegions);
+                        this.selectedRegions = [];
+                    }
+                }));
+            }
             context.append(new MenuItem({
                 label: 'Compute',
                 click: () => {
@@ -771,8 +699,36 @@ class mapPage extends GuiExtension {
 
                 }
             }));
+            // context.append(new MenuItem({
+            //     label: 'Create polygons layer from selected',
+            //     click: () => {
+            //         if (this.selectedRegions.length == 0) {
+            //             return;
+            //         }
+            //         dialog.showMessageBox({
+            //             type: 'question',
+            //             buttons: ['Cancel', 'Create'],
+            //             defaultId: 0,
+            //             title: 'Create polygons layer',
+            //             message: `Do you want to create a new polygon layers from the selected regions: ${this.selectedRegions}`,
+            //             noLink: true
+            //         }, (id) => {
+            //             if (id > 0) {
+            //                 let conf = {
+            //                     name: `Polygons${this.mapManager.getIndex()}`,
+            //                     type: 'polygons',
+            //                     polygons: this.selectedRegions.map((pol) => {
+            //                         return Object.assign({}, pol._configuration);
+            //                     })
+            //                 };
+            //                 this.addLayer(conf);
+            //                 this.selectedRegions = [];
+            //             }
+            //         });
+            //     }
+            // }));
             context.append(new MenuItem({
-                label: 'Export',
+                label: 'Export statistics',
                 click: () => {
                     if (this.selectedRegions.length === 0) {
                         this.exportsRegions([layer]);
@@ -786,10 +742,12 @@ class mapPage extends GuiExtension {
             inp.size = layerConfig.name.length + 1;
             let c = document.createElement('STRONG');
             c.appendChild(inp);
-            c.appendChild(inpC);
             c.oncontextmenu = (event) => {
                 context.popup();
             }
+            layer.on('contextmenu', () => {
+                context.popup();
+            })
             this.sidebarRegions.addItem({
                 id: layerConfig.id,
                 title: c,
@@ -803,7 +761,6 @@ class mapPage extends GuiExtension {
                             fillOpacity: 0.8
                         });
                         gui.notify(`${layerConfig.name} selected, (${this.selectedRegions.length} tot)`);
-                        //gui.notify(`${layerConfig.name} => ${Util.stringify(layerConfig.stats) || ' '} _`); //region stats in footbar
                     },
                     deactive: () => {
                         this.selectedRegions.splice(this.selectedRegions.indexOf(layer), 1);
@@ -817,78 +774,166 @@ class mapPage extends GuiExtension {
         });
 
         this.mapManager.on('add:marker', (e) => {
-            let mark = e.layer;
-            mark.on('contextmenu', (e) => {
-
-            });
-
-        });
-
-        this.mapManager.on('add:tileslayer', (e) => {
             let layer = e.layer;
-            let config = e.layerConfig;
-            let body = document.createElement('DIV');
-            let inp = document.createElement('INPUT');
-            inp.type = 'range';
-            inp.min = 0;
-            inp.max = 1;
-            inp.step = 0.05;
-            inp.value = layer.options.opacity;
-            inp.oninput = () => {
-                layer.setOpacity(inp.value);
-            }
-            body.appendChild(inp);
-            this.sidebar.layerList.addItem({
-                title: config.name,
-                body: body
+            let layerConfig = e.layer._configuration;
+
+            let context = new Menu();
+
+            context.append(new MenuItem({
+                label: 'Edit details',
+                click: () => {
+                    this.editMarkerDetails(layer);
+                }
+            }));
+
+            context.append(new MenuItem({
+                label: 'Delete',
+                click: () => {
+                    this.deleteMarkerCheck(layer);
+                }
+            }));
+
+            let txtTitle = Input.input({
+                type: `text`,
+                id: `txtmarker_${layerConfig.id}`,
+                value: layerConfig.name,
+                className: `list-input`,
+                readOnly: true,
+                onchange: () => {
+                    this.sidebarRegions.markers.setKey(layerConfig.id, txtTitle.value);
+                    layerConfig.name = txtTitle.value;
+                    layer.setTooltipContent(txtTitle.value);
+                    txtTitle.readOnly = true;
+                },
+                onblur: () => {
+                    txtTitle.value = layerConfig.name;
+                    txtTitle.readOnly = true;
+                },
+                ondblclick: (event) => {
+                    event.stopPropagation();
+                    txtTitle.readOnly = false;
+                }
+            });
+            txtTitle.size = layerConfig.name.length + 1;
+            txtTitle.oncontextmenu = () => {
+                context.popup();
+            };
+
+            let title = document.createElement('STRONG');
+            title.appendChild(txtTitle);
+
+            this.sidebarRegions.markers.addItem({
+                id: layerConfig.id,
+                title: title,
+                key: layerConfig.name,
+                toggle: true,
+                onclick: {
+                    active: () => {
+                        this.sidebarRegions.markers.deactiveAll();
+                        this.mapManager._map.setView(layer.getLatLng());
+                        layer.openPopup();
+                    },
+                    deactive: () => {
+                        layer.closePopup();
+                    }
+                }
+            });
+
+            layer.on('click', () => {
+                this.sidebarRegions.markers.deactiveAll();
+                this.sidebarRegions.markers.activeItem(layerConfig.id);
+                this.mapManager._map.setView(layer.getLatLng());
+            });
+
+            layer.on('dblclick', (e) => {
+                this.editMarkerDetails(layer);
             });
         });
 
-        this.mapManager.on('add:imagelayer', (e) => {
-            let layer = e.layer;
-            let config = e.layerConfig;
-            let body = document.createElement('DIV');
-            let inp = document.createElement('INPUT');
-            inp.type = 'range';
-            inp.min = 0;
-            inp.max = 1;
-            inp.step = 0.05;
-            inp.value = layer.options.opacity;
-            inp.oninput = () => {
-                layer.setOpacity(inp.value);
-            }
-            body.appendChild(inp);
-            this.sidebar.layerList.addItem({
-                title: config.name,
-                body: body
-            });
+        this.mapManager.on('remove:marker', (e) => {
+            this.sidebarRegions.markers.removeItem(e.layer._configuration.id);
         });
+
         this.mapManager.on('remove:polygon', (e) => {
             this.sidebarRegions.list.removeItem(e.layer._configuration.id);
         });
     }
 
+    editMarkerDetails(marker) {
+        // OPEN A MODAL ASKING FOR DETAILS.
+        var modal = new Modal({
+            title: "Edit marker details",
+            height: "auto"
+        });
 
-    updateMap(configuration) {
-        if (typeof configuration.id === 'undefined') return;
-        try {
-            configuration = MapIO.buildConfiguration(configuration);
-            this.initRegionActions(configuration);
-        } catch (e) {
-            // otherwise means that the mapManager is unable to load the map
-            console.log(e);
-            return;
-        }
-        this.sidebar.list.setKey(configuration.id, configuration.authors);
-        this.sidebar.list.setTitle(configuration.id, configuration.name);
-        this.maps[configuration.id] = configuration;
-        this.switchMap(configuration, true);
-        this.mapPane.show();
-        this.devPane.hide();
+        let grid = new Grid(2, 2);
+
+        let txtMarkerName = Input.input({
+            type: "text",
+            id: "txtmarkername",
+            value: marker._configuration.name
+        });
+        let lblMarkerName = document.createElement("LABEL");
+        lblMarkerName.htmlFor = "txtmarkername";
+        lblMarkerName.innerHTML = "Marker name: ";
+        grid.addElement(lblMarkerName, 0, 0);
+        grid.addElement(txtMarkerName, 0, 1);
+
+        let taMarkerDetails = document.createElement("TEXTAREA");
+        taMarkerDetails.id = "tamarkerdetails";
+        taMarkerDetails.value = marker._configuration.details;
+        taMarkerDetails.rows = 5
+        taMarkerDetails.style.width = '100%';
+        let lblMarkerDetails = document.createElement("LABEL");
+        lblMarkerDetails.htmlFor = "tamarkerdetails";
+        lblMarkerDetails.innerHTML = "Marker details: ";
+        grid.addElement(lblMarkerDetails, 1, 0);
+        grid.addElement(taMarkerDetails, 1, 1);
+
+        let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
+        buttonsContainer.addButton({
+            id: "CancelMarker00",
+            text: "Cancel",
+            action: () => {
+                modal.destroy();
+            },
+            className: "btn-default"
+        });
+        buttonsContainer.addButton({
+            id: "SaveMarker00",
+            text: "Save",
+            action: () => {
+                this.sidebarRegions.markers.setKey(marker._configuration.name, txtMarkerName.value);
+                marker._configuration.name = txtMarkerName.value;
+                marker._configuration.details = taMarkerDetails.value;
+                marker.setTooltipContent(txtMarkerName.value);
+                marker.setPopupContent(`<strong>${txtMarkerName.value}</strong> <p> ${taMarkerDetails.value}</p>`);
+                modal.destroy();
+            },
+            className: "btn-default"
+        });
+        let footer = Util.div();
+        footer.appendChild(buttonsContainer.element);
+
+        modal.addBody(grid.element);
+        modal.addFooter(footer);
+        modal.show();
     }
 
-
-
+    deleteMarkerCheck(marker) {
+        dialog.showMessageBox({
+            title: 'Delete selected marker?',
+            type: 'warning',
+            buttons: ['No', 'Yes'],
+            message: `Delete the selected marker? (no undo available)`,
+            detail: `Marker to be deleted: ${marker._configuration.name}.`,
+            noLink: true
+        }, (id) => {
+            if (id > 0) {
+                this.mapManager.removeMarker(marker, true);
+            }
+        });
+    }
 
     deleteRegionsCheck(regions) {
         dialog.showMessageBox({
@@ -896,7 +941,7 @@ class mapPage extends GuiExtension {
             type: 'warning',
             buttons: ['No', "Yes"],
             message: `Delete the selected regions? (no undo available)`,
-            detail: `Regions to be deleted: ${regions.map((reg)=> {return reg._configuration.name})}`,
+            detail: `Regions to be deleted: ${regions.map((reg) => { return reg._configuration.name })}`,
             noLink: true
         }, (id) => {
             if (id > 0) {
@@ -992,12 +1037,11 @@ class mapPage extends GuiExtension {
             this.mapManager._configuration.layers[key] = MapIO.parseLayerConfig(conf);
             this.mapManager.addLayer(this.mapManager._configuration.layers[key], key);
         } else if (path.endsWith('.jpg') || path.endsWith('.JPG') || path.endsWith('.png') || path.endsWith('.gif')) {
-            const sizeOf = require('image-size');
             var dim = sizeOf(path);
             let siz = Math.max(dim.height, dim.width);
             this.addLayer({
                 name: `tilesLayer from ${path}`,
-                tilesUrlTemplate: `file://${path}`,
+                tilesUrlTemplate: `${path}`,
                 basePath: '',
                 source: 'local',
                 original_size: siz,
@@ -1036,7 +1080,6 @@ class mapPage extends GuiExtension {
             });
 
             converter.progress = (converted, total) => {
-                const sizeOf = require('image-size');
                 var dim = sizeOf(`${converted[0].target}\/slice1.png`);
                 let siz = Math.max(dim.height, dim.width);
                 this.addLayer({
@@ -1053,28 +1096,21 @@ class mapPage extends GuiExtension {
                     maxNativeZoom: 0,
                     maxZoom: 8
                 });
-                gui.notify(`"${conf.name} added`);
-                Util.notifyOS(`"${conf.name} added"`);
+                gui.notify(`${path} added`);
+                Util.notifyOS(`"${path} added"`);
             }
             gui.notify(`${path} started conversion`);
             converter.convertArray([path], MapIO.basePath(null, path));
         }
-        this.showConfiguration(this.mapManager._configuration);
-        //this.switchMap(this.mapManager._configuration);
     }
 
 
     addLayer(conf) {
         conf = MapIO.parseLayerConfig(conf);
         let key = conf.name || conf.alias || conf.id || conf.type;
-        this.mapManager._configuration.layers[key] = conf;
-        this.mapManager.addLayer(conf);
+        this.mapManager.getConfiguration().layers[key] = conf;
+        this.mapManager.reload();
     }
-
-
-
-
-
 
 
 

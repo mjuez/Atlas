@@ -42,16 +42,15 @@ class CropTask extends Task {
     constructor(details) {
         let name = "ImageJ Image Cropping";
         super(name, details);
-        this.imageJExtension = gui.extensionsManager.extensions.imagej;
+        this.imageJExtension = gui.extensions.imagej;
         this.macro = "croppingBigSTiched";
         this.childProcess = null;
-
     }
 
     run(runPath) {
         super.run();
         this.showModal((modal, params) => {
-            let args = `${runPath}#${path.basename(runPath, path.extname(runPath))}#${params.dimTiles}#${params.height}#${params.width}#${params.path}`;
+            let args = `${runPath}#${path.basename(runPath, path.extname(runPath))}#${params.dimTiles}#${params.height}#${params.width}#${params.x}#${params.y}#${params.path}`;
             this.childProcess = this.imageJExtension.run(this.macro, args);
             this.childProcess.stdout.setEncoding('utf8');
             this.childProcess.stdout.on('data', (data) => {
@@ -116,7 +115,7 @@ class CropTask extends Task {
         });
 
         let body = document.createElement("DIV");
-        let grid = new Grid(4, 2);
+        let grid = new Grid(6, 2);
 
         let numDimTile = Input.input({
             type: "number",
@@ -155,12 +154,40 @@ class CropTask extends Task {
         grid.addElement(lblWidth, 2, 0);
         grid.addElement(numWidth, 2, 1);
 
+        let numx = Input.input({
+            type: "number",
+            id: "numx",
+            label: "X0",
+            value: "0",
+            min: "0"
+        });
+
+        let lblx = document.createElement("LABEL");
+        lblx.htmlFor = "numx";
+        lblx.innerHTML = "X0 ";
+        grid.addElement(lblx, 3, 0);
+        grid.addElement(numx, 3, 1);
+
+        let numy = Input.input({
+            type: "number",
+            id: "numy",
+            value: "0",
+            min: "0"
+        });
+
+        let lbly = document.createElement("LABEL");
+        lbly.htmlFor = "numy";
+        lbly.innerHTML = "Y0 ";
+        grid.addElement(lbly, 4, 0);
+        grid.addElement(numy, 4, 1);
+
+
         let fldOutputFolder = new FolderSelector("fileoutputfolder");
         let lblOutputFolder = document.createElement("LABEL");
         lblOutputFolder.htmlFor = "fileoutputfolder";
         lblOutputFolder.innerHTML = "Output folder: ";
-        grid.addElement(lblOutputFolder, 3, 0);
-        grid.addElement(fldOutputFolder.element, 3, 1);
+        grid.addElement(lblOutputFolder, 5, 0);
+        grid.addElement(fldOutputFolder.element, 5, 1);
 
         let buttonsContainer = new ButtonsContainer(document.createElement("DIV"));
         buttonsContainer.addButton({
@@ -182,6 +209,8 @@ class CropTask extends Task {
                             dimTiles: numDimTile.value || "[]",
                             height: numHeight.value || "[]",
                             width: numWidth.value || "[]",
+                            x: numx.value || 0,
+                            y: numy.value || 0,
                             path: fldOutputFolder.getFolderRoute()
                         }
                         next(modal, params);

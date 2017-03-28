@@ -66,9 +66,12 @@ class regionStatsPage extends GuiExtension {
         //this.sidebar.markers.clean();
         this.loadWorkspaceData();
         this.cleanPane();
-        this.showRegionsStats(gui.extensionsManager.extensions.mapPage.mapManager._configuration);
         this.sidebar.list.deactiveAll();
-        this.sidebar.list.activeItem(gui.extensionsManager.extensions.mapPage.mapManager._configuration.id);
+        let currentMapConfiguration = gui.extensionsManager.extensions.mapPage.mapManager._configuration;
+        if(currentMapConfiguration.id){
+            this.showRegionsStats(currentMapConfiguration);
+            this.sidebar.list.activeItem(currentMapConfiguration.id);
+        }  
     }
 
     addSidebar() {

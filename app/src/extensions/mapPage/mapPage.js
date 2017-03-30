@@ -513,6 +513,9 @@ class mapPage extends GuiExtension {
                     if (id > 0) {
                         if (configuration == this.mapManager._configuration) {
                             this.mapManager.clean();
+                            this.mapManager.setConfiguration({
+                                type: 'map'
+                            });
                         }
                         this.mapsList.removeItem(`${configuration.id}`);
                         delete this.maps[configuration.id];
